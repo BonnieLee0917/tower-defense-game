@@ -84,8 +84,8 @@ export class GameScene extends Phaser.Scene {
       }
     };
 
-    // Auto-start wave 1
-    this.waveManager.startNextWave();
+    // Don't auto-start wave 1 — let player build towers first (preparation phase)
+    // this.waveManager.startNextWave();
     this.updateHUD();
 
     // Cleanup on scene shutdown (prevents callback leaks on restart)
@@ -338,7 +338,11 @@ export class GameScene extends Phaser.Scene {
       this.nextWaveBtn.setVisible(this.waveManager.canSendEarly());
       this.nextWaveBtn.setStyle({ backgroundColor: '#8D6E00' });
     } else {
-      this.nextWaveBtn.setText('▶ Next Wave');
+      const waveNum = this.waveManager.getCurrentWave();
+      const label = waveNum === 1 && !this.waveManager.isWaveActive()
+        ? `▶ Start Wave ${waveNum}`
+        : `▶ Next Wave (${waveNum}/${TOTAL_WAVES})`;
+      this.nextWaveBtn.setText(label);
       this.nextWaveBtn.setVisible(true);
       this.nextWaveBtn.setStyle({ backgroundColor: '#1976D2' });
     }

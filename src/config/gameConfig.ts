@@ -66,16 +66,16 @@ export interface WaveEntry {
 }
 
 export const WAVE_CONFIG: WaveEntry[][] = [
-  // Wave 1
-  [{ type: 'normal', count: 8 }],
-  // Wave 2
-  [{ type: 'normal', count: 10 }, { type: 'fast', count: 3 }],
-  // Wave 3
-  [{ type: 'normal', count: 5 }, { type: 'fast', count: 8 }],
-  // Wave 4
-  [{ type: 'normal', count: 12 }, { type: 'fast', count: 6 }],
-  // Wave 5
-  [{ type: 'normal', count: 15 }, { type: 'fast', count: 10 }],
+  // Wave 1 — tutorial: slow start
+  [{ type: 'normal', count: 5 }],
+  // Wave 2 — introduce fast enemies
+  [{ type: 'normal', count: 6 }, { type: 'fast', count: 2 }],
+  // Wave 3 — more fast enemies
+  [{ type: 'normal', count: 4 }, { type: 'fast', count: 5 }],
+  // Wave 4 — bigger mixed wave
+  [{ type: 'normal', count: 8 }, { type: 'fast', count: 4 }],
+  // Wave 5 — final push
+  [{ type: 'normal', count: 10 }, { type: 'fast', count: 6 }],
 ];
 
 export const SPAWN_INTERVAL = 800; // ms between spawns
