@@ -86,6 +86,15 @@ export class GameScene extends Phaser.Scene {
     // Auto-start wave 1
     this.waveManager.startNextWave();
     this.updateHUD();
+
+    // Cleanup on scene shutdown (prevents callback leaks on restart)
+    this.events.on('shutdown', () => {
+      this.waveManager.onSpawn = undefined;
+      this.waveManager.onWaveComplete = undefined;
+      this.waveManager.onAllWavesDone = undefined;
+      this.economy.onChange = undefined;
+      this.input.removeAllListeners();
+    });
   }
 
   private drawMap() {
@@ -355,10 +364,11 @@ export class GameScene extends Phaser.Scene {
       if (hit) {
         // Apply damage
         if (p.splash > 0) {
-          const pos = p.getTargetPos();
+          // AoE — use projectile's hit position (where cannonball landed), not target's live position
+          const hitPos = { x: p.x, y: p.y };
           for (const e of this.enemies) {
             if (!e.alive) continue;
-            if (Math.hypot(e.x - pos.x, e.y - pos.y) <= p.splash) {
+            if (Math.hypot(e.x - hitPos.x, e.y - hitPos.y) <= p.splash) {
               const died = e.takeDamage(p.damage);
               if (died) this.onEnemyKilled(e);
             }
