@@ -32,7 +32,7 @@ export class BaseTower {
   private draw() {
     this.gfx.clear();
     // Base
-    this.gfx.fillStyle(0x888888, 1);
+    this.gfx.fillStyle(0x78909C, 1);
     this.gfx.fillRect(this.x - 24, this.y - 24, 48, 48);
     // Tower body
     this.gfx.fillStyle(this.config.color, 1);

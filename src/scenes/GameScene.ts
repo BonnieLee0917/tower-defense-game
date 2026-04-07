@@ -95,9 +95,9 @@ export class GameScene extends Phaser.Scene {
     for (let r = 0; r < MAP_DATA.rows; r++) {
       for (let c = 0; c < MAP_DATA.cols; c++) {
         const isPath = pathSet.has(`${c},${r}`);
-        gfx.fillStyle(isPath ? 0x8B6914 : 0x2d8a4e, 1);
+        gfx.fillStyle(isPath ? 0xC4956A : 0x3A7D44, 1);
         gfx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        gfx.lineStyle(1, 0x000000, 0.15);
+        gfx.lineStyle(1, 0x000000, 0.10);
         gfx.strokeRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
       }
     }
@@ -106,9 +106,9 @@ export class GameScene extends Phaser.Scene {
   private drawBuildSpots() {
     for (const spot of MAP_DATA.buildSpots) {
       const gfx = this.add.graphics();
-      gfx.lineStyle(2, 0xffffff, 0.6);
+      gfx.lineStyle(2, 0xF0E6D3, 0.6);
       gfx.strokeRect(spot.x - 28, spot.y - 28, 56, 56);
-      gfx.fillStyle(0xffffff, 0.1);
+      gfx.fillStyle(0xF0E6D3, 0.15);
       gfx.fillRect(spot.x - 28, spot.y - 28, 56, 56);
 
       const entry = { gfx, spot, occupied: false };
@@ -142,9 +142,9 @@ export class GameScene extends Phaser.Scene {
 
     // Background panel
     const bg = this.add.graphics();
-    bg.fillStyle(0x1a1a2e, 0.95);
+    bg.fillStyle(0x263238, 0.92);
     bg.fillRoundedRect(-menuW / 2, -menuH / 2, menuW, menuH, 10);
-    bg.lineStyle(2, 0x4488cc, 0.8);
+    bg.lineStyle(2, 0x1976D2, 0.8);
     bg.strokeRoundedRect(-menuW / 2, -menuH / 2, menuW, menuH, 10);
     container.add(bg);
 
@@ -189,7 +189,7 @@ export class GameScene extends Phaser.Scene {
 
     // Icon + Name
     const label = this.add.text(offsetX, offsetY + 10, `${icon} ${name}`, {
-      fontSize: '12px', color: canAfford ? '#ffffff' : '#666666', fontFamily: 'Arial',
+      fontSize: '12px', color: canAfford ? '#ffffff' : '#616161', fontFamily: 'Arial',
     }).setOrigin(0.5);
     container.add(label);
 
@@ -201,7 +201,7 @@ export class GameScene extends Phaser.Scene {
 
     // Cost
     const costText = this.add.text(offsetX, offsetY + 40, `💰 ${cfg.cost}`, {
-      fontSize: '13px', color: canAfford ? '#ffcc00' : '#664400', fontFamily: 'Arial', fontStyle: 'bold',
+      fontSize: '13px', color: canAfford ? '#FFD600' : '#616161', fontFamily: 'Arial', fontStyle: 'bold',
     }).setOrigin(0.5);
     container.add(costText);
 
@@ -268,7 +268,7 @@ export class GameScene extends Phaser.Scene {
     this.waveText = this.add.text(370, 8, '', style).setDepth(100);
 
     this.nextWaveBtn = this.add.text(GAME_WIDTH - 200, 6, '▶ Next Wave', {
-      fontSize: '16px', color: '#ffffff', backgroundColor: '#2266aa',
+      fontSize: '16px', color: '#ffffff', backgroundColor: '#1976D2',
       padding: { x: 12, y: 6 },
     }).setDepth(100).setInteractive({ useHandCursor: true });
     this.nextWaveBtn.on('pointerdown', () => {
@@ -311,11 +311,11 @@ export class GameScene extends Phaser.Scene {
     } else if (this.waveManager.isWaveActive()) {
       this.nextWaveBtn.setText(`⏩ Send Early (+${EARLY_WAVE_BONUS}g)`);
       this.nextWaveBtn.setVisible(this.waveManager.canSendEarly());
-      this.nextWaveBtn.setStyle({ backgroundColor: '#886600' });
+      this.nextWaveBtn.setStyle({ backgroundColor: '#8D6E00' });
     } else {
       this.nextWaveBtn.setText('▶ Next Wave');
       this.nextWaveBtn.setVisible(true);
-      this.nextWaveBtn.setStyle({ backgroundColor: '#2266aa' });
+      this.nextWaveBtn.setStyle({ backgroundColor: '#1976D2' });
     }
   }
 
@@ -431,7 +431,7 @@ export class GameScene extends Phaser.Scene {
     const btnH = 50;
     const btnX = GAME_WIDTH / 2 - btnW / 2;
     const btnY = GAME_HEIGHT / 2 + 90;
-    btnBg.fillStyle(0x2266aa, 1);
+    btnBg.fillStyle(0x1976D2, 1);
     btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, 10);
 
     const btn = this.add.text(GAME_WIDTH / 2, btnY + btnH / 2, btnLabel, {
@@ -440,12 +440,12 @@ export class GameScene extends Phaser.Scene {
 
     btn.on('pointerover', () => {
       btnBg.clear();
-      btnBg.fillStyle(0x3388cc, 1);
+      btnBg.fillStyle(0x1E88E5, 1);
       btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, 10);
     });
     btn.on('pointerout', () => {
       btnBg.clear();
-      btnBg.fillStyle(0x2266aa, 1);
+      btnBg.fillStyle(0x1976D2, 1);
       btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, 10);
     });
     btn.on('pointerdown', () => {

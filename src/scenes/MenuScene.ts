@@ -42,7 +42,7 @@ export class MenuScene extends Phaser.Scene {
     const btnY = GAME_HEIGHT / 2 + 40;
     const btnW = 240;
     const btnH = 60;
-    btnBg.fillStyle(0x2266aa, 1);
+    btnBg.fillStyle(0x1976D2, 1);
     btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, 12);
 
     const btnText = this.add.text(GAME_WIDTH / 2, btnY + btnH / 2, '▶  Click to Start', {
@@ -55,12 +55,12 @@ export class MenuScene extends Phaser.Scene {
     const zone = this.add.zone(GAME_WIDTH / 2, btnY + btnH / 2, btnW, btnH).setInteractive({ useHandCursor: true });
     zone.on('pointerover', () => {
       btnBg.clear();
-      btnBg.fillStyle(0x3388cc, 1);
+      btnBg.fillStyle(0x1E88E5, 1);
       btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, 12);
     });
     zone.on('pointerout', () => {
       btnBg.clear();
-      btnBg.fillStyle(0x2266aa, 1);
+      btnBg.fillStyle(0x1976D2, 1);
       btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, 12);
     });
     zone.on('pointerdown', () => {

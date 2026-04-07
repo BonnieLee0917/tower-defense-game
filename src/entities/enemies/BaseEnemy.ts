@@ -77,10 +77,10 @@ export class BaseEnemy {
     const barH = 4;
     const bx = this.x - barW / 2;
     const by = this.y - c.height / 2 - 8;
-    this.hpBar.fillStyle(0x333333, 1);
+    this.hpBar.fillStyle(0x37474F, 1);
     this.hpBar.fillRect(bx, by, barW, barH);
     const ratio = this.hp / this.maxHp;
-    const hpColor = ratio > 0.5 ? 0x00ff00 : ratio > 0.25 ? 0xffaa00 : 0xff0000;
+    const hpColor = ratio > 0.5 ? 0x4CAF50 : ratio > 0.25 ? 0xFF9800 : 0xF44336;
     this.hpBar.fillStyle(hpColor, 1);
     this.hpBar.fillRect(bx, by, barW * ratio, barH);
   }
