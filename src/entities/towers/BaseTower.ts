@@ -147,6 +147,9 @@ export class BaseTower {
         new Phaser.Geom.Point(this.x, this.y + r + 4),
         new Phaser.Geom.Point(this.x - r + 2, this.y),
       ], true);
+      // Energy orb at top (Vivian's suggestion)
+      this.gfx.fillStyle(0xE0B0FF, 1);
+      this.gfx.fillCircle(this.x, this.y - r - 2, 3);
     } else if (this.type === 'cannon') {
       // Wide rectangle base + circle on top
       this.gfx.fillStyle(this.baseConfig.color, 1);
