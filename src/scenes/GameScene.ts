@@ -43,6 +43,7 @@ export class GameScene extends Phaser.Scene {
   private selectedSpot: { x: number; y: number } | null = null;
 
   private spotGfxList: { gfx: Phaser.GameObjects.Graphics; spot: { x: number; y: number }; occupied: boolean }[] = [];
+  private isTouchDevice = false;
 
   constructor() {
     super('GameScene');
@@ -70,6 +71,8 @@ export class GameScene extends Phaser.Scene {
     this.statusEffects = new StatusEffectManager();
 
     this.economy.onChange = () => this.updateHUD();
+
+    this.isTouchDevice = this.sys.game.device.input.touch;
 
     this.drawMap();
     this.drawBuildSpots();
@@ -136,7 +139,8 @@ export class GameScene extends Phaser.Scene {
       const entry = { gfx, spot, occupied: false };
       this.spotGfxList.push(entry);
 
-      const zone = this.add.zone(spot.x, spot.y, 56, 56).setInteractive({ useHandCursor: true });
+      const zoneSize = this.isTouchDevice ? 67 : 56;
+      const zone = this.add.zone(spot.x, spot.y, zoneSize, zoneSize).setInteractive({ useHandCursor: true });
       zone.on('pointerdown', () => this.onBuildSpotClick(entry));
     }
   }
