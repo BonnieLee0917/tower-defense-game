@@ -42,6 +42,10 @@ export class WaveManager {
     this.enemiesAlive += newEnemies.length;
     if (!this.waveActive) this.spawnTimer = 0;
     this.waveActive = true;
+    // Note: currentWave increments immediately on startNextWave(), not on wave completion.
+    // This means currentWave represents "waves started so far" (1-indexed after increment).
+    // getCurrentWave() uses Math.min to clamp display value. Keep this in mind when adding
+    // wave-dependent logic later.
     this.currentWave++;
   }
 
