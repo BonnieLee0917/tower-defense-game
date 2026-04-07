@@ -27,7 +27,7 @@ console.log('\n🧪 Tower Storm MVP — 核心逻辑验证\n');
 
 // ===== 1. 游戏配置验证 =====
 console.log('📋 1. 游戏配置');
-assert(STARTING_GOLD === 200, '初始金币 200');
+assert(STARTING_GOLD === 350, '初始金币 350');
 assert(STARTING_LIVES === 20, '初始生命值 20');
 assert(TOTAL_WAVES === 5, '总波数 5');
 assert(SPAWN_INTERVAL === 800, '生成间隔 800ms');
@@ -57,13 +57,13 @@ assert(ENEMY_CONFIG.fast.reward === 7, '快速兵击杀奖励 7g');
 console.log('\n🌊 4. 波次配置');
 assert(WAVE_CONFIG.length === 5, '5 波配置');
 const waveCounts = WAVE_CONFIG.map(w => w.reduce((sum, e) => sum + e.count, 0));
-assert(waveCounts[0] === 8, 'Wave 1: 8 个敌人');
-assert(waveCounts[1] === 13, 'Wave 2: 13 个敌人');
-assert(waveCounts[2] === 13, 'Wave 3: 13 个敌人');
-assert(waveCounts[3] === 18, 'Wave 4: 18 个敌人');
-assert(waveCounts[4] === 25, 'Wave 5: 25 个敌人');
+assert(waveCounts[0] === 5, 'Wave 1: 5 个敌人');
+assert(waveCounts[1] === 8, 'Wave 2: 8 个敌人');
+assert(waveCounts[2] === 9, 'Wave 3: 9 个敌人');
+assert(waveCounts[3] === 12, 'Wave 4: 12 个敌人');
+assert(waveCounts[4] === 16, 'Wave 5: 16 个敌人');
 const totalEnemies = waveCounts.reduce((a, b) => a + b, 0);
-assert(totalEnemies === 77, `总敌人数 77（实际 ${totalEnemies}）`);
+assert(totalEnemies === 50, `总敌人数 50（实际 ${totalEnemies}）`);
 
 // 验证递增难度
 let isIncreasing = true;
@@ -135,18 +135,24 @@ console.log('\n💰 7. 经济系统');
 // 模拟：初始200g，建1弓箭塔+1炮塔
 let gold = STARTING_GOLD;
 const canBuildArcher = gold >= TOWER_CONFIG.archer.cost;
-assert(canBuildArcher, `初始可建弓箭塔（200 >= 70）`);
-gold -= TOWER_CONFIG.archer.cost; // 130
+assert(canBuildArcher, `初始可建弓箭塔（${STARTING_GOLD} >= 70）`);
+gold -= TOWER_CONFIG.archer.cost; // 280
 const canBuildCannon = gold >= TOWER_CONFIG.cannon.cost;
 assert(canBuildCannon, `剩余可建炮塔（${gold} >= 125）`);
-gold -= TOWER_CONFIG.cannon.cost; // 5
-assert(gold === 5, `建完2塔剩余 5g`);
+gold -= TOWER_CONFIG.cannon.cost; // 155
+assert(gold === 155, `建完2塔剩余 155g`);
 const canBuildMore = gold >= TOWER_CONFIG.archer.cost;
-assert(!canBuildMore, `余额不足无法再建塔（${gold} < 70）`);
+assert(canBuildMore, `余额充足可继续建塔（${gold} >= 70）`);
+
+// 开局最多建几座塔
+let tempGold = STARTING_GOLD;
+let towerCount = 0;
+while (tempGold >= TOWER_CONFIG.archer.cost) { tempGold -= TOWER_CONFIG.archer.cost; towerCount++; }
+assert(towerCount === 5, `350g 最多建 ${towerCount} 座弓箭塔`);
 
 // 击杀奖励
-gold += ENEMY_CONFIG.normal.reward * 8; // Wave 1 全杀
-assert(gold === 45, `Wave 1 全杀后 45g（5 + 8×5）`);
+gold += ENEMY_CONFIG.normal.reward * 5; // Wave 1 全杀（5个普通兵）
+assert(gold === 180, `Wave 1 全杀后 180g（155 + 5×5）`);
 
 // ===== 8. 胜负判定验证 =====
 console.log('\n❤️ 8. 胜负判定');
