@@ -197,6 +197,14 @@ export class GameScene extends Phaser.Scene {
     this.input.on('pointerdown', (_ptr: any, objects: any[]) => {
       if (objects.length === 0) this.closeBuildMenu();
     });
+
+    // Tower hover for range display
+    this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
+      for (const tower of this.towers) {
+        const d = Math.hypot(ptr.x - tower.x, ptr.y - tower.y);
+        tower.setShowRange(d < 30);
+      }
+    });
   }
 
   private updateHUD() {
