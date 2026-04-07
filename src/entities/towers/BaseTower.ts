@@ -39,7 +39,7 @@ export class BaseTower {
     this.gfx.fillCircle(this.x, this.y, this.config.radius);
     // Label
     if (!this._label) {
-      const label = this.type === 'archer' ? 'A' : 'C';
+      const label = this.type === 'archer' ? 'A' : this.type === 'cannon' ? 'C' : 'M';
       this._label = this.scene.add.text(this.x, this.y, label, {
         fontSize: '16px', color: '#ffffff', fontStyle: 'bold',
       }).setOrigin(0.5);
@@ -85,7 +85,8 @@ export class BaseTower {
       this.config.damage,
       this.config.splash,
       this.config.projectileColor,
-      this.type === 'cannon' ? 6 : 3,
+      this.type === 'cannon' ? 6 : this.type === 'magic' ? 5 : 3,
+      this.config.damageType,
     );
   }
 

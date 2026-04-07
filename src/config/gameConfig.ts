@@ -8,6 +8,8 @@ export const STARTING_GOLD = 350;
 export const STARTING_LIVES = 20;
 export const TOTAL_WAVES = 5;
 
+export type DamageType = 'physical' | 'magical';
+
 export const TOWER_CONFIG = {
   archer: {
     name: 'Archer Tower',
@@ -20,6 +22,7 @@ export const TOWER_CONFIG = {
     projectileSpeed: 400,
     projectileColor: 0xCDDC39,
     splash: 0,
+    damageType: 'physical' as DamageType,
   },
   cannon: {
     name: 'Cannon Tower',
@@ -32,6 +35,20 @@ export const TOWER_CONFIG = {
     projectileSpeed: 250,
     projectileColor: 0x455A64,
     splash: 60,
+    damageType: 'physical' as DamageType,
+  },
+  magic: {
+    name: 'Magic Tower',
+    cost: 100,
+    range: 130,
+    damage: 15,
+    attackSpeed: 0.7,
+    color: 0x7C4DFF,
+    radius: 20,
+    projectileSpeed: 300,
+    projectileColor: 0xB388FF,
+    splash: 50,
+    damageType: 'magical' as DamageType,
   },
 } as const;
 
@@ -46,6 +63,8 @@ export const ENEMY_CONFIG = {
     color: 0x42A5F5,
     width: 24,
     height: 24,
+    armor: 0,
+    magicResist: 0,
   },
   fast: {
     name: 'Fast',
@@ -55,6 +74,8 @@ export const ENEMY_CONFIG = {
     color: 0xFFCA28,
     width: 20,
     height: 20,
+    armor: 0,
+    magicResist: 0,
   },
 } as const;
 

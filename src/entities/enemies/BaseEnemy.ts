@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ENEMY_CONFIG, EnemyType } from '../../config/gameConfig';
+import { ENEMY_CONFIG, EnemyType, DamageType } from '../../config/gameConfig';
 import { PathManager } from '../../systems/PathManager';
 
 export class BaseEnemy {
@@ -10,6 +10,8 @@ export class BaseEnemy {
   public speed: number;
   public reward: number;
   public alive = true;
+  public speedMultiplier = 1.0;
+  public slowed = false;
 
   public x = 0;
   public y = 0;
@@ -18,6 +20,7 @@ export class BaseEnemy {
 
   private gfx: Phaser.GameObjects.Graphics;
   private hpBar: Phaser.GameObjects.Graphics;
+  private slowGfx: Phaser.GameObjects.Graphics;
   private pathManager: PathManager;
   private config: typeof ENEMY_CONFIG[EnemyType];
 
@@ -33,12 +36,15 @@ export class BaseEnemy {
 
     this.gfx = scene.add.graphics();
     this.hpBar = scene.add.graphics();
+    this.slowGfx = scene.add.graphics();
     this.distance = 0;
     this.draw();
   }
 
-  takeDamage(amount: number): boolean {
-    this.hp -= amount;
+  takeDamage(amount: number, damageType: DamageType = 'physical'): boolean {
+    const resistance = damageType === 'physical' ? this.config.armor : this.config.magicResist;
+    const actualDamage = amount * (1 - resistance / (resistance + 100));
+    this.hp -= actualDamage;
     if (this.hp <= 0) {
       this.hp = 0;
       this.alive = false;
@@ -49,7 +55,7 @@ export class BaseEnemy {
 
   update(dt: number): boolean {
     if (!this.alive) return false;
-    this.distance += this.speed * (dt / 1000);
+    this.distance += this.speed * this.speedMultiplier * (dt / 1000);
     const pos = this.pathManager.getPositionAt(this.distance);
     if (!pos) {
       // Reached end
@@ -86,6 +92,15 @@ export class BaseEnemy {
       ay - Math.sin(perpAngle) * arrowSize * 0.5,
     );
 
+    // Slow indicator
+    this.slowGfx.clear();
+    if (this.slowed) {
+      this.slowGfx.fillStyle(0xB388FF, 0.4);
+      this.slowGfx.fillCircle(this.x, this.y, c.width / 2 + 4);
+      this.slowGfx.lineStyle(1, 0x7C4DFF, 0.6);
+      this.slowGfx.strokeCircle(this.x, this.y, c.width / 2 + 4);
+    }
+
     // HP bar
     this.hpBar.clear();
     const barW = 30;
@@ -103,5 +118,6 @@ export class BaseEnemy {
   destroy() {
     this.gfx.destroy();
     this.hpBar.destroy();
+    this.slowGfx.destroy();
   }
 }

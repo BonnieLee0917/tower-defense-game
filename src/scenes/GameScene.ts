@@ -3,6 +3,7 @@ import { MAP_DATA } from '../maps/map1';
 import { PathManager } from '../systems/PathManager';
 import { EconomyManager } from '../systems/EconomyManager';
 import { WaveManager } from '../systems/WaveManager';
+import { StatusEffectManager } from '../systems/StatusEffects';
 import { BaseEnemy } from '../entities/enemies/BaseEnemy';
 import { BaseTower } from '../entities/towers/BaseTower';
 import { Projectile } from '../entities/projectiles/Projectile';
@@ -15,6 +16,7 @@ export class GameScene extends Phaser.Scene {
   private pathManager!: PathManager;
   private economy!: EconomyManager;
   private waveManager!: WaveManager;
+  private statusEffects!: StatusEffectManager;
 
   private enemies: BaseEnemy[] = [];
   private towers: BaseTower[] = [];
@@ -69,6 +71,8 @@ export class GameScene extends Phaser.Scene {
     this.pathManager = new PathManager(MAP_DATA);
     this.economy = new EconomyManager(this);
     this.waveManager = new WaveManager();
+
+    this.statusEffects = new StatusEffectManager();
 
     this.economy.onChange = () => this.updateHUD();
 
@@ -152,7 +156,7 @@ export class GameScene extends Phaser.Scene {
     const { x, y } = entry.spot;
 
     // Position menu above spot, but clamp to screen bounds
-    const menuW = 220;
+    const menuW = 320;
     const menuH = 110;
     let menuX = x;
     let menuY = y - 80;
@@ -188,15 +192,22 @@ export class GameScene extends Phaser.Scene {
     // Archer Tower option
     const archerCfg = TOWER_CONFIG.archer;
     const archerAfford = this.economy.canAfford(archerCfg.cost);
-    this.createTowerOption(container, -52, 8, '🏹', 'Archer', archerCfg, archerAfford, () => {
+    this.createTowerOption(container, -100, 8, '🏹', 'Archer', archerCfg, archerAfford, () => {
       this.buildTower('archer', entry);
     });
 
     // Cannon Tower option
     const cannonCfg = TOWER_CONFIG.cannon;
     const cannonAfford = this.economy.canAfford(cannonCfg.cost);
-    this.createTowerOption(container, 52, 8, '💣', 'Cannon', cannonCfg, cannonAfford, () => {
+    this.createTowerOption(container, 0, 8, '💣', 'Cannon', cannonCfg, cannonAfford, () => {
       this.buildTower('cannon', entry);
+    });
+
+    // Magic Tower option
+    const magicCfg = TOWER_CONFIG.magic;
+    const magicAfford = this.economy.canAfford(magicCfg.cost);
+    this.createTowerOption(container, 100, 8, '🔮', 'Magic', magicCfg, magicAfford, () => {
+      this.buildTower('magic', entry);
     });
 
     this.buildMenu = container;
@@ -430,15 +441,22 @@ export class GameScene extends Phaser.Scene {
           for (const e of this.enemies) {
             if (!e.alive) continue;
             if (Math.hypot(e.x - hitPos.x, e.y - hitPos.y) <= p.splash) {
-              const died = e.takeDamage(p.damage);
+              const died = e.takeDamage(p.damage, p.damageType);
               if (died) this.onEnemyKilled(e);
+              // Apply slow for magic tower projectiles
+              if (p.damageType === 'magical') {
+                this.statusEffects.applyEffect(e, { type: 'slow', magnitude: 0.3, duration: 2000 });
+              }
             }
           }
         } else {
           const target = p.getTarget();
           if (target.alive) {
-            const died = target.takeDamage(p.damage);
+            const died = target.takeDamage(p.damage, p.damageType);
             if (died) this.onEnemyKilled(target);
+            if (p.damageType === 'magical') {
+              this.statusEffects.applyEffect(target, { type: 'slow', magnitude: 0.3, duration: 2000 });
+            }
           }
         }
         this.projectiles.splice(i, 1);
@@ -451,10 +469,14 @@ export class GameScene extends Phaser.Scene {
     // Cleanup dead enemies
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       if (!this.enemies[i].alive) {
+        this.statusEffects.cleanup(this.enemies[i]);
         this.enemies[i].destroy();
         this.enemies.splice(i, 1);
       }
     }
+
+    // Update status effects
+    this.statusEffects.update(delta);
   }
 
   private onEnemyKilled(enemy: BaseEnemy) {

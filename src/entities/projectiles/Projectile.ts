@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { BaseEnemy } from '../enemies/BaseEnemy';
+import { DamageType } from '../../config/gameConfig';
 
 export class Projectile {
   public scene: Phaser.Scene;
@@ -9,6 +10,7 @@ export class Projectile {
   private speed: number;
   public damage: number;
   public splash: number;
+  public damageType: DamageType;
   private gfx: Phaser.GameObjects.Graphics;
   public alive = true;
   private color: number;
@@ -24,6 +26,7 @@ export class Projectile {
     splash: number,
     color: number,
     radius: number,
+    damageType: DamageType = 'physical',
   ) {
     this.scene = scene;
     this.x = x;
@@ -34,6 +37,7 @@ export class Projectile {
     this.splash = splash;
     this.color = color;
     this.radius = radius;
+    this.damageType = damageType;
     this.gfx = scene.add.graphics();
   }
 
