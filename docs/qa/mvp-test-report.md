@@ -73,12 +73,12 @@
 
 ### ⚠️ 潜在风险（代码审查发现）
 
-| # | 风险 | 严重程度 | 说明 |
-|---|------|---------|------|
-| 1 | scene.restart() 内存泄漏 | P1 | restart 前未解除 WaveManager/EconomyManager 回调引用（Kane review #5），多次重玩可能累积。create() 中重新赋值了引用，旧对象应被 GC，但 Phaser Scene 生命周期需确认 |
-| 2 | 炮塔 AoE 用 getTargetPos() 取活目标当前位置 | P2 | 如果 AoE 弹道命中时目标已移动，溅射中心是目标当前位置而非弹道命中位置。视觉上略有偏差，但 MVP 可接受 |
-| 3 | Graphics 对象性能 | P2 | 每帧 clear+redraw，Wave 5 同屏 25 敌人 = 50 个 Graphics 对象，MVP 可接受，Phase 2 需重构（Kane review #1） |
-| 4 | 提前发波时 currentWave 语义 | P2 | 连续提前发波时 currentWave 快速递增，显示逻辑有 Math.min 保护，但后续加波次相关逻辑需注意（已有注释） |
+| # | 风险 | 严重程度 | 状态 | 说明 |
+|---|------|---------|------|------|
+| 1 | scene.restart() 内存泄漏 | P1 | ✅ 已修复 (77d1b2e) | shutdown 事件中清除 WaveManager/EconomyManager 回调 + input listeners |
+| 2 | 炮塔 AoE 溅射中心位置 | P2 | ✅ 已修复 (77d1b2e) | AoE 溅射现在使用弹道命中坐标 (p.x, p.y) 而非目标实时位置 |
+| 3 | Graphics 对象性能 | P2 | ⏳ Phase 2 | 每帧 clear+redraw，Wave 5 同屏 25 敌人 = 50 个 Graphics 对象，MVP 可接受，Phase 2 需重构（Kane review #1） |
+| 4 | 提前发波时 currentWave 语义 | P2 | ⏳ Phase 2 | 连续提前发波时 currentWave 快速递增，显示逻辑有 Math.min 保护，已有注释 |
 
 ---
 
