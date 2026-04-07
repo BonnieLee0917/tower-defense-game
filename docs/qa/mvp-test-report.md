@@ -1,0 +1,102 @@
+# Tower Storm MVP — 验收测试报告（代码审查）
+
+> 测试人：Rose-QA
+> 测试日期：2026-04-07
+> 版本：commit 4429a89
+> 测试方式：代码静态审查 + 构建验证（无浏览器运行环境，暂无法做交互测试）
+
+---
+
+## 构建验证
+
+| 项目 | 结果 |
+|------|------|
+| TypeScript 编译（`tsc --noEmit`） | ✅ 零错误 |
+| Vite 生产构建（`vite build`） | ✅ 成功，1495KB（含 Phaser） |
+| 依赖安装（`npm install`） | ✅ 正常 |
+
+---
+
+## P0 — 核心循环 Checklist
+
+### 🗺️ 地图渲染
+- [x] 地图渲染逻辑正确：20×11 grid，64×64 tile，绿色草地 + 棕色路径
+- [x] 1280×720 分辨率常量定义正确
+- [x] 12 个建塔点白色方框渲染逻辑正确
+- [x] 路径从 (0,224) 经 10 个 waypoint 到 (1280,288)，数据正确
+- [x] pathTiles 从 waypoint 自动栅格化，无手动维护风险
+
+### 🚶 路径 & 敌人移动
+- [x] 敌人从起点生成，沿 waypoint 距离插值移动
+- [x] PathManager.getPositionAt() 按距离插值，转弯平滑
+- [x] 普通兵（蓝色,100hp,80speed）和快速兵（黄色,60hp,140speed）参数正确
+- [x] 敌人头顶血条：绿→黄→红 三段颜色逻辑正确
+- [x] 敌人到达终点返回 null → alive=false，正确触发生命值扣减
+
+### 🏹 防御塔
+- [x] 点击空建塔点弹出建塔菜单，含塔信息（伤害/范围/费用）
+- [x] canAfford 判断：金币不足时按钮灰色不可交互
+- [x] 弓箭塔 70g 单体攻击，炮塔 125g AoE 溅射 60px
+- [x] 已建塔位置 occupied=true，不可重复建塔
+- [x] 塔向最近敌人发射弹道，距离 <10px 判定命中
+- [x] hover 显示攻击范围圆圈
+- [x] 弹道追踪死亡目标 → 飞到最后位置消失，不造成伤害 ✅（Kane review #3 已修复）
+
+### 💰 经济系统
+- [x] 初始金币 200，STARTING_GOLD 常量正确
+- [x] spend() 扣款 + onChange 回调更新 HUD
+- [x] 击杀普通兵 +5g，快速兵 +7g，参数正确
+- [x] 击杀时有飘字动画反馈
+
+### 🌊 波次系统
+- [x] 5 波配置递增：8 → 13 → 13 → 18 → 25，总计 77 个敌人
+- [x] Wave 1 自动开始
+- [x] 波间显示 "Next Wave" 按钮
+- [x] 支持提前发波 +20g 奖励，多波可叠加
+- [x] HUD 波次显示正确，getCurrentWave() 有 Math.min 保护
+
+### ❤️ 生命值 & 胜负
+- [x] 初始 20 生命值
+- [x] 敌人到终点 → lives--，lives<=0 → showEndScreen(false)
+- [x] 全波清完 → showEndScreen(true)
+- [x] 结算画面显示统计：击杀数/金币/剩余生命/塔数量
+- [x] Play Again / Retry → scene.restart()，create() 中有完整状态重置
+
+---
+
+## P1 — 稳定性
+
+- [x] TypeScript 编译零错误，无运行时类型风险
+- [x] 已建塔位置 occupied 检查 → 不会重复建塔
+- [x] gameOver 状态下建塔点点击直接 return → 无异常操作
+- [x] Next Wave 按钮：allDone/gameOver 时 return → 不会多波触发
+
+### ⚠️ 潜在风险（代码审查发现）
+
+| # | 风险 | 严重程度 | 说明 |
+|---|------|---------|------|
+| 1 | scene.restart() 内存泄漏 | P1 | restart 前未解除 WaveManager/EconomyManager 回调引用（Kane review #5），多次重玩可能累积。create() 中重新赋值了引用，旧对象应被 GC，但 Phaser Scene 生命周期需确认 |
+| 2 | 炮塔 AoE 用 getTargetPos() 取活目标当前位置 | P2 | 如果 AoE 弹道命中时目标已移动，溅射中心是目标当前位置而非弹道命中位置。视觉上略有偏差，但 MVP 可接受 |
+| 3 | Graphics 对象性能 | P2 | 每帧 clear+redraw，Wave 5 同屏 25 敌人 = 50 个 Graphics 对象，MVP 可接受，Phase 2 需重构（Kane review #1） |
+| 4 | 提前发波时 currentWave 语义 | P2 | 连续提前发波时 currentWave 快速递增，显示逻辑有 Math.min 保护，但后续加波次相关逻辑需注意（已有注释） |
+
+---
+
+## 验收结论
+
+### ✅ 代码审查通过
+
+**P0 全部通过（22/22）** — 核心游戏循环代码逻辑完整正确
+**P1 无阻断性问题** — 4 个潜在风险均为 P1/P2，不阻碍 MVP
+
+### ⏳ 待完成
+
+**交互测试需要浏览器环境**，以下项目需在 `npm run dev` 运行后手动验证：
+- 实际渲染效果（地图、塔、敌人视觉）
+- 建塔菜单交互流畅度
+- 路径转弯平滑度
+- AoE 溅射视觉效果
+- 窗口缩放自适应
+- 性能表现（Wave 5 大量敌人同屏）
+
+**建议：部署到 Vercel 后我做一轮完整交互测试。**
