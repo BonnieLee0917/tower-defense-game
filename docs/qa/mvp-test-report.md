@@ -89,14 +89,25 @@
 **P0 全部通过（22/22）** — 核心游戏循环代码逻辑完整正确
 **P1 无阻断性问题** — 4 个潜在风险均为 P1/P2，不阻碍 MVP
 
-### ⏳ 待完成
+### ✅ 线上部署验证（2026-04-07 补充）
 
-**交互测试需要浏览器环境**，以下项目需在 `npm run dev` 运行后手动验证：
+**部署地址：** https://tower-defense-game-alu.pages.dev
+
+| 验证项 | 结果 |
+|--------|------|
+| HTTPS 访问 | ✅ HTTP 200，Cloudflare CDN |
+| 页面标题 | ✅ "Tower Storm" |
+| HTML 结构 | ✅ 正确加载，全屏布局，黑色背景 |
+| JS Bundle | ✅ 1.50MB（含 Phaser），加载成功 |
+| 游戏代码完整性 | ✅ 包含 Archer Tower / Cannon Tower / Victory / Defeat / Next Wave / Click to Start |
+| shutdown 修复 | ✅ 包含 shutdown + removeAllListeners |
+| 响应时间 | ✅ < 200ms |
+| 安全头 | ✅ CORS / nosniff / strict-origin referrer |
+
+**注意：** 以下项目需要浏览器实际运行 Phaser 才能验证，建议团队成员手动体验并反馈：
 - 实际渲染效果（地图、塔、敌人视觉）
 - 建塔菜单交互流畅度
 - 路径转弯平滑度
 - AoE 溅射视觉效果
 - 窗口缩放自适应
 - 性能表现（Wave 5 大量敌人同屏）
-
-**建议：部署到 Vercel 后我做一轮完整交互测试。**
