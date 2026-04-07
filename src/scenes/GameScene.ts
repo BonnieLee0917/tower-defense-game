@@ -154,106 +154,79 @@ export class GameScene extends Phaser.Scene {
 
   private showBuildMenu(entry: typeof this.spotGfxList[0]) {
     const { x, y } = entry.spot;
-    const menuW = 420;
-    const menuH = 110;
-    let menuX = x;
-    let menuY = y - 80;
-    if (menuY - menuH / 2 < 40) menuY = y + 80;
-    if (menuX - menuW / 2 < 0) menuX = menuW / 2 + 5;
-    if (menuX + menuW / 2 > GAME_WIDTH) menuX = GAME_WIDTH - menuW / 2 - 5;
+    const container = this.add.container(x, y).setDepth(150);
 
-    const container = this.add.container(menuX, menuY).setDepth(150);
-
-    const bg = this.add.graphics();
-    bg.fillStyle(0x263238, 0.92);
-    bg.fillRoundedRect(-menuW / 2, -menuH / 2, menuW, menuH, 10);
-    bg.lineStyle(2, 0x1976D2, 0.8);
-    bg.strokeRoundedRect(-menuW / 2, -menuH / 2, menuW, menuH, 10);
-    container.add(bg);
-
-    const title = this.add.text(0, -menuH / 2 + 12, 'Build Tower', {
-      fontSize: '14px', color: '#aaccff', fontFamily: 'Arial', fontStyle: 'bold',
-    }).setOrigin(0.5, 0);
-    container.add(title);
-
-    const closeBtn = this.add.text(menuW / 2 - 20, -menuH / 2 + 8, '✕', {
-      fontSize: '16px', color: '#B0BEC5', fontFamily: 'Arial',
-    }).setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
+    // Close button at center
+    const closeBtn = this.add.text(0, 0, '✕', {
+      fontSize: '14px', color: '#B0BEC5', fontFamily: 'Arial', fontStyle: 'bold',
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     closeBtn.on('pointerover', () => closeBtn.setColor('#ffffff'));
     closeBtn.on('pointerout', () => closeBtn.setColor('#B0BEC5'));
     closeBtn.on('pointerdown', () => this.closeBuildMenu());
     container.add(closeBtn);
 
-    const options: Array<{ type: TowerType; offsetX: number; icon: string; name: string }> = [
-      { type: 'archer', offsetX: -150, icon: '🏹', name: 'Archer' },
-      { type: 'cannon', offsetX: -50, icon: '💣', name: 'Cannon' },
-      { type: 'magic', offsetX: 50, icon: '🔮', name: 'Magic' },
-      { type: 'barracks', offsetX: 150, icon: '⚔️', name: 'Barracks' },
+    // Radial tower options: top=archer, right=magic, bottom=cannon, left=barracks
+    const radialOptions: Array<{ type: TowerType; dx: number; dy: number; icon: string }> = [
+      { type: 'archer', dx: 0, dy: -60, icon: '🏹' },
+      { type: 'magic', dx: 60, dy: 0, icon: '🔮' },
+      { type: 'cannon', dx: 0, dy: 60, icon: '💣' },
+      { type: 'barracks', dx: -60, dy: 0, icon: '⚔️' },
     ];
 
-    for (const option of options) {
-      const cfg = TOWER_CONFIG[option.type];
-      this.createTowerOption(
-        container,
-        option.offsetX,
-        8,
-        option.icon,
-        option.name,
-        cfg,
-        this.economy.canAfford(cfg.cost),
-        () => this.buildTower(option.type, entry),
-      );
-    }
+    radialOptions.forEach((opt, i) => {
+      const cfg = TOWER_CONFIG[opt.type];
+      const canAfford = this.economy.canAfford(cfg.cost);
+      const alpha = canAfford ? 1.0 : 0.4;
+
+      // Button container (starts at center, will tween out)
+      const btnContainer = this.add.container(0, 0);
+      btnContainer.setScale(0);
+      btnContainer.setAlpha(0);
+
+      // Circle background
+      const circle = this.add.graphics();
+      circle.fillStyle(canAfford ? cfg.color : 0x616161, alpha);
+      circle.fillCircle(0, 0, 24);
+      circle.lineStyle(2, canAfford ? 0xffffff : 0x444444, alpha * 0.6);
+      circle.strokeCircle(0, 0, 24);
+      btnContainer.add(circle);
+
+      // Icon
+      const iconText = this.add.text(0, -2, opt.icon, {
+        fontSize: '18px', fontFamily: 'Arial',
+      }).setOrigin(0.5).setAlpha(alpha);
+      btnContainer.add(iconText);
+
+      // Cost text below circle
+      const costLabel = this.add.text(0, 30, `${cfg.cost}`, {
+        fontSize: '11px', color: canAfford ? '#FFD600' : '#616161', fontFamily: 'Arial', fontStyle: 'bold',
+      }).setOrigin(0.5).setAlpha(alpha);
+      btnContainer.add(costLabel);
+
+      // Interactive zone
+      if (canAfford) {
+        const zone = this.add.zone(0, 0, 52, 52).setInteractive({ useHandCursor: true });
+        zone.on('pointerdown', () => this.buildTower(opt.type, entry));
+        btnContainer.add(zone);
+      }
+
+      container.add(btnContainer);
+
+      // Spring animation from center to final position
+      this.tweens.add({
+        targets: btnContainer,
+        x: opt.dx,
+        y: opt.dy,
+        scaleX: 1,
+        scaleY: 1,
+        alpha: 1,
+        duration: 200,
+        delay: i * 30,
+        ease: 'Back.easeOut',
+      });
+    });
 
     this.buildMenu = container;
-  }
-
-  private createTowerOption(
-    container: Phaser.GameObjects.Container,
-    offsetX: number,
-    offsetY: number,
-    icon: string,
-    name: string,
-    cfg: (typeof TOWER_CONFIG)[keyof typeof TOWER_CONFIG],
-    canAfford: boolean,
-    onClick: () => void,
-  ) {
-    const alpha = canAfford ? 1.0 : 0.4;
-
-    const preview = this.add.graphics();
-    preview.fillStyle(cfg.color, alpha);
-    if (cfg.type === 'barracks') {
-      preview.fillRect(offsetX - 12, offsetY - 20, 24, 24);
-      preview.lineStyle(2, 0xF57C00, alpha);
-      preview.strokeRect(offsetX - 12, offsetY - 20, 24, 24);
-    } else {
-      preview.fillCircle(offsetX, offsetY - 8, 12);
-    }
-    container.add(preview);
-
-    const label = this.add.text(offsetX, offsetY + 10, `${icon} ${name}`, {
-      fontSize: '12px', color: canAfford ? '#ffffff' : '#616161', fontFamily: 'Arial',
-    }).setOrigin(0.5);
-    container.add(label);
-
-    const statsText = cfg.type === 'barracks'
-      ? `${BARRACKS_CONFIG.levels[0].damage}dmg ${BARRACKS_CONFIG.levels[0].hp}hp x${BARRACKS_CONFIG.maxSoldiers}`
-      : `${cfg.damage}dmg ${cfg.range}rng`;
-    const stats = this.add.text(offsetX, offsetY + 26, statsText, {
-      fontSize: '10px', color: '#888899', fontFamily: 'Arial',
-    }).setOrigin(0.5);
-    container.add(stats);
-
-    const costText = this.add.text(offsetX, offsetY + 40, `💰 ${cfg.cost}`, {
-      fontSize: '13px', color: canAfford ? '#FFD600' : '#616161', fontFamily: 'Arial', fontStyle: 'bold',
-    }).setOrigin(0.5);
-    container.add(costText);
-
-    if (canAfford) {
-      const zone = this.add.zone(offsetX, offsetY + 10, 96, 72).setInteractive({ useHandCursor: true });
-      zone.on('pointerdown', onClick);
-      container.add(zone);
-    }
   }
 
   private closeBuildMenu() {
@@ -277,84 +250,91 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showTowerMenu(tower: BaseTower) {
-    const menuW = 250;
-    const menuH = 148;
-    let menuX = tower.x;
-    let menuY = tower.y - 90;
-    if (menuY - menuH / 2 < 40) menuY = tower.y + 90;
-    if (menuX - menuW / 2 < 0) menuX = menuW / 2 + 5;
-    if (menuX + menuW / 2 > GAME_WIDTH) menuX = GAME_WIDTH - menuW / 2 - 5;
+    const container = this.add.container(tower.x, tower.y).setDepth(150);
 
-    const container = this.add.container(menuX, menuY).setDepth(150);
-
-    const bg = this.add.graphics();
-    bg.fillStyle(0x263238, 0.92);
-    bg.fillRoundedRect(-menuW / 2, -menuH / 2, menuW, menuH, 10);
-    bg.lineStyle(2, 0xFF9800, 0.8);
-    bg.strokeRoundedRect(-menuW / 2, -menuH / 2, menuW, menuH, 10);
-    container.add(bg);
-
-    const lvlLabel = this.add.text(0, -menuH / 2 + 10, `Lv.${tower.level} ${TOWER_CONFIG[tower.type].name}`, {
-      fontSize: '13px', color: '#FFD600', fontFamily: 'Arial', fontStyle: 'bold',
-    }).setOrigin(0.5, 0);
-    container.add(lvlLabel);
+    // Center: tower info label
+    const cfg = TOWER_CONFIG[tower.type];
+    const infoLabel = this.add.text(0, 0, `Lv${tower.level}`, {
+      fontSize: '11px', color: '#FFD600', fontFamily: 'Arial', fontStyle: 'bold',
+    }).setOrigin(0.5);
+    container.add(infoLabel);
 
     const upgradeCost = tower.getUpgradeCost();
-    let statsLine = '';
-    if (tower.isBarracks()) {
-      const current = BARRACKS_CONFIG.levels[tower.level - 1];
-      const next = upgradeCost !== null ? BARRACKS_CONFIG.levels[tower.level] : null;
-      statsLine = next
-        ? `Soldiers: ${current.damage} DMG / ${current.hp} HP → ${next.damage} / ${next.hp}`
-        : `Soldiers: ${current.damage} DMG / ${current.hp} HP`;
-    } else {
-      const dmgText = `DMG: ${Math.round(tower.damage)}`;
-      const rngText = `RNG: ${Math.round(tower.range)}`;
-      let nextStats = '';
-      if (upgradeCost !== null) {
-        const nextLvl = tower.level;
-        const nextDmg = Math.round(TOWER_CONFIG[tower.type].damage * UPGRADE_CONFIG.damageMultiplier[nextLvl]);
-        const nextRng = Math.round(TOWER_CONFIG[tower.type].range * UPGRADE_CONFIG.rangeMultiplier[nextLvl]);
-        nextStats = ` → ${nextDmg} / ${nextRng}`;
-      }
-      statsLine = `${dmgText}  ${rngText}${nextStats}`;
-    }
+    let btnIndex = 0;
 
-    const stats = this.add.text(0, -menuH / 2 + 30, statsLine, {
-      fontSize: '11px', color: '#90A4AE', fontFamily: 'Arial', align: 'center', wordWrap: { width: menuW - 20 },
-    }).setOrigin(0.5, 0);
-    container.add(stats);
-
+    // Top: Upgrade button
     if (upgradeCost !== null) {
       const canAfford = this.economy.canAfford(upgradeCost);
-      const upgradeBtn = this.add.text(0, 10, `⬆ Upgrade (${upgradeCost}g)`, {
-        fontSize: '15px', color: canAfford ? '#66BB6A' : '#616161', fontFamily: 'Arial', fontStyle: 'bold',
-      }).setOrigin(0.5).setInteractive({ useHandCursor: canAfford });
+      const alpha = canAfford ? 1.0 : 0.4;
+
+      const upBtn = this.add.container(0, 0).setScale(0).setAlpha(0);
+      const upCircle = this.add.graphics();
+      upCircle.fillStyle(canAfford ? 0x66BB6A : 0x616161, alpha);
+      upCircle.fillCircle(0, 0, 24);
+      upCircle.lineStyle(2, canAfford ? 0xffffff : 0x444444, alpha * 0.6);
+      upCircle.strokeCircle(0, 0, 24);
+      upBtn.add(upCircle);
+
+      const upIcon = this.add.text(0, -2, '⬆', {
+        fontSize: '18px', fontFamily: 'Arial',
+      }).setOrigin(0.5).setAlpha(alpha);
+      upBtn.add(upIcon);
+
+      const upCost = this.add.text(0, 30, `${upgradeCost}`, {
+        fontSize: '11px', color: canAfford ? '#FFD600' : '#616161', fontFamily: 'Arial', fontStyle: 'bold',
+      }).setOrigin(0.5).setAlpha(alpha);
+      upBtn.add(upCost);
+
       if (canAfford) {
-        upgradeBtn.on('pointerdown', () => { this.upgradeTower(tower); this.closeTowerMenu(); });
-        upgradeBtn.on('pointerover', () => upgradeBtn.setColor('#A5D6A7'));
-        upgradeBtn.on('pointerout', () => upgradeBtn.setColor('#66BB6A'));
+        const zone = this.add.zone(0, 0, 52, 52).setInteractive({ useHandCursor: true });
+        zone.on('pointerdown', () => { this.upgradeTower(tower); this.closeTowerMenu(); });
+        upBtn.add(zone);
       }
-      container.add(upgradeBtn);
-    } else {
-      const maxLabel = this.add.text(0, 10, 'MAX LEVEL', {
-        fontSize: '14px', color: '#616161', fontFamily: 'Arial', fontStyle: 'bold',
-      }).setOrigin(0.5);
-      container.add(maxLabel);
+
+      container.add(upBtn);
+      this.tweens.add({
+        targets: upBtn, x: 0, y: -60, scaleX: 1, scaleY: 1, alpha: 1,
+        duration: 200, delay: btnIndex * 30, ease: 'Back.easeOut',
+      });
+      btnIndex++;
     }
 
+    // Bottom: Sell button
     const sellValue = tower.getSellValue();
-    const sellBtn = this.add.text(0, 38, `💰 Sell (${sellValue}g)`, {
-      fontSize: '15px', color: '#FFB74D', fontFamily: 'Arial', fontStyle: 'bold',
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    sellBtn.on('pointerdown', () => { this.sellTower(tower); this.closeTowerMenu(); });
-    sellBtn.on('pointerover', () => sellBtn.setColor('#FFCC80'));
-    sellBtn.on('pointerout', () => sellBtn.setColor('#FFB74D'));
-    container.add(sellBtn);
+    const sellBtn = this.add.container(0, 0).setScale(0).setAlpha(0);
+    const sellCircle = this.add.graphics();
+    sellCircle.fillStyle(0xFFB74D, 1);
+    sellCircle.fillCircle(0, 0, 24);
+    sellCircle.lineStyle(2, 0xffffff, 0.6);
+    sellCircle.strokeCircle(0, 0, 24);
+    sellBtn.add(sellCircle);
 
-    const closeBtn = this.add.text(menuW / 2 - 20, -menuH / 2 + 8, '✕', {
-      fontSize: '16px', color: '#B0BEC5', fontFamily: 'Arial',
-    }).setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
+    const sellIcon = this.add.text(0, -2, '💰', {
+      fontSize: '18px', fontFamily: 'Arial',
+    }).setOrigin(0.5);
+    sellBtn.add(sellIcon);
+
+    const sellCost = this.add.text(0, 30, `${sellValue}`, {
+      fontSize: '11px', color: '#FFD600', fontFamily: 'Arial', fontStyle: 'bold',
+    }).setOrigin(0.5);
+    sellBtn.add(sellCost);
+
+    const sellZone = this.add.zone(0, 0, 52, 52).setInteractive({ useHandCursor: true });
+    sellZone.on('pointerdown', () => { this.sellTower(tower); this.closeTowerMenu(); });
+    sellBtn.add(sellZone);
+
+    container.add(sellBtn);
+    this.tweens.add({
+      targets: sellBtn, x: 0, y: 60, scaleX: 1, scaleY: 1, alpha: 1,
+      duration: 200, delay: btnIndex * 30, ease: 'Back.easeOut',
+    });
+
+    // Close button at center (small, above info)
+    const closeBtn = this.add.text(0, -14, '✕', {
+      fontSize: '12px', color: '#B0BEC5', fontFamily: 'Arial',
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    closeBtn.on('pointerover', () => closeBtn.setColor('#ffffff'));
+    closeBtn.on('pointerout', () => closeBtn.setColor('#B0BEC5'));
     closeBtn.on('pointerdown', () => this.closeTowerMenu());
     container.add(closeBtn);
 
