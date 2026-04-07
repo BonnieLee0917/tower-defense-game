@@ -114,17 +114,44 @@ export class BaseTower {
     this.gfx.fillRect(this.x - 24, this.y - 24, 48, 48);
 
     if (this.isBarracks()) {
+      // House shape: rectangle body + triangle roof
       this.gfx.fillStyle(0xFFB300, 1);
-      this.gfx.fillRect(this.x - 18, this.y - 18, 36, 36);
+      this.gfx.fillRect(this.x - 16, this.y - 8, 32, 26);
+      this.gfx.fillTriangle(this.x - 20, this.y - 8, this.x + 20, this.y - 8, this.x, this.y - 22);
       this.gfx.lineStyle(2, 0xF57C00, 1);
-      this.gfx.strokeRect(this.x - 18, this.y - 18, 36, 36);
+      this.gfx.strokeRect(this.x - 16, this.y - 8, 32, 26);
+      this.gfx.strokeTriangle(this.x - 20, this.y - 8, this.x + 20, this.y - 8, this.x, this.y - 22);
 
       for (let i = 0; i < this.soldiers.length; i++) {
         if (this.soldiers[i]?.alive) {
           this.gfx.fillStyle(0xFFE082, 1);
-          this.gfx.fillCircle(this.x - 10 + i * 10, this.y - 19, 3);
+          this.gfx.fillCircle(this.x - 10 + i * 10, this.y - 23, 3);
         }
       }
+    } else if (this.type === 'archer') {
+      // Circle with arrow tip triangle on top
+      this.gfx.fillStyle(this.baseConfig.color, 1);
+      this.gfx.fillCircle(this.x, this.y, this.baseConfig.radius);
+      this.gfx.fillTriangle(
+        this.x, this.y - this.baseConfig.radius - 10,
+        this.x - 6, this.y - this.baseConfig.radius + 2,
+        this.x + 6, this.y - this.baseConfig.radius + 2,
+      );
+    } else if (this.type === 'magic') {
+      // Tall diamond/rhombus
+      const r = this.baseConfig.radius;
+      this.gfx.fillStyle(this.baseConfig.color, 1);
+      this.gfx.fillPoints([
+        new Phaser.Geom.Point(this.x, this.y - r - 4),
+        new Phaser.Geom.Point(this.x + r - 2, this.y),
+        new Phaser.Geom.Point(this.x, this.y + r + 4),
+        new Phaser.Geom.Point(this.x - r + 2, this.y),
+      ], true);
+    } else if (this.type === 'cannon') {
+      // Wide rectangle base + circle on top
+      this.gfx.fillStyle(this.baseConfig.color, 1);
+      this.gfx.fillRect(this.x - 16, this.y - 4, 32, 20);
+      this.gfx.fillCircle(this.x, this.y - 6, 12);
     } else {
       this.gfx.fillStyle(this.baseConfig.color, 1);
       this.gfx.fillCircle(this.x, this.y, this.baseConfig.radius);

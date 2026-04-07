@@ -109,40 +109,67 @@ export class BaseEnemy {
     if (this.isFlying) {
       const bodyY = this.y - 6;
 
+      // Shadow
       this.gfx.fillStyle(0x000000, 0.22);
       this.gfx.fillEllipse(this.x, this.y + 12, c.width, 8);
 
-      this.gfx.fillStyle(c.color, 1);
-      this.gfx.fillRect(this.x - c.width / 2, bodyY - c.height / 2, c.width, c.height);
+      // Triangle pointing in movement direction + wing lines
+      const tipX = this.x + Math.cos(this.angle) * (c.width * 0.7);
+      const tipY = bodyY + Math.sin(this.angle) * (c.height * 0.7);
+      const perpAngle = this.angle + Math.PI / 2;
+      const backX1 = this.x + Math.cos(perpAngle) * (c.width * 0.5) - Math.cos(this.angle) * (c.width * 0.4);
+      const backY1 = bodyY + Math.sin(perpAngle) * (c.height * 0.5) - Math.sin(this.angle) * (c.height * 0.4);
+      const backX2 = this.x - Math.cos(perpAngle) * (c.width * 0.5) - Math.cos(this.angle) * (c.width * 0.4);
+      const backY2 = bodyY - Math.sin(perpAngle) * (c.height * 0.5) - Math.sin(this.angle) * (c.height * 0.4);
 
-      this.gfx.fillStyle(0xE1BEE7, 0.9);
+      this.gfx.fillStyle(c.color, 1);
+      this.gfx.fillTriangle(tipX, tipY, backX1, backY1, backX2, backY2);
+
+      // Wing lines
+      this.gfx.lineStyle(2, 0xE1BEE7, 0.9);
+      this.gfx.lineBetween(backX1, backY1, backX1 + Math.cos(perpAngle) * 8, backY1 + Math.sin(perpAngle) * 8 - 4);
+      this.gfx.lineBetween(backX2, backY2, backX2 - Math.cos(perpAngle) * 8, backY2 - Math.sin(perpAngle) * 8 - 4);
+    } else if (this.type === 'fast') {
+      // Diamond/rhombus shape
+      this.gfx.fillStyle(c.color, 1);
+      this.gfx.fillPoints([
+        new Phaser.Geom.Point(this.x, this.y - c.height / 2 - 2),
+        new Phaser.Geom.Point(this.x + c.width / 2 + 2, this.y),
+        new Phaser.Geom.Point(this.x, this.y + c.height / 2 + 2),
+        new Phaser.Geom.Point(this.x - c.width / 2 - 2, this.y),
+      ], true);
+
+      // Direction arrow
+      const arrowSize = 5;
+      const ax = this.x + Math.cos(this.angle) * (c.width / 2 + 4);
+      const ay = this.y + Math.sin(this.angle) * (c.height / 2 + 4);
+      const pAngle = this.angle + Math.PI / 2;
+      this.gfx.fillStyle(0xffffff, 0.7);
       this.gfx.fillTriangle(
-        this.x - c.width / 2 + 1,
-        bodyY,
-        this.x - c.width / 2 - 8,
-        bodyY - 6,
-        this.x - c.width / 2 - 3,
-        bodyY + 5,
-      );
-      this.gfx.fillTriangle(
-        this.x + c.width / 2 - 1,
-        bodyY,
-        this.x + c.width / 2 + 8,
-        bodyY - 6,
-        this.x + c.width / 2 + 3,
-        bodyY + 5,
+        ax + Math.cos(this.angle) * arrowSize,
+        ay + Math.sin(this.angle) * arrowSize,
+        ax + Math.cos(pAngle) * arrowSize * 0.5,
+        ay + Math.sin(pAngle) * arrowSize * 0.5,
+        ax - Math.cos(pAngle) * arrowSize * 0.5,
+        ay - Math.sin(pAngle) * arrowSize * 0.5,
       );
     } else {
+      // Normal and Heavy: rectangle
       this.gfx.fillStyle(c.color, 1);
       this.gfx.fillRect(this.x - c.width / 2, this.y - c.height / 2, c.width, c.height);
 
       if (this.type === 'heavy') {
+        // Shield overlay: darker inner rectangle
         this.gfx.fillStyle(0x455A64, 0.9);
-        this.gfx.fillRect(this.x - 6, this.y - 8, 12, 16);
+        this.gfx.fillRect(this.x - 7, this.y - 9, 14, 18);
         this.gfx.lineStyle(1, 0x263238, 1);
-        this.gfx.strokeRect(this.x - 6, this.y - 8, 12, 16);
+        this.gfx.strokeRect(this.x - 7, this.y - 9, 14, 18);
+        // Shield highlight
+        this.gfx.fillStyle(0x607D8B, 0.5);
+        this.gfx.fillRect(this.x - 4, this.y - 6, 8, 3);
       }
 
+      // Direction arrow
       const arrowSize = 6;
       const ax = this.x + Math.cos(this.angle) * (c.width / 2 + 2);
       const ay = this.y + Math.sin(this.angle) * (c.height / 2 + 2);
