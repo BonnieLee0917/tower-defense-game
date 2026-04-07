@@ -26,7 +26,7 @@ console.log('\n🧪 Tower Storm — 完整核心逻辑验证（4塔4敌10波）\
 
 // ===== 1. 游戏配置 =====
 console.log('📋 1. 游戏配置');
-assert(STARTING_GOLD === 350, '初始金币 350');
+assert(STARTING_GOLD === 400, '初始金币 400');
 assert(STARTING_LIVES === 20, '初始生命值 20');
 assert(TOTAL_WAVES === 10, '总波数 10');
 assert(SPAWN_INTERVAL === 800, '生成间隔 800ms');
@@ -105,7 +105,7 @@ assert(ENEMY_CONFIG.heavy.isFlying === false, '重甲兵地面单位');
 // 飞行单位
 assert(ENEMY_CONFIG.flying.hp === 120, '飞行单位 120HP');
 assert(ENEMY_CONFIG.flying.speed === 100, '飞行单位速度 100');
-assert(ENEMY_CONFIG.flying.reward === 10, '飞行单位奖励 10g');
+assert(ENEMY_CONFIG.flying.reward === 12, '飞行单位奖励 12g');
 assert(ENEMY_CONFIG.flying.isFlying === true, '飞行单位 isFlying=true');
 assert(ENEMY_CONFIG.flying.armor === 0, '飞行单位 0 护甲');
 
@@ -178,7 +178,7 @@ assert(spotsOnPath === 0, '建塔点不在路径上');
 console.log('\n📊 9. 经济平衡');
 let g = STARTING_GOLD; let cnt = 0;
 while (g >= TOWER_CONFIG.archer.cost) { g -= TOWER_CONFIG.archer.cost; cnt++; }
-assert(cnt === 5, `350g 最多建 ${cnt} 座弓箭塔`);
+assert(cnt === 5, `400g 最多建 ${cnt} 座弓箭塔`);
 
 // 4 种塔费用
 console.log(`  塔费用: 弓箭${TOWER_CONFIG.archer.cost} 炮塔${TOWER_CONFIG.cannon.cost} 魔法${TOWER_CONFIG.magic.cost} 兵营${TOWER_CONFIG.barracks.cost}`);
