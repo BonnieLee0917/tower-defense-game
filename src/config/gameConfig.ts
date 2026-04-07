@@ -4,7 +4,7 @@ export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
 export const TILE_SIZE = 64;
 
-export const STARTING_GOLD = 350;
+export const STARTING_GOLD = 400;
 export const STARTING_LIVES = 20;
 export const TOTAL_WAVES = 10;
 
@@ -113,7 +113,7 @@ export const ENEMY_CONFIG = {
     name: 'Heavy Armor',
     hp: 300,
     speed: 50,
-    reward: 15,
+    reward: 20,
     color: 0x78909C,
     width: 28,
     height: 28,
@@ -126,7 +126,7 @@ export const ENEMY_CONFIG = {
     name: 'Flying',
     hp: 120,
     speed: 100,
-    reward: 10,
+    reward: 12,
     color: 0xCE93D8,
     width: 20,
     height: 20,
@@ -170,9 +170,9 @@ export const WAVE_CONFIG: WaveEntry[][] = [
   // Wave 8 — full mix
   [{ type: 'normal', count: 4 }, { type: 'fast', count: 8 }, { type: 'heavy', count: 4 }, { type: 'flying', count: 4 }],
   // Wave 9 — intense
-  [{ type: 'fast', count: 10 }, { type: 'heavy', count: 6 }, { type: 'flying', count: 5 }],
-  // Wave 10 — final boss wave
-  [{ type: 'normal', count: 8 }, { type: 'fast', count: 10 }, { type: 'heavy', count: 8 }, { type: 'flying', count: 6 }],
+  [{ type: 'normal', count: 3 }, { type: 'fast', count: 10 }, { type: 'heavy', count: 5 }, { type: 'flying', count: 5 }],
+  // Wave 10 — final boss wave (big but not impossible)
+  [{ type: 'normal', count: 6 }, { type: 'fast', count: 10 }, { type: 'heavy', count: 6 }, { type: 'flying', count: 6 }],
 ];
 
 export const SPAWN_INTERVAL = 800;
