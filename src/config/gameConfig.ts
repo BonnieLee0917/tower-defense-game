@@ -4,7 +4,7 @@ export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
 export const TILE_SIZE = 64;
 
-export const STARTING_GOLD = 200;
+export const STARTING_GOLD = 350;
 export const STARTING_LIVES = 20;
 export const TOTAL_WAVES = 5;
 
