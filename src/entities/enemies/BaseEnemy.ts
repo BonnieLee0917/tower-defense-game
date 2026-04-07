@@ -71,6 +71,21 @@ export class BaseEnemy {
     this.gfx.fillStyle(c.color, 1);
     this.gfx.fillRect(this.x - c.width / 2, this.y - c.height / 2, c.width, c.height);
 
+    // Direction arrow (small triangle pointing in movement direction)
+    const arrowSize = 6;
+    const ax = this.x + Math.cos(this.angle) * (c.width / 2 + 2);
+    const ay = this.y + Math.sin(this.angle) * (c.height / 2 + 2);
+    const perpAngle = this.angle + Math.PI / 2;
+    this.gfx.fillStyle(0xffffff, 0.7);
+    this.gfx.fillTriangle(
+      ax + Math.cos(this.angle) * arrowSize,
+      ay + Math.sin(this.angle) * arrowSize,
+      ax + Math.cos(perpAngle) * arrowSize * 0.5,
+      ay + Math.sin(perpAngle) * arrowSize * 0.5,
+      ax - Math.cos(perpAngle) * arrowSize * 0.5,
+      ay - Math.sin(perpAngle) * arrowSize * 0.5,
+    );
+
     // HP bar
     this.hpBar.clear();
     const barW = 30;

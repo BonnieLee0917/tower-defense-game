@@ -15,6 +15,7 @@ export class WaveManager {
   getCurrentWave(): number { return Math.min(this.currentWave + 1, TOTAL_WAVES); }
   isWaveActive(): boolean { return this.waveActive; }
   isAllDone(): boolean { return this.allWavesDone; }
+  getEnemiesAlive(): number { return this.enemiesAlive; }
 
   /** Can send next wave early (current wave active + not the last wave) */
   canSendEarly(): boolean {

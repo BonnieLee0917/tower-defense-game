@@ -32,6 +32,7 @@ export class GameScene extends Phaser.Scene {
   private livesText!: Phaser.GameObjects.Text;
   private goldText!: Phaser.GameObjects.Text;
   private waveText!: Phaser.GameObjects.Text;
+  private enemiesText!: Phaser.GameObjects.Text;
   private nextWaveBtn!: Phaser.GameObjects.Text;
 
   // Build menu
@@ -163,6 +164,15 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5, 0);
     container.add(title);
 
+    // Close button
+    const closeBtn = this.add.text(menuW / 2 - 20, -menuH / 2 + 8, '✕', {
+      fontSize: '16px', color: '#888899', fontFamily: 'Arial',
+    }).setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
+    closeBtn.on('pointerover', () => closeBtn.setColor('#ffffff'));
+    closeBtn.on('pointerout', () => closeBtn.setColor('#888899'));
+    closeBtn.on('pointerdown', () => this.closeBuildMenu());
+    container.add(closeBtn);
+
     // Archer Tower option
     const archerCfg = TOWER_CONFIG.archer;
     const archerAfford = this.economy.canAfford(archerCfg.cost);
@@ -275,6 +285,7 @@ export class GameScene extends Phaser.Scene {
     this.livesText = this.add.text(20, 8, '', style).setDepth(100);
     this.goldText = this.add.text(180, 8, '', style).setDepth(100);
     this.waveText = this.add.text(370, 8, '', style).setDepth(100);
+    this.enemiesText = this.add.text(560, 8, '', style).setDepth(100);
 
     this.nextWaveBtn = this.add.text(GAME_WIDTH - 200, 6, '▶ Next Wave', {
       fontSize: '16px', color: '#ffffff', backgroundColor: '#1976D2',
@@ -313,6 +324,11 @@ export class GameScene extends Phaser.Scene {
     this.livesText.setText(`❤️ ${this.lives}/${STARTING_LIVES}`);
     this.goldText.setText(`💰 ${this.economy.getGold()}`);
     this.waveText.setText(`🌊 Wave ${this.waveManager.getCurrentWave()}/${TOTAL_WAVES}`);
+
+    // Show remaining enemies during active wave
+    const alive = this.waveManager.getEnemiesAlive();
+    this.enemiesText.setText(this.waveManager.isWaveActive() ? `👾 ${alive}` : '');
+    this.enemiesText.setVisible(this.waveManager.isWaveActive());
 
     // Next wave button: show between waves OR during wave (for early send)
     if (this.gameOver || this.waveManager.isAllDone()) {
