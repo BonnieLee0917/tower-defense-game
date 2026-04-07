@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { BARRACKS_CONFIG } from '../../config/gameConfig';
 import { BaseEnemy } from '../enemies/BaseEnemy';
 
-const ENEMY_RETALIATION_DAMAGE = 10;
+const ENEMY_RETALIATION_DAMAGE_DEFAULT = 10; // fallback if config missing
 const ENEMY_RETALIATION_INTERVAL = 1000;
 
 export class Soldier {
@@ -117,7 +117,8 @@ export class Soldier {
 
       if (this.retaliationTimer >= ENEMY_RETALIATION_INTERVAL) {
         this.retaliationTimer -= ENEMY_RETALIATION_INTERVAL;
-        const soldierDied = this.takeDamage(ENEMY_RETALIATION_DAMAGE);
+        const retDmg = this.target.config.retaliationDamage ?? ENEMY_RETALIATION_DAMAGE_DEFAULT;
+        const soldierDied = this.takeDamage(retDmg);
         if (soldierDied) {
           return { killed: null, died: true };
         }

@@ -25,7 +25,7 @@ export class BaseEnemy {
   private hpBar: Phaser.GameObjects.Graphics;
   private slowGfx: Phaser.GameObjects.Graphics;
   private pathManager: PathManager;
-  private config: typeof ENEMY_CONFIG[EnemyType];
+  public readonly config: typeof ENEMY_CONFIG[EnemyType];
   private flyingPath: { x: number; y: number }[] | null = null;
   private destroyed = false;
 

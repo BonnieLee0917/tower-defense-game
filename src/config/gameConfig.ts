@@ -94,6 +94,7 @@ export const ENEMY_CONFIG = {
     armor: 0,
     magicResist: 0,
     isFlying: false,
+    retaliationDamage: 8,
   },
   fast: {
     name: 'Fast',
@@ -106,6 +107,7 @@ export const ENEMY_CONFIG = {
     armor: 0,
     magicResist: 0,
     isFlying: false,
+    retaliationDamage: 6,
   },
   heavy: {
     name: 'Heavy Armor',
@@ -118,6 +120,7 @@ export const ENEMY_CONFIG = {
     armor: 60,
     magicResist: 10,
     isFlying: false,
+    retaliationDamage: 18,
   },
   flying: {
     name: 'Flying',
@@ -130,6 +133,7 @@ export const ENEMY_CONFIG = {
     armor: 0,
     magicResist: 0,
     isFlying: true,
+    retaliationDamage: 5,
   },
 } as const;
 
