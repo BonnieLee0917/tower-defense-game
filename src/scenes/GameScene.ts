@@ -9,7 +9,7 @@ import { BaseTower } from '../entities/towers/BaseTower';
 import { Projectile } from '../entities/projectiles/Projectile';
 import {
   GAME_WIDTH, GAME_HEIGHT, TILE_SIZE, STARTING_LIVES, TOTAL_WAVES,
-  TOWER_CONFIG, TowerType, EnemyType, EARLY_WAVE_BONUS, WAVE_COUNTDOWN,
+  TOWER_CONFIG, UPGRADE_CONFIG, TowerType, EnemyType, EARLY_WAVE_BONUS, WAVE_COUNTDOWN,
 } from '../config/gameConfig';
 
 export class GameScene extends Phaser.Scene {
@@ -43,6 +43,7 @@ export class GameScene extends Phaser.Scene {
 
   // Build menu
   private buildMenu: Phaser.GameObjects.Container | null = null;
+  private towerMenu: Phaser.GameObjects.Container | null = null;
   private selectedSpot: { x: number; y: number } | null = null;
 
   // Build spot graphics
@@ -63,6 +64,7 @@ export class GameScene extends Phaser.Scene {
     this.totalKills = 0;
     this.totalGoldEarned = 0;
     this.buildMenu = null;
+    this.towerMenu = null;
     this.selectedSpot = null;
     this.spotGfxList = [];
     this.waveCountdown = -1;
@@ -147,7 +149,7 @@ export class GameScene extends Phaser.Scene {
 
   private onBuildSpotClick(entry: typeof this.spotGfxList[0]) {
     if (entry.occupied || this.gameOver) return;
-    this.closeBuildMenu();
+    this.closeAllMenus();
     this.selectedSpot = entry.spot;
     this.showBuildMenu(entry);
   }
@@ -263,6 +265,133 @@ export class GameScene extends Phaser.Scene {
     this.selectedSpot = null;
   }
 
+  private closeTowerMenu() {
+    if (this.towerMenu) {
+      this.towerMenu.destroy();
+      this.towerMenu = null;
+    }
+  }
+
+  private closeAllMenus() {
+    this.closeBuildMenu();
+    this.closeTowerMenu();
+  }
+
+  private showTowerMenu(tower: BaseTower) {
+    const menuW = 240;
+    const menuH = 140;
+    let menuX = tower.x;
+    let menuY = tower.y - 90;
+    if (menuY - menuH / 2 < 40) menuY = tower.y + 90;
+    if (menuX - menuW / 2 < 0) menuX = menuW / 2 + 5;
+    if (menuX + menuW / 2 > GAME_WIDTH) menuX = GAME_WIDTH - menuW / 2 - 5;
+
+    const container = this.add.container(menuX, menuY).setDepth(150);
+
+    const bg = this.add.graphics();
+    bg.fillStyle(0x263238, 0.92);
+    bg.fillRoundedRect(-menuW / 2, -menuH / 2, menuW, menuH, 10);
+    bg.lineStyle(2, 0xFF9800, 0.8);
+    bg.strokeRoundedRect(-menuW / 2, -menuH / 2, menuW, menuH, 10);
+    container.add(bg);
+
+    // Level label
+    const lvlLabel = this.add.text(0, -menuH / 2 + 10, `Lv.${tower.level} ${TOWER_CONFIG[tower.type].name}`, {
+      fontSize: '13px', color: '#FFD600', fontFamily: 'Arial', fontStyle: 'bold',
+    }).setOrigin(0.5, 0);
+    container.add(lvlLabel);
+
+    // Stats
+    const dmgText = `DMG: ${Math.round(tower.damage)}`;
+    const rngText = `RNG: ${Math.round(tower.range)}`;
+    const upgradeCost = tower.getUpgradeCost();
+    let nextStats = '';
+    if (upgradeCost !== null) {
+      const nextLvl = tower.level; // next level index
+      const nextDmg = Math.round(TOWER_CONFIG[tower.type].damage * UPGRADE_CONFIG.damageMultiplier[nextLvl]);
+      const nextRng = Math.round(TOWER_CONFIG[tower.type].range * UPGRADE_CONFIG.rangeMultiplier[nextLvl]);
+      nextStats = ` → ${nextDmg} / ${nextRng}`;
+    }
+    const stats = this.add.text(0, -menuH / 2 + 30, `${dmgText}  ${rngText}${nextStats}`, {
+      fontSize: '11px', color: '#90A4AE', fontFamily: 'Arial',
+    }).setOrigin(0.5, 0);
+    container.add(stats);
+
+    // Upgrade button
+    if (upgradeCost !== null) {
+      const canAfford = this.economy.canAfford(upgradeCost);
+      const upgradeBtn = this.add.text(0, 10, `⬆ Upgrade (${upgradeCost}g)`, {
+        fontSize: '15px', color: canAfford ? '#66BB6A' : '#616161', fontFamily: 'Arial', fontStyle: 'bold',
+      }).setOrigin(0.5).setInteractive({ useHandCursor: canAfford });
+      if (canAfford) {
+        upgradeBtn.on('pointerdown', () => { this.upgradeTower(tower); this.closeTowerMenu(); });
+        upgradeBtn.on('pointerover', () => upgradeBtn.setColor('#A5D6A7'));
+        upgradeBtn.on('pointerout', () => upgradeBtn.setColor('#66BB6A'));
+      }
+      container.add(upgradeBtn);
+    } else {
+      const maxLabel = this.add.text(0, 10, 'MAX LEVEL', {
+        fontSize: '14px', color: '#616161', fontFamily: 'Arial', fontStyle: 'bold',
+      }).setOrigin(0.5);
+      container.add(maxLabel);
+    }
+
+    // Sell button
+    const sellValue = tower.getSellValue();
+    const sellBtn = this.add.text(0, 38, `💰 Sell (${sellValue}g)`, {
+      fontSize: '15px', color: '#FFB74D', fontFamily: 'Arial', fontStyle: 'bold',
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    sellBtn.on('pointerdown', () => { this.sellTower(tower); this.closeTowerMenu(); });
+    sellBtn.on('pointerover', () => sellBtn.setColor('#FFCC80'));
+    sellBtn.on('pointerout', () => sellBtn.setColor('#FFB74D'));
+    container.add(sellBtn);
+
+    // Close button
+    const closeBtn = this.add.text(menuW / 2 - 20, -menuH / 2 + 8, '✕', {
+      fontSize: '16px', color: '#B0BEC5', fontFamily: 'Arial',
+    }).setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
+    closeBtn.on('pointerdown', () => this.closeTowerMenu());
+    container.add(closeBtn);
+
+    this.towerMenu = container;
+  }
+
+  private upgradeTower(tower: BaseTower) {
+    const cost = tower.getUpgradeCost();
+    if (cost === null || !this.economy.spend(cost)) return;
+    tower.addInvestment(cost);
+    tower.upgrade();
+    this.showFloatingText(tower.x, tower.y - 30, `⬆ Lv.${tower.level}`, '#66BB6A');
+    this.updateHUD();
+  }
+
+  private sellTower(tower: BaseTower) {
+    const value = tower.getSellValue();
+    this.economy.earn(value);
+    this.totalGoldEarned += value;
+    this.showFloatingText(tower.x, tower.y - 30, `+${value}g`, '#FFB74D');
+
+    // Find and free the build spot
+    for (const entry of this.spotGfxList) {
+      if (entry.spot.x === tower.x && entry.spot.y === tower.y) {
+        entry.occupied = false;
+        // Redraw build spot highlight
+        entry.gfx.clear();
+        entry.gfx.lineStyle(2, 0xF0E6D3, 0.6);
+        entry.gfx.strokeRect(entry.spot.x - 28, entry.spot.y - 28, 56, 56);
+        entry.gfx.fillStyle(0xF0E6D3, 0.15);
+        entry.gfx.fillRect(entry.spot.x - 28, entry.spot.y - 28, 56, 56);
+        break;
+      }
+    }
+
+    // Remove tower
+    const idx = this.towers.indexOf(tower);
+    if (idx >= 0) this.towers.splice(idx, 1);
+    tower.destroy();
+    this.updateHUD();
+  }
+
   private buildTower(type: TowerType, entry: typeof this.spotGfxList[0]) {
     const cost = TOWER_CONFIG[type].cost;
     if (!this.economy.spend(cost)) return;
@@ -340,9 +469,22 @@ export class GameScene extends Phaser.Scene {
       this.updateHUD();
     });
 
-    // Click anywhere else to close build menu
-    this.input.on('pointerdown', (_ptr: any, objects: any[]) => {
-      if (objects.length === 0) this.closeBuildMenu();
+    // Click anywhere else to close menus; also detect tower clicks
+    this.input.on('pointerdown', (ptr: Phaser.Input.Pointer, objects: any[]) => {
+      if (objects.length === 0) {
+        // Check if clicking on a tower
+        let clickedTower: BaseTower | null = null;
+        for (const tower of this.towers) {
+          const d = Math.hypot(ptr.x - tower.x, ptr.y - tower.y);
+          if (d < 30) { clickedTower = tower; break; }
+        }
+        if (clickedTower) {
+          this.closeAllMenus();
+          this.showTowerMenu(clickedTower);
+        } else {
+          this.closeAllMenus();
+        }
+      }
     });
 
     // Tower hover for range display

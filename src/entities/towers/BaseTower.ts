@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { TOWER_CONFIG, TowerType } from '../../config/gameConfig';
+import { TOWER_CONFIG, UPGRADE_CONFIG, TowerType } from '../../config/gameConfig';
 import { BaseEnemy } from '../enemies/BaseEnemy';
 import { Projectile } from '../projectiles/Projectile';
 
@@ -8,8 +8,9 @@ export class BaseTower {
   public type: TowerType;
   public x: number;
   public y: number;
+  public level = 1;
 
-  private config: typeof TOWER_CONFIG[TowerType];
+  private baseConfig: typeof TOWER_CONFIG[TowerType];
   private gfx: Phaser.GameObjects.Graphics;
   private rangeGfx: Phaser.GameObjects.Graphics;
   private cooldown = 0;
@@ -17,16 +18,56 @@ export class BaseTower {
   private _label: Phaser.GameObjects.Text | null = null;
   public projectiles: Projectile[] = [];
 
+  // Effective stats (recalculated on upgrade)
+  public damage: number;
+  public range: number;
+  public attackSpeed: number;
+
+  // Cost tracking for sell value
+  private totalInvested: number;
+
   constructor(scene: Phaser.Scene, type: TowerType, x: number, y: number) {
     this.scene = scene;
     this.type = type;
     this.x = x;
     this.y = y;
-    this.config = TOWER_CONFIG[type];
+    this.baseConfig = TOWER_CONFIG[type];
+    this.damage = this.baseConfig.damage;
+    this.range = this.baseConfig.range;
+    this.attackSpeed = this.baseConfig.attackSpeed;
+    this.totalInvested = this.baseConfig.cost;
 
     this.gfx = scene.add.graphics();
     this.rangeGfx = scene.add.graphics();
     this.draw();
+  }
+
+  private recalcStats() {
+    const lvlIdx = this.level - 1;
+    this.damage = this.baseConfig.damage * UPGRADE_CONFIG.damageMultiplier[lvlIdx];
+    this.range = this.baseConfig.range * UPGRADE_CONFIG.rangeMultiplier[lvlIdx];
+    this.attackSpeed = this.baseConfig.attackSpeed * UPGRADE_CONFIG.attackSpeedMultiplier[lvlIdx];
+  }
+
+  upgrade(): boolean {
+    if (this.level >= UPGRADE_CONFIG.levels) return false;
+    this.level++;
+    this.recalcStats();
+    this.draw();
+    return true;
+  }
+
+  getUpgradeCost(): number | null {
+    if (this.level >= UPGRADE_CONFIG.levels) return null;
+    return Math.round(this.baseConfig.cost * UPGRADE_CONFIG.costMultiplier[this.level]);
+  }
+
+  addInvestment(cost: number) {
+    this.totalInvested += cost;
+  }
+
+  getSellValue(): number {
+    return Math.round(this.totalInvested * 0.6);
   }
 
   private draw() {
@@ -35,12 +76,24 @@ export class BaseTower {
     this.gfx.fillStyle(0x78909C, 1);
     this.gfx.fillRect(this.x - 24, this.y - 24, 48, 48);
     // Tower body
-    this.gfx.fillStyle(this.config.color, 1);
-    this.gfx.fillCircle(this.x, this.y, this.config.radius);
+    this.gfx.fillStyle(this.baseConfig.color, 1);
+    this.gfx.fillCircle(this.x, this.y, this.baseConfig.radius);
+
+    // Level dots
+    if (this.level >= 2) {
+      this.gfx.fillStyle(0xFFD600, 1);
+      for (let i = 0; i < this.level - 1; i++) {
+        this.gfx.fillCircle(this.x - 6 + i * 12, this.y + this.baseConfig.radius + 6, 3);
+      }
+    }
+
     // Label
-    if (!this._label) {
-      const label = this.type === 'archer' ? 'A' : this.type === 'cannon' ? 'C' : 'M';
-      this._label = this.scene.add.text(this.x, this.y, label, {
+    const letterMap = { archer: 'A', cannon: 'C', magic: 'M' } as const;
+    const labelText = `${letterMap[this.type]}${this.level}`;
+    if (this._label) {
+      this._label.setText(labelText);
+    } else {
+      this._label = this.scene.add.text(this.x, this.y, labelText, {
         fontSize: '16px', color: '#ffffff', fontStyle: 'bold',
       }).setOrigin(0.5);
     }
@@ -51,9 +104,9 @@ export class BaseTower {
     this.rangeGfx.clear();
     if (show) {
       this.rangeGfx.lineStyle(2, 0xffffff, 0.3);
-      this.rangeGfx.strokeCircle(this.x, this.y, this.config.range);
+      this.rangeGfx.strokeCircle(this.x, this.y, this.range);
       this.rangeGfx.fillStyle(0xffffff, 0.05);
-      this.rangeGfx.fillCircle(this.x, this.y, this.config.range);
+      this.rangeGfx.fillCircle(this.x, this.y, this.range);
     }
   }
 
@@ -67,7 +120,7 @@ export class BaseTower {
     for (const e of enemies) {
       if (!e.alive) continue;
       const d = Math.hypot(e.x - this.x, e.y - this.y);
-      if (d <= this.config.range && d < nearestDist) {
+      if (d <= this.range && d < nearestDist) {
         nearest = e;
         nearestDist = d;
       }
@@ -75,18 +128,17 @@ export class BaseTower {
 
     if (!nearest) return null;
 
-    this.cooldown = 1000 / this.config.attackSpeed;
-    // Fire projectile
+    this.cooldown = 1000 / this.attackSpeed;
     return new Projectile(
       this.scene,
       this.x, this.y,
       nearest,
-      this.config.projectileSpeed,
-      this.config.damage,
-      this.config.splash,
-      this.config.projectileColor,
+      this.baseConfig.projectileSpeed,
+      this.damage,
+      this.baseConfig.splash,
+      this.baseConfig.projectileColor,
       this.type === 'cannon' ? 6 : this.type === 'magic' ? 5 : 3,
-      this.config.damageType,
+      this.baseConfig.damageType,
     );
   }
 

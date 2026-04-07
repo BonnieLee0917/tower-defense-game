@@ -77,6 +77,14 @@ export class BaseEnemy {
     this.gfx.fillStyle(c.color, 1);
     this.gfx.fillRect(this.x - c.width / 2, this.y - c.height / 2, c.width, c.height);
 
+    // Shield overlay for heavy enemies
+    if (this.type === 'heavy') {
+      this.gfx.fillStyle(0x455A64, 0.9);
+      this.gfx.fillRect(this.x - 6, this.y - 8, 12, 16);
+      this.gfx.lineStyle(1, 0x263238, 1);
+      this.gfx.strokeRect(this.x - 6, this.y - 8, 12, 16);
+    }
+
     // Direction arrow (small triangle pointing in movement direction)
     const arrowSize = 6;
     const ax = this.x + Math.cos(this.angle) * (c.width / 2 + 2);

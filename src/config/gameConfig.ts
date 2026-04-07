@@ -6,7 +6,7 @@ export const TILE_SIZE = 64;
 
 export const STARTING_GOLD = 350;
 export const STARTING_LIVES = 20;
-export const TOTAL_WAVES = 5;
+export const TOTAL_WAVES = 7;
 
 export type DamageType = 'physical' | 'magical';
 
@@ -77,6 +77,17 @@ export const ENEMY_CONFIG = {
     armor: 0,
     magicResist: 0,
   },
+  heavy: {
+    name: 'Heavy Armor',
+    hp: 300,
+    speed: 50,
+    reward: 15,
+    color: 0x78909C,
+    width: 28,
+    height: 28,
+    armor: 60,
+    magicResist: 10,
+  },
 } as const;
 
 export type EnemyType = keyof typeof ENEMY_CONFIG;
@@ -86,17 +97,29 @@ export interface WaveEntry {
   count: number;
 }
 
+export const UPGRADE_CONFIG = {
+  levels: 3,
+  costMultiplier: [0, 1.0, 1.5],
+  damageMultiplier: [1.0, 1.5, 2.2],
+  rangeMultiplier: [1.0, 1.1, 1.2],
+  attackSpeedMultiplier: [1.0, 1.15, 1.3],
+};
+
 export const WAVE_CONFIG: WaveEntry[][] = [
-  // Wave 1 — tutorial: slow start
+  // Wave 1 — tutorial
   [{ type: 'normal', count: 5 }],
-  // Wave 2 — introduce fast enemies
+  // Wave 2 — introduce fast
   [{ type: 'normal', count: 6 }, { type: 'fast', count: 2 }],
-  // Wave 3 — more fast enemies
-  [{ type: 'normal', count: 4 }, { type: 'fast', count: 5 }],
-  // Wave 4 — bigger mixed wave
-  [{ type: 'normal', count: 8 }, { type: 'fast', count: 4 }],
-  // Wave 5 — final push
-  [{ type: 'normal', count: 10 }, { type: 'fast', count: 6 }],
+  // Wave 3 — introduce heavy
+  [{ type: 'normal', count: 4 }, { type: 'fast', count: 4 }, { type: 'heavy', count: 1 }],
+  // Wave 4 — mixed
+  [{ type: 'normal', count: 3 }, { type: 'fast', count: 6 }, { type: 'heavy', count: 2 }],
+  // Wave 5 — speed pressure
+  [{ type: 'fast', count: 8 }, { type: 'heavy', count: 3 }],
+  // Wave 6 — armor pressure
+  [{ type: 'normal', count: 4 }, { type: 'fast', count: 4 }, { type: 'heavy', count: 5 }],
+  // Wave 7 — final push
+  [{ type: 'normal', count: 6 }, { type: 'fast', count: 8 }, { type: 'heavy', count: 5 }],
 ];
 
 export const SPAWN_INTERVAL = 800; // ms between spawns
