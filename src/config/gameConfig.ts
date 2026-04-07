@@ -80,3 +80,4 @@ export const WAVE_CONFIG: WaveEntry[][] = [
 
 export const SPAWN_INTERVAL = 800; // ms between spawns
 export const EARLY_WAVE_BONUS = 20; // gold bonus for sending next wave early
+export const WAVE_COUNTDOWN = 15000; // ms countdown between waves (auto-start)

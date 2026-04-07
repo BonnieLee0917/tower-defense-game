@@ -8,7 +8,7 @@ import { BaseTower } from '../entities/towers/BaseTower';
 import { Projectile } from '../entities/projectiles/Projectile';
 import {
   GAME_WIDTH, GAME_HEIGHT, TILE_SIZE, STARTING_LIVES, TOTAL_WAVES,
-  TOWER_CONFIG, TowerType, EnemyType, EARLY_WAVE_BONUS,
+  TOWER_CONFIG, TowerType, EnemyType, EARLY_WAVE_BONUS, WAVE_COUNTDOWN,
 } from '../config/gameConfig';
 
 export class GameScene extends Phaser.Scene {
@@ -27,6 +27,10 @@ export class GameScene extends Phaser.Scene {
   // Stats tracking
   private totalKills = 0;
   private totalGoldEarned = 0;
+
+  // Wave countdown (auto-start timer between waves)
+  private waveCountdown = -1; // -1 = not counting, >0 = ms remaining
+  private firstWaveStarted = false;
 
   // HUD elements
   private livesText!: Phaser.GameObjects.Text;
@@ -59,6 +63,8 @@ export class GameScene extends Phaser.Scene {
     this.buildMenu = null;
     this.selectedSpot = null;
     this.spotGfxList = [];
+    this.waveCountdown = -1;
+    this.firstWaveStarted = false;
 
     this.pathManager = new PathManager(MAP_DATA);
     this.economy = new EconomyManager(this);
@@ -75,7 +81,13 @@ export class GameScene extends Phaser.Scene {
 
     // Wire wave manager
     this.waveManager.onSpawn = (type: EnemyType) => this.spawnEnemy(type);
-    this.waveManager.onWaveComplete = () => this.updateHUD();
+    this.waveManager.onWaveComplete = () => {
+      // Start countdown for next wave (unless all waves done)
+      if (!this.waveManager.isAllDone()) {
+        this.waveCountdown = WAVE_COUNTDOWN;
+      }
+      this.updateHUD();
+    };
     this.waveManager.onAllWavesDone = () => {
       if (!this.gameOver) {
         this.gameWon = true;
@@ -294,8 +306,19 @@ export class GameScene extends Phaser.Scene {
     this.nextWaveBtn.on('pointerdown', () => {
       if (this.waveManager.isAllDone() || this.gameOver) return;
 
-      if (this.waveManager.isWaveActive()) {
-        // Early wave send — bonus gold!
+      if (!this.firstWaveStarted) {
+        // First wave — manual start from preparation phase
+        this.firstWaveStarted = true;
+        this.waveManager.startNextWave();
+      } else if (this.waveCountdown > 0) {
+        // During countdown — early trigger with bonus
+        this.waveCountdown = -1;
+        this.economy.earn(EARLY_WAVE_BONUS);
+        this.totalGoldEarned += EARLY_WAVE_BONUS;
+        this.showFloatingText(GAME_WIDTH - 140, 40, `+${EARLY_WAVE_BONUS}g bonus!`, '#00ff88');
+        this.waveManager.startNextWave();
+      } else if (this.waveManager.isWaveActive()) {
+        // During active wave — send next wave early (stacking)
         this.economy.earn(EARLY_WAVE_BONUS);
         this.totalGoldEarned += EARLY_WAVE_BONUS;
         this.showFloatingText(GAME_WIDTH - 140, 40, `+${EARLY_WAVE_BONUS}g bonus!`, '#00ff88');
@@ -330,19 +353,27 @@ export class GameScene extends Phaser.Scene {
     this.enemiesText.setText(this.waveManager.isWaveActive() ? `👾 ${alive}` : '');
     this.enemiesText.setVisible(this.waveManager.isWaveActive());
 
-    // Next wave button: show between waves OR during wave (for early send)
+    // Next wave button: different states
     if (this.gameOver || this.waveManager.isAllDone()) {
       this.nextWaveBtn.setVisible(false);
+    } else if (!this.firstWaveStarted) {
+      // Preparation phase before first wave
+      this.nextWaveBtn.setText(`▶ Start Wave 1`);
+      this.nextWaveBtn.setVisible(true);
+      this.nextWaveBtn.setStyle({ backgroundColor: '#1976D2' });
+    } else if (this.waveCountdown > 0) {
+      // Countdown between waves — show timer + early send option
+      const secs = Math.ceil(this.waveCountdown / 1000);
+      this.nextWaveBtn.setText(`⏩ Send Early ${secs}s (+${EARLY_WAVE_BONUS}g)`);
+      this.nextWaveBtn.setVisible(true);
+      this.nextWaveBtn.setStyle({ backgroundColor: '#8D6E00' });
     } else if (this.waveManager.isWaveActive()) {
       this.nextWaveBtn.setText(`⏩ Send Early (+${EARLY_WAVE_BONUS}g)`);
       this.nextWaveBtn.setVisible(this.waveManager.canSendEarly());
       this.nextWaveBtn.setStyle({ backgroundColor: '#8D6E00' });
     } else {
       const waveNum = this.waveManager.getCurrentWave();
-      const label = waveNum === 1 && !this.waveManager.isWaveActive()
-        ? `▶ Start Wave ${waveNum}`
-        : `▶ Next Wave (${waveNum}/${TOTAL_WAVES})`;
-      this.nextWaveBtn.setText(label);
+      this.nextWaveBtn.setText(`▶ Next Wave (${waveNum}/${TOTAL_WAVES})`);
       this.nextWaveBtn.setVisible(true);
       this.nextWaveBtn.setStyle({ backgroundColor: '#1976D2' });
     }
@@ -350,6 +381,16 @@ export class GameScene extends Phaser.Scene {
 
   update(_time: number, delta: number) {
     if (this.gameOver) return;
+
+    // Wave countdown timer (auto-start between waves)
+    if (this.waveCountdown > 0) {
+      this.waveCountdown -= delta;
+      if (this.waveCountdown <= 0) {
+        this.waveCountdown = -1;
+        this.waveManager.startNextWave();
+      }
+      this.updateHUD();
+    }
 
     // Update wave manager
     this.waveManager.update(delta);
