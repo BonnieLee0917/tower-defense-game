@@ -8,7 +8,7 @@ import { BaseTower } from '../entities/towers/BaseTower';
 import { Projectile } from '../entities/projectiles/Projectile';
 import {
   GAME_WIDTH, GAME_HEIGHT, TILE_SIZE, STARTING_LIVES, TOTAL_WAVES,
-  TOWER_CONFIG, TowerType, EnemyType,
+  TOWER_CONFIG, TowerType, EnemyType, EARLY_WAVE_BONUS,
 } from '../config/gameConfig';
 
 export class GameScene extends Phaser.Scene {
@@ -23,6 +23,10 @@ export class GameScene extends Phaser.Scene {
   private lives = STARTING_LIVES;
   private gameOver = false;
   private gameWon = false;
+
+  // Stats tracking
+  private totalKills = 0;
+  private totalGoldEarned = 0;
 
   // HUD elements
   private livesText!: Phaser.GameObjects.Text;
@@ -42,6 +46,19 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
+    // Reset state on restart
+    this.enemies = [];
+    this.towers = [];
+    this.projectiles = [];
+    this.lives = STARTING_LIVES;
+    this.gameOver = false;
+    this.gameWon = false;
+    this.totalKills = 0;
+    this.totalGoldEarned = 0;
+    this.buildMenu = null;
+    this.selectedSpot = null;
+    this.spotGfxList = [];
+
     this.pathManager = new PathManager(MAP_DATA);
     this.economy = new EconomyManager(this);
     this.waveManager = new WaveManager();
@@ -97,7 +114,6 @@ export class GameScene extends Phaser.Scene {
       const entry = { gfx, spot, occupied: false };
       this.spotGfxList.push(entry);
 
-      // Make interactive zone
       const zone = this.add.zone(spot.x, spot.y, 56, 56).setInteractive({ useHandCursor: true });
       zone.on('pointerdown', () => this.onBuildSpotClick(entry));
     }
@@ -112,41 +128,89 @@ export class GameScene extends Phaser.Scene {
 
   private showBuildMenu(entry: typeof this.spotGfxList[0]) {
     const { x, y } = entry.spot;
-    const container = this.add.container(x, y - 70);
 
-    // Background
+    // Position menu above spot, but clamp to screen bounds
+    const menuW = 220;
+    const menuH = 110;
+    let menuX = x;
+    let menuY = y - 80;
+    if (menuY - menuH / 2 < 40) menuY = y + 80; // flip below if too close to top
+    if (menuX - menuW / 2 < 0) menuX = menuW / 2 + 5;
+    if (menuX + menuW / 2 > GAME_WIDTH) menuX = GAME_WIDTH - menuW / 2 - 5;
+
+    const container = this.add.container(menuX, menuY).setDepth(150);
+
+    // Background panel
     const bg = this.add.graphics();
-    bg.fillStyle(0x222222, 0.9);
-    bg.fillRoundedRect(-90, -30, 180, 60, 8);
+    bg.fillStyle(0x1a1a2e, 0.95);
+    bg.fillRoundedRect(-menuW / 2, -menuH / 2, menuW, menuH, 10);
+    bg.lineStyle(2, 0x4488cc, 0.8);
+    bg.strokeRoundedRect(-menuW / 2, -menuH / 2, menuW, menuH, 10);
     container.add(bg);
 
-    // Archer button
-    const archerAfford = this.economy.canAfford(TOWER_CONFIG.archer.cost);
-    const archerBtn = this.add.text(-80, -20, `🏹 ${TOWER_CONFIG.archer.cost}g`, {
-      fontSize: '14px',
-      color: archerAfford ? '#00ff00' : '#666666',
-      backgroundColor: '#333333',
-      padding: { x: 6, y: 6 },
-    }).setInteractive(archerAfford ? { useHandCursor: true } : undefined);
-    if (archerAfford) {
-      archerBtn.on('pointerdown', () => this.buildTower('archer', entry));
-    }
-    container.add(archerBtn);
+    // Title
+    const title = this.add.text(0, -menuH / 2 + 12, 'Build Tower', {
+      fontSize: '14px', color: '#aaccff', fontFamily: 'Arial', fontStyle: 'bold',
+    }).setOrigin(0.5, 0);
+    container.add(title);
 
-    // Cannon button
-    const cannonAfford = this.economy.canAfford(TOWER_CONFIG.cannon.cost);
-    const cannonBtn = this.add.text(10, -20, `💣 ${TOWER_CONFIG.cannon.cost}g`, {
-      fontSize: '14px',
-      color: cannonAfford ? '#ff4444' : '#666666',
-      backgroundColor: '#333333',
-      padding: { x: 6, y: 6 },
-    }).setInteractive(cannonAfford ? { useHandCursor: true } : undefined);
-    if (cannonAfford) {
-      cannonBtn.on('pointerdown', () => this.buildTower('cannon', entry));
-    }
-    container.add(cannonBtn);
+    // Archer Tower option
+    const archerCfg = TOWER_CONFIG.archer;
+    const archerAfford = this.economy.canAfford(archerCfg.cost);
+    this.createTowerOption(container, -52, 8, '🏹', 'Archer', archerCfg, archerAfford, () => {
+      this.buildTower('archer', entry);
+    });
+
+    // Cannon Tower option
+    const cannonCfg = TOWER_CONFIG.cannon;
+    const cannonAfford = this.economy.canAfford(cannonCfg.cost);
+    this.createTowerOption(container, 52, 8, '💣', 'Cannon', cannonCfg, cannonAfford, () => {
+      this.buildTower('cannon', entry);
+    });
 
     this.buildMenu = container;
+  }
+
+  private createTowerOption(
+    container: Phaser.GameObjects.Container,
+    offsetX: number, offsetY: number,
+    icon: string, name: string,
+    cfg: (typeof TOWER_CONFIG)[keyof typeof TOWER_CONFIG],
+    canAfford: boolean,
+    onClick: () => void,
+  ) {
+    const alpha = canAfford ? 1.0 : 0.4;
+
+    // Tower color preview circle
+    const preview = this.add.graphics();
+    preview.fillStyle(cfg.color, alpha);
+    preview.fillCircle(offsetX, offsetY - 8, 12);
+    container.add(preview);
+
+    // Icon + Name
+    const label = this.add.text(offsetX, offsetY + 10, `${icon} ${name}`, {
+      fontSize: '12px', color: canAfford ? '#ffffff' : '#666666', fontFamily: 'Arial',
+    }).setOrigin(0.5);
+    container.add(label);
+
+    // Stats: DMG / SPD / RNG
+    const stats = this.add.text(offsetX, offsetY + 26, `${cfg.damage}dmg ${cfg.range}rng`, {
+      fontSize: '10px', color: '#888899', fontFamily: 'Arial',
+    }).setOrigin(0.5);
+    container.add(stats);
+
+    // Cost
+    const costText = this.add.text(offsetX, offsetY + 40, `💰 ${cfg.cost}`, {
+      fontSize: '13px', color: canAfford ? '#ffcc00' : '#664400', fontFamily: 'Arial', fontStyle: 'bold',
+    }).setOrigin(0.5);
+    container.add(costText);
+
+    // Interactive zone
+    if (canAfford) {
+      const zone = this.add.zone(offsetX, offsetY + 10, 90, 70).setInteractive({ useHandCursor: true });
+      zone.on('pointerdown', onClick);
+      container.add(zone);
+    }
   }
 
   private closeBuildMenu() {
@@ -162,7 +226,7 @@ export class GameScene extends Phaser.Scene {
     if (!this.economy.spend(cost)) return;
 
     entry.occupied = true;
-    entry.gfx.clear(); // Remove build spot highlight
+    entry.gfx.clear();
 
     const tower = new BaseTower(this, type, entry.spot.x, entry.spot.y);
     this.towers.push(tower);
@@ -175,22 +239,51 @@ export class GameScene extends Phaser.Scene {
     this.enemies.push(enemy);
   }
 
+  /** Show floating gold text at a position */
+  private showFloatingText(x: number, y: number, text: string, color: string = '#ffcc00') {
+    const t = this.add.text(x, y, text, {
+      fontSize: '16px', color, fontFamily: 'Arial', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(90);
+
+    this.tweens.add({
+      targets: t,
+      y: y - 40,
+      alpha: 0,
+      duration: 800,
+      ease: 'Power2',
+      onComplete: () => t.destroy(),
+    });
+  }
+
   private createHUD() {
-    const style = { fontSize: '20px', color: '#ffffff', fontFamily: 'Arial' };
+    // HUD background bar
+    const hudBg = this.add.graphics().setDepth(99);
+    hudBg.fillStyle(0x111122, 0.85);
+    hudBg.fillRect(0, 0, GAME_WIDTH, 36);
+
+    const style = { fontSize: '18px', color: '#ffffff', fontFamily: 'Arial' };
 
     this.livesText = this.add.text(20, 8, '', style).setDepth(100);
-    this.goldText = this.add.text(200, 8, '', style).setDepth(100);
-    this.waveText = this.add.text(420, 8, '', style).setDepth(100);
+    this.goldText = this.add.text(180, 8, '', style).setDepth(100);
+    this.waveText = this.add.text(370, 8, '', style).setDepth(100);
 
-    this.nextWaveBtn = this.add.text(GAME_WIDTH - 180, 8, '▶ Next Wave', {
-      fontSize: '18px', color: '#ffffff', backgroundColor: '#2266aa',
+    this.nextWaveBtn = this.add.text(GAME_WIDTH - 200, 6, '▶ Next Wave', {
+      fontSize: '16px', color: '#ffffff', backgroundColor: '#2266aa',
       padding: { x: 12, y: 6 },
     }).setDepth(100).setInteractive({ useHandCursor: true });
     this.nextWaveBtn.on('pointerdown', () => {
-      if (!this.waveManager.isWaveActive() && !this.waveManager.isAllDone()) {
+      if (this.waveManager.isAllDone() || this.gameOver) return;
+
+      if (this.waveManager.isWaveActive()) {
+        // Early wave send — bonus gold!
+        this.economy.earn(EARLY_WAVE_BONUS);
+        this.totalGoldEarned += EARLY_WAVE_BONUS;
+        this.showFloatingText(GAME_WIDTH - 140, 40, `+${EARLY_WAVE_BONUS}g bonus!`, '#00ff88');
         this.waveManager.startNextWave();
-        this.updateHUD();
+      } else {
+        this.waveManager.startNextWave();
       }
+      this.updateHUD();
     });
 
     // Click anywhere else to close build menu
@@ -212,9 +305,18 @@ export class GameScene extends Phaser.Scene {
     this.goldText.setText(`💰 ${this.economy.getGold()}`);
     this.waveText.setText(`🌊 Wave ${this.waveManager.getCurrentWave()}/${TOTAL_WAVES}`);
 
-    // Next wave button visibility
-    const showBtn = !this.waveManager.isWaveActive() && !this.waveManager.isAllDone() && !this.gameOver;
-    this.nextWaveBtn.setVisible(showBtn);
+    // Next wave button: show between waves OR during wave (for early send)
+    if (this.gameOver || this.waveManager.isAllDone()) {
+      this.nextWaveBtn.setVisible(false);
+    } else if (this.waveManager.isWaveActive()) {
+      this.nextWaveBtn.setText(`⏩ Send Early (+${EARLY_WAVE_BONUS}g)`);
+      this.nextWaveBtn.setVisible(this.waveManager.canSendEarly());
+      this.nextWaveBtn.setStyle({ backgroundColor: '#886600' });
+    } else {
+      this.nextWaveBtn.setText('▶ Next Wave');
+      this.nextWaveBtn.setVisible(true);
+      this.nextWaveBtn.setStyle({ backgroundColor: '#2266aa' });
+    }
   }
 
   update(_time: number, delta: number) {
@@ -253,7 +355,6 @@ export class GameScene extends Phaser.Scene {
       if (hit) {
         // Apply damage
         if (p.splash > 0) {
-          // AoE
           const pos = p.getTargetPos();
           for (const e of this.enemies) {
             if (!e.alive) continue;
@@ -263,13 +364,15 @@ export class GameScene extends Phaser.Scene {
             }
           }
         } else {
-          // Single target
           const target = p.getTarget();
           if (target.alive) {
             const died = target.takeDamage(p.damage);
             if (died) this.onEnemyKilled(target);
           }
         }
+        this.projectiles.splice(i, 1);
+      } else if (!p.alive) {
+        // Projectile reached dead target's last position — no damage, just remove
         this.projectiles.splice(i, 1);
       }
     }
@@ -285,30 +388,67 @@ export class GameScene extends Phaser.Scene {
 
   private onEnemyKilled(enemy: BaseEnemy) {
     this.economy.earn(enemy.reward);
+    this.totalKills++;
+    this.totalGoldEarned += enemy.reward;
     this.waveManager.enemyKilled();
+
+    // Floating gold text
+    this.showFloatingText(enemy.x, enemy.y - 20, `+${enemy.reward}g`);
     this.updateHUD();
   }
 
   private showEndScreen(won: boolean) {
     const overlay = this.add.graphics().setDepth(200);
-    overlay.fillStyle(0x000000, 0.7);
+    overlay.fillStyle(0x000000, 0.75);
     overlay.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
+    // Title
     const msg = won ? '🎉 Victory!' : '💀 Defeat!';
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, msg, {
-      fontSize: '48px', color: '#ffffff', fontStyle: 'bold',
+    const titleColor = won ? '#44ff88' : '#ff4444';
+    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 100, msg, {
+      fontSize: '52px', color: titleColor, fontStyle: 'bold', fontFamily: 'Arial',
     }).setOrigin(0.5).setDepth(201);
 
-    const btnText = won ? '▶ Play Again' : '🔄 Retry';
-    const btn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 40, btnText, {
-      fontSize: '24px', color: '#ffffff', backgroundColor: '#2266aa',
-      padding: { x: 20, y: 10 },
-    }).setOrigin(0.5).setDepth(201).setInteractive({ useHandCursor: true });
+    // Stats
+    const statsLines = [
+      `🎯 Enemies Killed: ${this.totalKills}`,
+      `💰 Gold Earned: ${this.totalGoldEarned}`,
+      `❤️ Lives Remaining: ${this.lives}/${STARTING_LIVES}`,
+      `🏰 Towers Built: ${this.towers.length}`,
+    ];
+    if (!won) {
+      statsLines.push(`🌊 Reached Wave: ${this.waveManager.getCurrentWave()}/${TOTAL_WAVES}`);
+    }
+    const statsText = statsLines.join('\n');
+    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 10, statsText, {
+      fontSize: '18px', color: '#ccccdd', fontFamily: 'Arial', lineSpacing: 8, align: 'center',
+    }).setOrigin(0.5).setDepth(201);
+
+    // Button
+    const btnLabel = won ? '▶ Play Again' : '🔄 Retry';
+    const btnBg = this.add.graphics().setDepth(201);
+    const btnW = 200;
+    const btnH = 50;
+    const btnX = GAME_WIDTH / 2 - btnW / 2;
+    const btnY = GAME_HEIGHT / 2 + 90;
+    btnBg.fillStyle(0x2266aa, 1);
+    btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, 10);
+
+    const btn = this.add.text(GAME_WIDTH / 2, btnY + btnH / 2, btnLabel, {
+      fontSize: '22px', color: '#ffffff', fontStyle: 'bold', fontFamily: 'Arial',
+    }).setOrigin(0.5).setDepth(202).setInteractive({ useHandCursor: true });
+
+    btn.on('pointerover', () => {
+      btnBg.clear();
+      btnBg.fillStyle(0x3388cc, 1);
+      btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, 10);
+    });
+    btn.on('pointerout', () => {
+      btnBg.clear();
+      btnBg.fillStyle(0x2266aa, 1);
+      btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, 10);
+    });
     btn.on('pointerdown', () => {
-      // Clean up and restart
-      this.enemies.forEach(e => e.destroy());
-      this.towers.forEach(t => t.destroy());
-      this.projectiles.forEach(p => p.destroy());
       this.scene.restart();
     });
   }

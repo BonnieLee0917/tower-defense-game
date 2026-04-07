@@ -1,7 +1,7 @@
 import { WAVE_CONFIG, SPAWN_INTERVAL, EnemyType, TOTAL_WAVES } from '../config/gameConfig';
 
 export class WaveManager {
-  private currentWave = 0; // 0-indexed
+  private currentWave = 0; // 0-indexed, the wave being spawned / about to spawn
   private spawnQueue: EnemyType[] = [];
   private spawnTimer = 0;
   private waveActive = false;
@@ -12,27 +12,37 @@ export class WaveManager {
 
   private enemiesAlive = 0;
 
-  getCurrentWave(): number { return this.currentWave + 1; } // 1-indexed for display
+  getCurrentWave(): number { return Math.min(this.currentWave + 1, TOTAL_WAVES); }
   isWaveActive(): boolean { return this.waveActive; }
   isAllDone(): boolean { return this.allWavesDone; }
 
+  /** Can send next wave early (current wave active + not the last wave) */
+  canSendEarly(): boolean {
+    return this.waveActive && this.currentWave < TOTAL_WAVES;
+  }
+
   startNextWave() {
-    if (this.currentWave >= TOTAL_WAVES || this.waveActive) return;
+    if (this.currentWave >= TOTAL_WAVES || this.allWavesDone) return;
+
     const waveDef = WAVE_CONFIG[this.currentWave];
-    this.spawnQueue = [];
+    const newEnemies: EnemyType[] = [];
     for (const entry of waveDef) {
       for (let i = 0; i < entry.count; i++) {
-        this.spawnQueue.push(entry.type);
+        newEnemies.push(entry.type);
       }
     }
     // Shuffle to mix types
-    for (let i = this.spawnQueue.length - 1; i > 0; i--) {
+    for (let i = newEnemies.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [this.spawnQueue[i], this.spawnQueue[j]] = [this.spawnQueue[j], this.spawnQueue[i]];
+      [newEnemies[i], newEnemies[j]] = [newEnemies[j], newEnemies[i]];
     }
-    this.enemiesAlive = this.spawnQueue.length;
-    this.spawnTimer = 0;
+
+    // Add to existing spawn queue (for early wave, this stacks)
+    this.spawnQueue.push(...newEnemies);
+    this.enemiesAlive += newEnemies.length;
+    if (!this.waveActive) this.spawnTimer = 0;
     this.waveActive = true;
+    this.currentWave++;
   }
 
   enemyKilled() {
@@ -48,8 +58,7 @@ export class WaveManager {
   private checkWaveEnd() {
     if (this.enemiesAlive <= 0 && this.spawnQueue.length === 0 && this.waveActive) {
       this.waveActive = false;
-      this.onWaveComplete?.(this.currentWave + 1);
-      this.currentWave++;
+      this.onWaveComplete?.(this.currentWave);
       if (this.currentWave >= TOTAL_WAVES) {
         this.allWavesDone = true;
         this.onAllWavesDone?.();

@@ -14,6 +14,7 @@ export class BaseTower {
   private rangeGfx: Phaser.GameObjects.Graphics;
   private cooldown = 0;
   private showRange = false;
+  private _label: Phaser.GameObjects.Text | null = null;
   public projectiles: Projectile[] = [];
 
   constructor(scene: Phaser.Scene, type: TowerType, x: number, y: number) {
@@ -37,10 +38,9 @@ export class BaseTower {
     this.gfx.fillStyle(this.config.color, 1);
     this.gfx.fillCircle(this.x, this.y, this.config.radius);
     // Label
-    const label = this.type === 'archer' ? 'A' : 'C';
-    // Use a small text if not existing
-    if (!(this as any)._label) {
-      (this as any)._label = this.scene.add.text(this.x, this.y, label, {
+    if (!this._label) {
+      const label = this.type === 'archer' ? 'A' : 'C';
+      this._label = this.scene.add.text(this.x, this.y, label, {
         fontSize: '16px', color: '#ffffff', fontStyle: 'bold',
       }).setOrigin(0.5);
     }
@@ -92,6 +92,6 @@ export class BaseTower {
   destroy() {
     this.gfx.destroy();
     this.rangeGfx.destroy();
-    if ((this as any)._label) (this as any)._label.destroy();
+    if (this._label) this._label.destroy();
   }
 }

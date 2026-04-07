@@ -13,6 +13,7 @@ export class Projectile {
   public alive = true;
   private color: number;
   private radius: number;
+  private lastTargetPos: { x: number; y: number } | null = null;
 
   constructor(
     scene: Phaser.Scene,
@@ -36,21 +37,26 @@ export class Projectile {
     this.gfx = scene.add.graphics();
   }
 
-  /** Returns true if projectile reached target (or target died) */
+  /** Returns true if projectile reached target (or should be removed) */
   update(dt: number): boolean {
     if (!this.alive) return true;
 
-    // Move toward target's current position (homing)
-    const tx = this.target.alive ? this.target.x : this.x;
-    const ty = this.target.alive ? this.target.y : this.y;
+    // If target died mid-flight, fly to its last known position then disappear (no damage)
+    if (!this.target.alive && !this.lastTargetPos) {
+      this.lastTargetPos = { x: this.target.x, y: this.target.y };
+    }
+
+    const tx = this.lastTargetPos ? this.lastTargetPos.x : this.target.x;
+    const ty = this.lastTargetPos ? this.lastTargetPos.y : this.target.y;
     const dx = tx - this.x;
     const dy = ty - this.y;
     const dist = Math.hypot(dx, dy);
 
-    if (dist < 10 || !this.target.alive) {
-      // Hit
+    if (dist < 10) {
       this.alive = false;
       this.gfx.destroy();
+      // If target died mid-flight, don't deal damage
+      if (this.lastTargetPos) return false;
       return true;
     }
 
