@@ -166,10 +166,10 @@ export class GameScene extends Phaser.Scene {
 
     // Close button
     const closeBtn = this.add.text(menuW / 2 - 20, -menuH / 2 + 8, '✕', {
-      fontSize: '16px', color: '#888899', fontFamily: 'Arial',
+      fontSize: '16px', color: '#B0BEC5', fontFamily: 'Arial',
     }).setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
     closeBtn.on('pointerover', () => closeBtn.setColor('#ffffff'));
-    closeBtn.on('pointerout', () => closeBtn.setColor('#888899'));
+    closeBtn.on('pointerout', () => closeBtn.setColor('#B0BEC5'));
     closeBtn.on('pointerdown', () => this.closeBuildMenu());
     container.add(closeBtn);
 
