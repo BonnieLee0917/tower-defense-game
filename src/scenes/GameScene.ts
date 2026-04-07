@@ -9,7 +9,7 @@ import { BaseTower } from '../entities/towers/BaseTower';
 import { Projectile } from '../entities/projectiles/Projectile';
 import {
   GAME_WIDTH, GAME_HEIGHT, TILE_SIZE, STARTING_LIVES, TOTAL_WAVES,
-  TOWER_CONFIG, UPGRADE_CONFIG, TowerType, EnemyType, EARLY_WAVE_BONUS, WAVE_COUNTDOWN,
+  TOWER_CONFIG, UPGRADE_CONFIG, TowerType, EnemyType, EARLY_WAVE_BONUS, WAVE_COUNTDOWN, BARRACKS_CONFIG,
 } from '../config/gameConfig';
 
 export class GameScene extends Phaser.Scene {
@@ -26,27 +26,22 @@ export class GameScene extends Phaser.Scene {
   private gameOver = false;
   private gameWon = false;
 
-  // Stats tracking
   private totalKills = 0;
   private totalGoldEarned = 0;
 
-  // Wave countdown (auto-start timer between waves)
-  private waveCountdown = -1; // -1 = not counting, >0 = ms remaining
+  private waveCountdown = -1;
   private firstWaveStarted = false;
 
-  // HUD elements
   private livesText!: Phaser.GameObjects.Text;
   private goldText!: Phaser.GameObjects.Text;
   private waveText!: Phaser.GameObjects.Text;
   private enemiesText!: Phaser.GameObjects.Text;
   private nextWaveBtn!: Phaser.GameObjects.Text;
 
-  // Build menu
   private buildMenu: Phaser.GameObjects.Container | null = null;
   private towerMenu: Phaser.GameObjects.Container | null = null;
   private selectedSpot: { x: number; y: number } | null = null;
 
-  // Build spot graphics
   private spotGfxList: { gfx: Phaser.GameObjects.Graphics; spot: { x: number; y: number }; occupied: boolean }[] = [];
 
   constructor() {
@@ -54,7 +49,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    // Reset state on restart
     this.enemies = [];
     this.towers = [];
     this.projectiles = [];
@@ -73,22 +67,16 @@ export class GameScene extends Phaser.Scene {
     this.pathManager = new PathManager(MAP_DATA);
     this.economy = new EconomyManager(this);
     this.waveManager = new WaveManager();
-
     this.statusEffects = new StatusEffectManager();
 
     this.economy.onChange = () => this.updateHUD();
 
-    // Draw map
     this.drawMap();
-    // Draw build spots
     this.drawBuildSpots();
-    // Create HUD
     this.createHUD();
 
-    // Wire wave manager
     this.waveManager.onSpawn = (type: EnemyType) => this.spawnEnemy(type);
     this.waveManager.onWaveComplete = () => {
-      // Start countdown for next wave (unless all waves done)
       if (!this.waveManager.isAllDone()) {
         this.waveCountdown = WAVE_COUNTDOWN;
       }
@@ -102,11 +90,8 @@ export class GameScene extends Phaser.Scene {
       }
     };
 
-    // Don't auto-start wave 1 — let player build towers first (preparation phase)
-    // this.waveManager.startNextWave();
     this.updateHUD();
 
-    // Cleanup on scene shutdown (prevents callback leaks on restart)
     this.events.on('shutdown', () => {
       this.waveManager.onSpawn = undefined;
       this.waveManager.onWaveComplete = undefined;
@@ -118,7 +103,8 @@ export class GameScene extends Phaser.Scene {
 
   private drawMap() {
     const gfx = this.add.graphics();
-    const pathSet = new Set(MAP_DATA.pathTiles.map(t => `${t.col},${t.row}`));
+    const pathSet = new Set(MAP_DATA.pathTiles.map((t) => `${t.col},${t.row}`));
+    const flyingPath = this.pathManager.getFlyingPath();
 
     for (let r = 0; r < MAP_DATA.rows; r++) {
       for (let c = 0; c < MAP_DATA.cols; c++) {
@@ -129,6 +115,14 @@ export class GameScene extends Phaser.Scene {
         gfx.strokeRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
       }
     }
+
+    gfx.lineStyle(3, 0xCE93D8, 0.45);
+    gfx.beginPath();
+    gfx.moveTo(flyingPath[0].x, flyingPath[0].y - 18);
+    for (let i = 1; i < flyingPath.length; i++) {
+      gfx.lineTo(flyingPath[i].x, flyingPath[i].y - 18);
+    }
+    gfx.strokePath();
   }
 
   private drawBuildSpots() {
@@ -156,19 +150,16 @@ export class GameScene extends Phaser.Scene {
 
   private showBuildMenu(entry: typeof this.spotGfxList[0]) {
     const { x, y } = entry.spot;
-
-    // Position menu above spot, but clamp to screen bounds
-    const menuW = 320;
+    const menuW = 420;
     const menuH = 110;
     let menuX = x;
     let menuY = y - 80;
-    if (menuY - menuH / 2 < 40) menuY = y + 80; // flip below if too close to top
+    if (menuY - menuH / 2 < 40) menuY = y + 80;
     if (menuX - menuW / 2 < 0) menuX = menuW / 2 + 5;
     if (menuX + menuW / 2 > GAME_WIDTH) menuX = GAME_WIDTH - menuW / 2 - 5;
 
     const container = this.add.container(menuX, menuY).setDepth(150);
 
-    // Background panel
     const bg = this.add.graphics();
     bg.fillStyle(0x263238, 0.92);
     bg.fillRoundedRect(-menuW / 2, -menuH / 2, menuW, menuH, 10);
@@ -176,13 +167,11 @@ export class GameScene extends Phaser.Scene {
     bg.strokeRoundedRect(-menuW / 2, -menuH / 2, menuW, menuH, 10);
     container.add(bg);
 
-    // Title
     const title = this.add.text(0, -menuH / 2 + 12, 'Build Tower', {
       fontSize: '14px', color: '#aaccff', fontFamily: 'Arial', fontStyle: 'bold',
     }).setOrigin(0.5, 0);
     container.add(title);
 
-    // Close button
     const closeBtn = this.add.text(menuW / 2 - 20, -menuH / 2 + 8, '✕', {
       fontSize: '16px', color: '#B0BEC5', fontFamily: 'Arial',
     }).setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
@@ -191,67 +180,73 @@ export class GameScene extends Phaser.Scene {
     closeBtn.on('pointerdown', () => this.closeBuildMenu());
     container.add(closeBtn);
 
-    // Archer Tower option
-    const archerCfg = TOWER_CONFIG.archer;
-    const archerAfford = this.economy.canAfford(archerCfg.cost);
-    this.createTowerOption(container, -100, 8, '🏹', 'Archer', archerCfg, archerAfford, () => {
-      this.buildTower('archer', entry);
-    });
+    const options: Array<{ type: TowerType; offsetX: number; icon: string; name: string }> = [
+      { type: 'archer', offsetX: -150, icon: '🏹', name: 'Archer' },
+      { type: 'cannon', offsetX: -50, icon: '💣', name: 'Cannon' },
+      { type: 'magic', offsetX: 50, icon: '🔮', name: 'Magic' },
+      { type: 'barracks', offsetX: 150, icon: '⚔️', name: 'Barracks' },
+    ];
 
-    // Cannon Tower option
-    const cannonCfg = TOWER_CONFIG.cannon;
-    const cannonAfford = this.economy.canAfford(cannonCfg.cost);
-    this.createTowerOption(container, 0, 8, '💣', 'Cannon', cannonCfg, cannonAfford, () => {
-      this.buildTower('cannon', entry);
-    });
-
-    // Magic Tower option
-    const magicCfg = TOWER_CONFIG.magic;
-    const magicAfford = this.economy.canAfford(magicCfg.cost);
-    this.createTowerOption(container, 100, 8, '🔮', 'Magic', magicCfg, magicAfford, () => {
-      this.buildTower('magic', entry);
-    });
+    for (const option of options) {
+      const cfg = TOWER_CONFIG[option.type];
+      this.createTowerOption(
+        container,
+        option.offsetX,
+        8,
+        option.icon,
+        option.name,
+        cfg,
+        this.economy.canAfford(cfg.cost),
+        () => this.buildTower(option.type, entry),
+      );
+    }
 
     this.buildMenu = container;
   }
 
   private createTowerOption(
     container: Phaser.GameObjects.Container,
-    offsetX: number, offsetY: number,
-    icon: string, name: string,
+    offsetX: number,
+    offsetY: number,
+    icon: string,
+    name: string,
     cfg: (typeof TOWER_CONFIG)[keyof typeof TOWER_CONFIG],
     canAfford: boolean,
     onClick: () => void,
   ) {
     const alpha = canAfford ? 1.0 : 0.4;
 
-    // Tower color preview circle
     const preview = this.add.graphics();
     preview.fillStyle(cfg.color, alpha);
-    preview.fillCircle(offsetX, offsetY - 8, 12);
+    if (cfg.type === 'barracks') {
+      preview.fillRect(offsetX - 12, offsetY - 20, 24, 24);
+      preview.lineStyle(2, 0xF57C00, alpha);
+      preview.strokeRect(offsetX - 12, offsetY - 20, 24, 24);
+    } else {
+      preview.fillCircle(offsetX, offsetY - 8, 12);
+    }
     container.add(preview);
 
-    // Icon + Name
     const label = this.add.text(offsetX, offsetY + 10, `${icon} ${name}`, {
       fontSize: '12px', color: canAfford ? '#ffffff' : '#616161', fontFamily: 'Arial',
     }).setOrigin(0.5);
     container.add(label);
 
-    // Stats: DMG / SPD / RNG
-    const stats = this.add.text(offsetX, offsetY + 26, `${cfg.damage}dmg ${cfg.range}rng`, {
+    const statsText = cfg.type === 'barracks'
+      ? `${BARRACKS_CONFIG.levels[0].damage}dmg ${BARRACKS_CONFIG.levels[0].hp}hp x${BARRACKS_CONFIG.maxSoldiers}`
+      : `${cfg.damage}dmg ${cfg.range}rng`;
+    const stats = this.add.text(offsetX, offsetY + 26, statsText, {
       fontSize: '10px', color: '#888899', fontFamily: 'Arial',
     }).setOrigin(0.5);
     container.add(stats);
 
-    // Cost
     const costText = this.add.text(offsetX, offsetY + 40, `💰 ${cfg.cost}`, {
       fontSize: '13px', color: canAfford ? '#FFD600' : '#616161', fontFamily: 'Arial', fontStyle: 'bold',
     }).setOrigin(0.5);
     container.add(costText);
 
-    // Interactive zone
     if (canAfford) {
-      const zone = this.add.zone(offsetX, offsetY + 10, 90, 70).setInteractive({ useHandCursor: true });
+      const zone = this.add.zone(offsetX, offsetY + 10, 96, 72).setInteractive({ useHandCursor: true });
       zone.on('pointerdown', onClick);
       container.add(zone);
     }
@@ -278,8 +273,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showTowerMenu(tower: BaseTower) {
-    const menuW = 240;
-    const menuH = 140;
+    const menuW = 250;
+    const menuH = 148;
     let menuX = tower.x;
     let menuY = tower.y - 90;
     if (menuY - menuH / 2 < 40) menuY = tower.y + 90;
@@ -295,29 +290,37 @@ export class GameScene extends Phaser.Scene {
     bg.strokeRoundedRect(-menuW / 2, -menuH / 2, menuW, menuH, 10);
     container.add(bg);
 
-    // Level label
     const lvlLabel = this.add.text(0, -menuH / 2 + 10, `Lv.${tower.level} ${TOWER_CONFIG[tower.type].name}`, {
       fontSize: '13px', color: '#FFD600', fontFamily: 'Arial', fontStyle: 'bold',
     }).setOrigin(0.5, 0);
     container.add(lvlLabel);
 
-    // Stats
-    const dmgText = `DMG: ${Math.round(tower.damage)}`;
-    const rngText = `RNG: ${Math.round(tower.range)}`;
     const upgradeCost = tower.getUpgradeCost();
-    let nextStats = '';
-    if (upgradeCost !== null) {
-      const nextLvl = tower.level; // next level index
-      const nextDmg = Math.round(TOWER_CONFIG[tower.type].damage * UPGRADE_CONFIG.damageMultiplier[nextLvl]);
-      const nextRng = Math.round(TOWER_CONFIG[tower.type].range * UPGRADE_CONFIG.rangeMultiplier[nextLvl]);
-      nextStats = ` → ${nextDmg} / ${nextRng}`;
+    let statsLine = '';
+    if (tower.isBarracks()) {
+      const current = BARRACKS_CONFIG.levels[tower.level - 1];
+      const next = upgradeCost !== null ? BARRACKS_CONFIG.levels[tower.level] : null;
+      statsLine = next
+        ? `Soldiers: ${current.damage} DMG / ${current.hp} HP → ${next.damage} / ${next.hp}`
+        : `Soldiers: ${current.damage} DMG / ${current.hp} HP`;
+    } else {
+      const dmgText = `DMG: ${Math.round(tower.damage)}`;
+      const rngText = `RNG: ${Math.round(tower.range)}`;
+      let nextStats = '';
+      if (upgradeCost !== null) {
+        const nextLvl = tower.level;
+        const nextDmg = Math.round(TOWER_CONFIG[tower.type].damage * UPGRADE_CONFIG.damageMultiplier[nextLvl]);
+        const nextRng = Math.round(TOWER_CONFIG[tower.type].range * UPGRADE_CONFIG.rangeMultiplier[nextLvl]);
+        nextStats = ` → ${nextDmg} / ${nextRng}`;
+      }
+      statsLine = `${dmgText}  ${rngText}${nextStats}`;
     }
-    const stats = this.add.text(0, -menuH / 2 + 30, `${dmgText}  ${rngText}${nextStats}`, {
-      fontSize: '11px', color: '#90A4AE', fontFamily: 'Arial',
+
+    const stats = this.add.text(0, -menuH / 2 + 30, statsLine, {
+      fontSize: '11px', color: '#90A4AE', fontFamily: 'Arial', align: 'center', wordWrap: { width: menuW - 20 },
     }).setOrigin(0.5, 0);
     container.add(stats);
 
-    // Upgrade button
     if (upgradeCost !== null) {
       const canAfford = this.economy.canAfford(upgradeCost);
       const upgradeBtn = this.add.text(0, 10, `⬆ Upgrade (${upgradeCost}g)`, {
@@ -336,7 +339,6 @@ export class GameScene extends Phaser.Scene {
       container.add(maxLabel);
     }
 
-    // Sell button
     const sellValue = tower.getSellValue();
     const sellBtn = this.add.text(0, 38, `💰 Sell (${sellValue}g)`, {
       fontSize: '15px', color: '#FFB74D', fontFamily: 'Arial', fontStyle: 'bold',
@@ -346,7 +348,6 @@ export class GameScene extends Phaser.Scene {
     sellBtn.on('pointerout', () => sellBtn.setColor('#FFB74D'));
     container.add(sellBtn);
 
-    // Close button
     const closeBtn = this.add.text(menuW / 2 - 20, -menuH / 2 + 8, '✕', {
       fontSize: '16px', color: '#B0BEC5', fontFamily: 'Arial',
     }).setOrigin(0.5, 0).setInteractive({ useHandCursor: true });
@@ -371,11 +372,9 @@ export class GameScene extends Phaser.Scene {
     this.totalGoldEarned += value;
     this.showFloatingText(tower.x, tower.y - 30, `+${value}g`, '#FFB74D');
 
-    // Find and free the build spot
     for (const entry of this.spotGfxList) {
       if (entry.spot.x === tower.x && entry.spot.y === tower.y) {
         entry.occupied = false;
-        // Redraw build spot highlight
         entry.gfx.clear();
         entry.gfx.lineStyle(2, 0xF0E6D3, 0.6);
         entry.gfx.strokeRect(entry.spot.x - 28, entry.spot.y - 28, 56, 56);
@@ -385,7 +384,6 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // Remove tower
     const idx = this.towers.indexOf(tower);
     if (idx >= 0) this.towers.splice(idx, 1);
     tower.destroy();
@@ -406,12 +404,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   private spawnEnemy(type: EnemyType) {
-    const enemy = new BaseEnemy(this, type, this.pathManager);
-    this.enemies.push(enemy);
+    this.enemies.push(new BaseEnemy(this, type, this.pathManager));
   }
 
-  /** Show floating gold text at a position */
-  private showFloatingText(x: number, y: number, text: string, color: string = '#ffcc00') {
+  private showFloatingText(x: number, y: number, text: string, color = '#ffcc00') {
     const t = this.add.text(x, y, text, {
       fontSize: '16px', color, fontFamily: 'Arial', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(90);
@@ -427,7 +423,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createHUD() {
-    // HUD background bar
     const hudBg = this.add.graphics().setDepth(99);
     hudBg.fillStyle(0x111122, 0.85);
     hudBg.fillRect(0, 0, GAME_WIDTH, 36);
@@ -440,25 +435,21 @@ export class GameScene extends Phaser.Scene {
     this.enemiesText = this.add.text(560, 8, '', style).setDepth(100);
 
     this.nextWaveBtn = this.add.text(GAME_WIDTH - 200, 6, '▶ Next Wave', {
-      fontSize: '16px', color: '#ffffff', backgroundColor: '#1976D2',
-      padding: { x: 12, y: 6 },
+      fontSize: '16px', color: '#ffffff', backgroundColor: '#1976D2', padding: { x: 12, y: 6 },
     }).setDepth(100).setInteractive({ useHandCursor: true });
     this.nextWaveBtn.on('pointerdown', () => {
       if (this.waveManager.isAllDone() || this.gameOver) return;
 
       if (!this.firstWaveStarted) {
-        // First wave — manual start from preparation phase
         this.firstWaveStarted = true;
         this.waveManager.startNextWave();
       } else if (this.waveCountdown > 0) {
-        // During countdown — early trigger with bonus
         this.waveCountdown = -1;
         this.economy.earn(EARLY_WAVE_BONUS);
         this.totalGoldEarned += EARLY_WAVE_BONUS;
         this.showFloatingText(GAME_WIDTH - 140, 40, `+${EARLY_WAVE_BONUS}g bonus!`, '#00ff88');
         this.waveManager.startNextWave();
       } else if (this.waveManager.isWaveActive()) {
-        // During active wave — send next wave early (stacking)
         this.economy.earn(EARLY_WAVE_BONUS);
         this.totalGoldEarned += EARLY_WAVE_BONUS;
         this.showFloatingText(GAME_WIDTH - 140, 40, `+${EARLY_WAVE_BONUS}g bonus!`, '#00ff88');
@@ -469,14 +460,15 @@ export class GameScene extends Phaser.Scene {
       this.updateHUD();
     });
 
-    // Click anywhere else to close menus; also detect tower clicks
-    this.input.on('pointerdown', (ptr: Phaser.Input.Pointer, objects: any[]) => {
+    this.input.on('pointerdown', (ptr: Phaser.Input.Pointer, objects: Phaser.GameObjects.GameObject[]) => {
       if (objects.length === 0) {
-        // Check if clicking on a tower
         let clickedTower: BaseTower | null = null;
         for (const tower of this.towers) {
           const d = Math.hypot(ptr.x - tower.x, ptr.y - tower.y);
-          if (d < 30) { clickedTower = tower; break; }
+          if (d < 30) {
+            clickedTower = tower;
+            break;
+          }
         }
         if (clickedTower) {
           this.closeAllMenus();
@@ -487,7 +479,6 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
-    // Tower hover for range display
     this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
       for (const tower of this.towers) {
         const d = Math.hypot(ptr.x - tower.x, ptr.y - tower.y);
@@ -501,21 +492,17 @@ export class GameScene extends Phaser.Scene {
     this.goldText.setText(`💰 ${this.economy.getGold()}`);
     this.waveText.setText(`🌊 Wave ${this.waveManager.getCurrentWave()}/${TOTAL_WAVES}`);
 
-    // Show remaining enemies during active wave
     const alive = this.waveManager.getEnemiesAlive();
     this.enemiesText.setText(this.waveManager.isWaveActive() ? `👾 ${alive}` : '');
     this.enemiesText.setVisible(this.waveManager.isWaveActive());
 
-    // Next wave button: different states
     if (this.gameOver || this.waveManager.isAllDone()) {
       this.nextWaveBtn.setVisible(false);
     } else if (!this.firstWaveStarted) {
-      // Preparation phase before first wave
-      this.nextWaveBtn.setText(`▶ Start Wave 1`);
+      this.nextWaveBtn.setText('▶ Start Wave 1');
       this.nextWaveBtn.setVisible(true);
       this.nextWaveBtn.setStyle({ backgroundColor: '#1976D2' });
     } else if (this.waveCountdown > 0) {
-      // Countdown between waves — show timer + early send option
       const secs = Math.ceil(this.waveCountdown / 1000);
       this.nextWaveBtn.setText(`⏩ Send Early ${secs}s (+${EARLY_WAVE_BONUS}g)`);
       this.nextWaveBtn.setVisible(true);
@@ -535,7 +522,6 @@ export class GameScene extends Phaser.Scene {
   update(_time: number, delta: number) {
     if (this.gameOver) return;
 
-    // Wave countdown timer (auto-start between waves)
     if (this.waveCountdown > 0) {
       this.waveCountdown -= delta;
       if (this.waveCountdown <= 0) {
@@ -545,14 +531,12 @@ export class GameScene extends Phaser.Scene {
       this.updateHUD();
     }
 
-    // Update wave manager
     this.waveManager.update(delta);
 
-    // Update enemies
     for (let i = this.enemies.length - 1; i >= 0; i--) {
-      const e = this.enemies[i];
-      if (!e.alive) continue;
-      const reachedEnd = e.update(delta);
+      const enemy = this.enemies[i];
+      if (!enemy.alive) continue;
+      const reachedEnd = enemy.update(delta);
       if (reachedEnd) {
         this.lives--;
         this.waveManager.enemyReachedEnd();
@@ -565,29 +549,28 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // Update towers & create projectiles
     for (const tower of this.towers) {
-      const proj = tower.update(delta, this.enemies);
-      if (proj) this.projectiles.push(proj);
+      if (tower.isBarracks()) {
+        tower.updateBarracks(delta, this.enemies, (enemy) => this.onEnemyKilled(enemy));
+      } else {
+        const proj = tower.update(delta, this.enemies);
+        if (proj) this.projectiles.push(proj);
+      }
     }
 
-    // Update projectiles
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const p = this.projectiles[i];
       const hit = p.update(delta);
       if (hit) {
-        // Apply damage
         if (p.splash > 0) {
-          // AoE — use projectile's hit position (where cannonball landed), not target's live position
           const hitPos = { x: p.x, y: p.y };
-          for (const e of this.enemies) {
-            if (!e.alive) continue;
-            if (Math.hypot(e.x - hitPos.x, e.y - hitPos.y) <= p.splash) {
-              const died = e.takeDamage(p.damage, p.damageType);
-              if (died) this.onEnemyKilled(e);
-              // Apply slow for magic tower projectiles
+          for (const enemy of this.enemies) {
+            if (!enemy.alive) continue;
+            if (Math.hypot(enemy.x - hitPos.x, enemy.y - hitPos.y) <= p.splash) {
+              const died = enemy.takeDamage(p.damage, p.damageType);
+              if (died) this.onEnemyKilled(enemy);
               if (p.damageType === 'magical') {
-                this.statusEffects.applyEffect(e, { type: 'slow', magnitude: 0.3, duration: 2000 });
+                this.statusEffects.applyEffect(enemy, { type: 'slow', magnitude: 0.3, duration: 2000 });
               }
             }
           }
@@ -603,12 +586,10 @@ export class GameScene extends Phaser.Scene {
         }
         this.projectiles.splice(i, 1);
       } else if (!p.alive) {
-        // Projectile reached dead target's last position — no damage, just remove
         this.projectiles.splice(i, 1);
       }
     }
 
-    // Cleanup dead enemies
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       if (!this.enemies[i].alive) {
         this.statusEffects.cleanup(this.enemies[i]);
@@ -617,17 +598,15 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    // Update status effects
     this.statusEffects.update(delta);
   }
 
   private onEnemyKilled(enemy: BaseEnemy) {
+    if (enemy.alive) return;
     this.economy.earn(enemy.reward);
     this.totalKills++;
     this.totalGoldEarned += enemy.reward;
     this.waveManager.enemyKilled();
-
-    // Floating gold text
     this.showFloatingText(enemy.x, enemy.y - 20, `+${enemy.reward}g`);
     this.updateHUD();
   }
@@ -637,14 +616,12 @@ export class GameScene extends Phaser.Scene {
     overlay.fillStyle(0x000000, 0.75);
     overlay.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    // Title
     const msg = won ? '🎉 Victory!' : '💀 Defeat!';
     const titleColor = won ? '#44ff88' : '#ff4444';
     this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 100, msg, {
       fontSize: '52px', color: titleColor, fontStyle: 'bold', fontFamily: 'Arial',
     }).setOrigin(0.5).setDepth(201);
 
-    // Stats
     const statsLines = [
       `🎯 Enemies Killed: ${this.totalKills}`,
       `💰 Gold Earned: ${this.totalGoldEarned}`,
@@ -654,12 +631,10 @@ export class GameScene extends Phaser.Scene {
     if (!won) {
       statsLines.push(`🌊 Reached Wave: ${this.waveManager.getCurrentWave()}/${TOTAL_WAVES}`);
     }
-    const statsText = statsLines.join('\n');
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 10, statsText, {
+    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 10, statsLines.join('\n'), {
       fontSize: '18px', color: '#ccccdd', fontFamily: 'Arial', lineSpacing: 8, align: 'center',
     }).setOrigin(0.5).setDepth(201);
 
-    // Button
     const btnLabel = won ? '▶ Play Again' : '🔄 Retry';
     const btnBg = this.add.graphics().setDepth(201);
     const btnW = 200;

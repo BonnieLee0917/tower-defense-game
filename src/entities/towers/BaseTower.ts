@@ -1,7 +1,10 @@
 import Phaser from 'phaser';
-import { TOWER_CONFIG, UPGRADE_CONFIG, TowerType } from '../../config/gameConfig';
+import { TOWER_CONFIG, UPGRADE_CONFIG, BARRACKS_CONFIG, TowerType } from '../../config/gameConfig';
 import { BaseEnemy } from '../enemies/BaseEnemy';
 import { Projectile } from '../projectiles/Projectile';
+import { Soldier } from './Soldier';
+
+let NEXT_BARRACKS_ID = 1;
 
 export class BaseTower {
   public scene: Phaser.Scene;
@@ -9,22 +12,23 @@ export class BaseTower {
   public x: number;
   public y: number;
   public level = 1;
+  public readonly barracksId: number | null;
 
   private baseConfig: typeof TOWER_CONFIG[TowerType];
   private gfx: Phaser.GameObjects.Graphics;
   private rangeGfx: Phaser.GameObjects.Graphics;
   private cooldown = 0;
-  private showRange = false;
-  private _label: Phaser.GameObjects.Text | null = null;
-  public projectiles: Projectile[] = [];
+  private label: Phaser.GameObjects.Text | null = null;
 
-  // Effective stats (recalculated on upgrade)
   public damage: number;
   public range: number;
   public attackSpeed: number;
 
-  // Cost tracking for sell value
   private totalInvested: number;
+
+  public soldiers: Array<Soldier | null> = [];
+  private respawnTimers: number[] = [];
+  public rallyPoints: { x: number; y: number }[] = [];
 
   constructor(scene: Phaser.Scene, type: TowerType, x: number, y: number) {
     this.scene = scene;
@@ -36,17 +40,50 @@ export class BaseTower {
     this.range = this.baseConfig.range;
     this.attackSpeed = this.baseConfig.attackSpeed;
     this.totalInvested = this.baseConfig.cost;
+    this.barracksId = this.isBarracks() ? NEXT_BARRACKS_ID++ : null;
 
     this.gfx = scene.add.graphics();
     this.rangeGfx = scene.add.graphics();
+
+    if (this.isBarracks()) {
+      this.rallyPoints = [-18, 0, 18].map((dx) => ({ x: this.x + dx, y: this.y + 30 }));
+      this.respawnTimers = [0, 0, 0];
+      this.soldiers = [null, null, null];
+      this.spawnInitialSoldiers();
+    }
+
     this.draw();
+  }
+
+  isBarracks(): boolean {
+    return this.baseConfig.type === 'barracks';
+  }
+
+  private spawnInitialSoldiers() {
+    for (let i = 0; i < BARRACKS_CONFIG.maxSoldiers; i++) {
+      this.spawnSoldier(i);
+    }
+  }
+
+  private spawnSoldier(slotIndex: number) {
+    if (!this.isBarracks() || this.barracksId === null) return;
+    const rally = this.rallyPoints[slotIndex];
+    const soldier = new Soldier(this.scene, rally.x, rally.y, this.level, this.barracksId, slotIndex);
+    this.soldiers[slotIndex] = soldier;
+    this.respawnTimers[slotIndex] = 0;
   }
 
   private recalcStats() {
     const lvlIdx = this.level - 1;
-    this.damage = this.baseConfig.damage * UPGRADE_CONFIG.damageMultiplier[lvlIdx];
-    this.range = this.baseConfig.range * UPGRADE_CONFIG.rangeMultiplier[lvlIdx];
-    this.attackSpeed = this.baseConfig.attackSpeed * UPGRADE_CONFIG.attackSpeedMultiplier[lvlIdx];
+    if (!this.isBarracks()) {
+      this.damage = this.baseConfig.damage * UPGRADE_CONFIG.damageMultiplier[lvlIdx];
+      this.range = this.baseConfig.range * UPGRADE_CONFIG.rangeMultiplier[lvlIdx];
+      this.attackSpeed = this.baseConfig.attackSpeed * UPGRADE_CONFIG.attackSpeedMultiplier[lvlIdx];
+    }
+
+    for (const soldier of this.soldiers) {
+      soldier?.setLevel(this.level);
+    }
   }
 
   upgrade(): boolean {
@@ -72,37 +109,52 @@ export class BaseTower {
 
   private draw() {
     this.gfx.clear();
-    // Base
+
     this.gfx.fillStyle(0x78909C, 1);
     this.gfx.fillRect(this.x - 24, this.y - 24, 48, 48);
-    // Tower body
-    this.gfx.fillStyle(this.baseConfig.color, 1);
-    this.gfx.fillCircle(this.x, this.y, this.baseConfig.radius);
 
-    // Level dots
+    if (this.isBarracks()) {
+      this.gfx.fillStyle(0xFFB300, 1);
+      this.gfx.fillRect(this.x - 18, this.y - 18, 36, 36);
+      this.gfx.lineStyle(2, 0xF57C00, 1);
+      this.gfx.strokeRect(this.x - 18, this.y - 18, 36, 36);
+
+      for (let i = 0; i < this.soldiers.length; i++) {
+        if (this.soldiers[i]?.alive) {
+          this.gfx.fillStyle(0xFFE082, 1);
+          this.gfx.fillCircle(this.x - 10 + i * 10, this.y - 19, 3);
+        }
+      }
+    } else {
+      this.gfx.fillStyle(this.baseConfig.color, 1);
+      this.gfx.fillCircle(this.x, this.y, this.baseConfig.radius);
+    }
+
     if (this.level >= 2) {
       this.gfx.fillStyle(0xFFD600, 1);
+      const baseY = this.isBarracks() ? this.y + 26 : this.y + this.baseConfig.radius + 6;
       for (let i = 0; i < this.level - 1; i++) {
-        this.gfx.fillCircle(this.x - 6 + i * 12, this.y + this.baseConfig.radius + 6, 3);
+        this.gfx.fillCircle(this.x - 6 + i * 12, baseY, 3);
       }
     }
 
-    // Label
-    const letterMap = { archer: 'A', cannon: 'C', magic: 'M' } as const;
+    const letterMap: Record<TowerType, string> = { archer: 'A', cannon: 'C', magic: 'M', barracks: 'B' };
     const labelText = `${letterMap[this.type]}${this.level}`;
-    if (this._label) {
-      this._label.setText(labelText);
+    if (this.label) {
+      this.label.setText(labelText);
     } else {
-      this._label = this.scene.add.text(this.x, this.y, labelText, {
-        fontSize: '16px', color: '#ffffff', fontStyle: 'bold',
+      this.label = this.scene.add.text(this.x, this.y, labelText, {
+        fontSize: '16px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+        fontFamily: 'Arial',
       }).setOrigin(0.5);
     }
   }
 
   setShowRange(show: boolean) {
-    this.showRange = show;
     this.rangeGfx.clear();
-    if (show) {
+    if (show && !this.isBarracks()) {
       this.rangeGfx.lineStyle(2, 0xffffff, 0.3);
       this.rangeGfx.strokeCircle(this.x, this.y, this.range);
       this.rangeGfx.fillStyle(0xffffff, 0.05);
@@ -110,18 +162,44 @@ export class BaseTower {
     }
   }
 
+  updateBarracks(dt: number, enemies: BaseEnemy[], onKill: (enemy: BaseEnemy) => void) {
+    if (!this.isBarracks()) return;
+
+    for (let i = 0; i < BARRACKS_CONFIG.maxSoldiers; i++) {
+      const soldier = this.soldiers[i];
+      if (soldier) {
+        const result = soldier.update(dt, enemies);
+        if (result.killed) {
+          onKill(result.killed);
+        }
+        if (result.died || !soldier.alive) {
+          this.soldiers[i] = null;
+          this.respawnTimers[i] = BARRACKS_CONFIG.respawnTime;
+        }
+      } else if (this.respawnTimers[i] > 0) {
+        this.respawnTimers[i] -= dt;
+        if (this.respawnTimers[i] <= 0) {
+          this.spawnSoldier(i);
+        }
+      }
+    }
+
+    this.draw();
+  }
+
   update(dt: number, enemies: BaseEnemy[]): Projectile | null {
+    if (this.isBarracks()) return null;
+
     this.cooldown -= dt;
     if (this.cooldown > 0) return null;
 
-    // Find nearest enemy in range
     let nearest: BaseEnemy | null = null;
     let nearestDist = Infinity;
-    for (const e of enemies) {
-      if (!e.alive) continue;
-      const d = Math.hypot(e.x - this.x, e.y - this.y);
+    for (const enemy of enemies) {
+      if (!enemy.alive) continue;
+      const d = Math.hypot(enemy.x - this.x, enemy.y - this.y);
       if (d <= this.range && d < nearestDist) {
-        nearest = e;
+        nearest = enemy;
         nearestDist = d;
       }
     }
@@ -131,7 +209,8 @@ export class BaseTower {
     this.cooldown = 1000 / this.attackSpeed;
     return new Projectile(
       this.scene,
-      this.x, this.y,
+      this.x,
+      this.y,
       nearest,
       this.baseConfig.projectileSpeed,
       this.damage,
@@ -145,6 +224,10 @@ export class BaseTower {
   destroy() {
     this.gfx.destroy();
     this.rangeGfx.destroy();
-    if (this._label) this._label.destroy();
+    this.label?.destroy();
+    for (const soldier of this.soldiers) {
+      soldier?.destroy();
+    }
+    this.soldiers = [];
   }
 }

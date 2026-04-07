@@ -6,7 +6,7 @@ export const TILE_SIZE = 64;
 
 export const STARTING_GOLD = 350;
 export const STARTING_LIVES = 20;
-export const TOTAL_WAVES = 7;
+export const TOTAL_WAVES = 10;
 
 export type DamageType = 'physical' | 'magical';
 
@@ -16,13 +16,14 @@ export const TOWER_CONFIG = {
     cost: 70,
     range: 150,
     damage: 10,
-    attackSpeed: 1.0, // attacks per second
+    attackSpeed: 1.0,
     color: 0x4CAF50,
     radius: 18,
     projectileSpeed: 400,
     projectileColor: 0xCDDC39,
     splash: 0,
     damageType: 'physical' as DamageType,
+    type: 'ranged' as const,
   },
   cannon: {
     name: 'Cannon Tower',
@@ -36,6 +37,7 @@ export const TOWER_CONFIG = {
     projectileColor: 0x455A64,
     splash: 60,
     damageType: 'physical' as DamageType,
+    type: 'ranged' as const,
   },
   magic: {
     name: 'Magic Tower',
@@ -49,10 +51,36 @@ export const TOWER_CONFIG = {
     projectileColor: 0xB388FF,
     splash: 50,
     damageType: 'magical' as DamageType,
+    type: 'ranged' as const,
+  },
+  barracks: {
+    name: 'Barracks',
+    cost: 70,
+    range: 0,
+    damage: 0,
+    attackSpeed: 0,
+    color: 0xFFB300,
+    radius: 20,
+    projectileSpeed: 0,
+    projectileColor: 0x000000,
+    splash: 0,
+    damageType: 'physical' as DamageType,
+    type: 'barracks' as const,
   },
 } as const;
 
 export type TowerType = keyof typeof TOWER_CONFIG;
+
+export const BARRACKS_CONFIG = {
+  maxSoldiers: 3,
+  respawnTime: 10000, // ms
+  engagementRange: 40,
+  levels: [
+    { hp: 100, damage: 8, attackInterval: 1000 },
+    { hp: 130, damage: 12, attackInterval: 1000 },
+    { hp: 170, damage: 16, attackInterval: 1000 },
+  ],
+};
 
 export const ENEMY_CONFIG = {
   normal: {
@@ -65,6 +93,7 @@ export const ENEMY_CONFIG = {
     height: 24,
     armor: 0,
     magicResist: 0,
+    isFlying: false,
   },
   fast: {
     name: 'Fast',
@@ -76,6 +105,7 @@ export const ENEMY_CONFIG = {
     height: 20,
     armor: 0,
     magicResist: 0,
+    isFlying: false,
   },
   heavy: {
     name: 'Heavy Armor',
@@ -87,6 +117,19 @@ export const ENEMY_CONFIG = {
     height: 28,
     armor: 60,
     magicResist: 10,
+    isFlying: false,
+  },
+  flying: {
+    name: 'Flying',
+    hp: 120,
+    speed: 100,
+    reward: 10,
+    color: 0xCE93D8,
+    width: 20,
+    height: 20,
+    armor: 0,
+    magicResist: 0,
+    isFlying: true,
   },
 } as const;
 
@@ -116,12 +159,18 @@ export const WAVE_CONFIG: WaveEntry[][] = [
   [{ type: 'normal', count: 3 }, { type: 'fast', count: 6 }, { type: 'heavy', count: 2 }],
   // Wave 5 — speed pressure
   [{ type: 'fast', count: 8 }, { type: 'heavy', count: 3 }],
-  // Wave 6 — armor pressure
-  [{ type: 'normal', count: 4 }, { type: 'fast', count: 4 }, { type: 'heavy', count: 5 }],
-  // Wave 7 — final push
-  [{ type: 'normal', count: 6 }, { type: 'fast', count: 8 }, { type: 'heavy', count: 5 }],
+  // Wave 6 — introduce flying
+  [{ type: 'normal', count: 4 }, { type: 'fast', count: 3 }, { type: 'heavy', count: 4 }, { type: 'flying', count: 2 }],
+  // Wave 7 — air+ground
+  [{ type: 'fast', count: 6 }, { type: 'heavy', count: 5 }, { type: 'flying', count: 3 }],
+  // Wave 8 — full mix
+  [{ type: 'normal', count: 4 }, { type: 'fast', count: 8 }, { type: 'heavy', count: 4 }, { type: 'flying', count: 4 }],
+  // Wave 9 — intense
+  [{ type: 'fast', count: 10 }, { type: 'heavy', count: 6 }, { type: 'flying', count: 5 }],
+  // Wave 10 — final boss wave
+  [{ type: 'normal', count: 8 }, { type: 'fast', count: 10 }, { type: 'heavy', count: 8 }, { type: 'flying', count: 6 }],
 ];
 
-export const SPAWN_INTERVAL = 800; // ms between spawns
-export const EARLY_WAVE_BONUS = 20; // gold bonus for sending next wave early
-export const WAVE_COUNTDOWN = 15000; // ms countdown between waves (auto-start)
+export const SPAWN_INTERVAL = 800;
+export const EARLY_WAVE_BONUS = 20;
+export const WAVE_COUNTDOWN = 15000;
