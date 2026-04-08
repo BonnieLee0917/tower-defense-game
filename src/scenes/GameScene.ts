@@ -142,6 +142,7 @@ export class GameScene extends Phaser.Scene {
 
       const zoneSize = this.isTouchDevice ? 67 : 56;
       const zone = this.add.zone(spot.x, spot.y, zoneSize, zoneSize).setInteractive({ useHandCursor: true });
+      (zone as any).__isBuildSpot = true;
       zone.on('pointerdown', () => this.onBuildSpotClick(entry));
     }
   }
@@ -538,21 +539,24 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.input.on('pointerdown', (ptr: Phaser.Input.Pointer, objects: Phaser.GameObjects.GameObject[]) => {
-      if (objects.length === 0) {
-        let clickedTower: BaseTower | null = null;
-        for (const tower of this.towers) {
-          const d = Math.hypot(ptr.x - tower.x, ptr.y - tower.y);
-          if (d < 30) {
-            clickedTower = tower;
-            break;
-          }
+      // Check if any clicked object is a build spot zone (has __buildSpot marker)
+      const clickedBuildSpot = objects.some((obj: any) => obj.__isBuildSpot);
+      if (clickedBuildSpot) return; // build spot handles its own click
+
+      // Try to find a tower at click position
+      let clickedTower: BaseTower | null = null;
+      for (const tower of this.towers) {
+        const d = Math.hypot(ptr.x - tower.x, ptr.y - tower.y);
+        if (d < 30) {
+          clickedTower = tower;
+          break;
         }
-        if (clickedTower) {
-          this.closeAllMenus();
-          this.showTowerMenu(clickedTower);
-        } else {
-          this.closeAllMenus();
-        }
+      }
+      if (clickedTower) {
+        this.closeAllMenus();
+        this.showTowerMenu(clickedTower);
+      } else if (objects.length === 0) {
+        this.closeAllMenus();
       }
     });
 
