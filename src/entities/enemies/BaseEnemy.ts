@@ -129,8 +129,12 @@ export class BaseEnemy {
     } else {
       this.sprite.setFlipX(movingRight);
     }
-    // Slightly larger than strict hitbox size for better readability on the map
-    this.sprite.setScale((c.width / 48) * 1.6, (c.height / 48) * 1.6);
+    // Scale enemies to be clearly visible on map
+    // Normal/Fast: ~44px, Heavy: ~52px, all clearly readable on 64px tiles
+    const sizeMap: Record<string, number> = { normal: 44, fast: 40, heavy: 52, flying: 42 };
+    const displaySize = sizeMap[this.type] || 44;
+    const scale = displaySize / 48;
+    this.sprite.setScale(scale, scale);
 
     // Slow effect: blue tint overlay when speedMultiplier < 1
     this.slowGfx.clear();
