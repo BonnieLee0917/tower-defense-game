@@ -197,31 +197,38 @@ export class Soldier {
       this.gfx.fillCircle(this.x, this.y, drawR + 3);
     }
 
-    // Body
+    // Body — humanoid soldier shape instead of yellow circle
+    const sx = this.x, sy = this.y;
+    const facing = this.facingAngle !== 0 ? (Math.cos(this.facingAngle) < 0 ? -1 : 1) : 1;
+    
+    // Legs
+    const walkCycle = this.inCombat ? Math.sin(Date.now() * 0.01) * 3 : 0;
+    this.gfx.fillStyle(0x5D4037, 1);
+    this.gfx.fillRect(sx - 3 + walkCycle, sy + 4, 3, 6);
+    this.gfx.fillRect(sx + 1 - walkCycle, sy + 4, 3, 6);
+    // Body (golden armor)
     this.gfx.fillStyle(0xFFB300, 1);
-    this.gfx.fillCircle(this.x, this.y, drawR);
-    this.gfx.lineStyle(1.5, 0xE65100, 1);
-    this.gfx.strokeCircle(this.x, this.y, drawR);
-
-    // Sword on top
-    const swordAngle = this.inCombat && this.target
-      ? Math.atan2(this.target.y - this.y, this.target.x - this.x) - Math.PI / 2
-      : -Math.PI / 2;
-    const sx = this.x + Math.cos(swordAngle) * (drawR - 2);
-    const sy = this.y + Math.sin(swordAngle) * (drawR - 2);
-    const ex = this.x + Math.cos(swordAngle) * (drawR + 7);
-    const ey = this.y + Math.sin(swordAngle) * (drawR + 7);
-    this.gfx.lineStyle(2, 0x795548, 1);
-    this.gfx.lineBetween(sx, sy, ex, ey);
-    // Guard
-    const perpAngle = swordAngle + Math.PI / 2;
-    const gx = this.x + Math.cos(swordAngle) * drawR;
-    const gy = this.y + Math.sin(swordAngle) * drawR;
-    this.gfx.lineStyle(2, 0x9E9E9E, 1);
-    this.gfx.lineBetween(
-      gx + Math.cos(perpAngle) * 3, gy + Math.sin(perpAngle) * 3,
-      gx - Math.cos(perpAngle) * 3, gy - Math.sin(perpAngle) * 3
-    );
+    this.gfx.fillRect(sx - 5, sy - 6, 10, 12);
+    // Armor detail
+    this.gfx.fillStyle(0xE6A200, 0.6);
+    this.gfx.fillRect(sx - 5, sy + 2, 10, 4);
+    // Head
+    this.gfx.fillStyle(0xE8C4A0, 1);
+    this.gfx.fillCircle(sx, sy - 10, 4);
+    // Helmet
+    this.gfx.fillStyle(0x757575, 1);
+    this.gfx.fillRect(sx - 4, sy - 14, 8, 3);
+    // Shield
+    this.gfx.fillStyle(0xE65100, 1);
+    this.gfx.fillRect(sx - 7 * facing, sy - 5, 3, 8);
+    // Sword (visible in combat)
+    if (this.inCombat) {
+      this.gfx.fillStyle(0xBDBDBD, 1);
+      this.gfx.fillRect(sx + 6 * facing, sy - 8, 2, 10);
+    }
+    // Outline
+    this.gfx.lineStyle(1, 0x5D4037, 0.6);
+    this.gfx.strokeRect(sx - 5, sy - 6, 10, 12);
 
     // Combat crossed-swords effect
     if (this.inCombat && this.target) {

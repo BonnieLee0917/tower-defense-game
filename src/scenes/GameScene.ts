@@ -109,7 +109,7 @@ export class GameScene extends Phaser.Scene {
   private drawMap() {
     // Seeded random for deterministic decoration
     const seed = (c: number, r: number) => ((c * 7 + r * 13 + 37) * 2654435761) >>> 0;
-    const grassKeys = ['grass1']; // tile024 = pure green, confirmed
+    const grassKeys = ['grass1', 'grass2', 'grass3', 'grass4', 'grass5', 'grass6'];
 
     // Grass base layer
     for (let r = 0; r < MAP_DATA.rows; r++) {
@@ -160,6 +160,31 @@ export class GameScene extends Phaser.Scene {
     }
     for (const p of MAP_DATA.waypoints) {
       pathGfx.fillCircle(p.x, p.y, innerWidth / 2);
+    }
+
+    // Scatter decorations (trees/bushes) on grass tiles far from path and build spots
+    const pathSet = new Set(MAP_DATA.pathTiles.map((t) => `${t.col},${t.row}`));
+    const buildSpotSet = new Set(MAP_DATA.buildSpots.map((s) => `${Math.floor(s.x / TILE_SIZE)},${Math.floor(s.y / TILE_SIZE)}`));
+    const decoKeys = ['deco1', 'deco2', 'deco3', 'deco4'];
+    for (let r = 0; r < MAP_DATA.rows; r++) {
+      for (let c = 0; c < MAP_DATA.cols; c++) {
+        const key = `${c},${r}`;
+        if (pathSet.has(key) || buildSpotSet.has(key)) continue;
+        // Check if adjacent to path (don't place decorations next to path)
+        const adjPath = [[-1,0],[1,0],[0,-1],[0,1]].some(([dc,dr]) => pathSet.has(`${c+dc},${r+dr}`));
+        if (adjPath) continue;
+        // Deterministic random: ~15% of eligible tiles get decoration
+        const s = seed(c, r);
+        if (s % 100 < 15) {
+          const tx = c * TILE_SIZE + TILE_SIZE / 2;
+          const ty = r * TILE_SIZE + TILE_SIZE / 2;
+          const decoKey = decoKeys[s % decoKeys.length];
+          this.add.image(tx, ty, decoKey)
+            .setDisplaySize(TILE_SIZE, TILE_SIZE)
+            .setDepth(2)
+            .setAlpha(0.85);
+        }
+      }
     }
   }
 

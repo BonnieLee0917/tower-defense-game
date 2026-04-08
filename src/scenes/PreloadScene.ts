@@ -13,6 +13,11 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('grass4', 'assets/tiles/kenney/towerDefense_tile249.png'); // green ground
     this.load.image('grass5', 'assets/tiles/kenney/towerDefense_tile038.png'); // grass variant
     this.load.image('grass6', 'assets/tiles/kenney/towerDefense_tile071.png'); // grass variant
+    // Decoration tiles (trees/bushes)
+    this.load.image('deco1', 'assets/tiles/kenney/towerDefense_tile131.png'); // tree
+    this.load.image('deco2', 'assets/tiles/kenney/towerDefense_tile132.png'); // tree variant
+    this.load.image('deco3', 'assets/tiles/kenney/towerDefense_tile133.png'); // bush
+    this.load.image('deco4', 'assets/tiles/kenney/towerDefense_tile134.png'); // bush variant
     // Path tiles (BROWN/SAND)
     this.load.image('path1', 'assets/tiles/kenney/towerDefense_tile046.png'); // pure brown sand, uniform brightness
 
@@ -51,6 +56,7 @@ export class PreloadScene extends Phaser.Scene {
     // Set NEAREST filter on all loaded textures for pixel-perfect rendering
     [
       'grass1', 'grass2', 'grass3', 'grass4', 'grass5', 'grass6', 'path1',
+      'deco1', 'deco2', 'deco3', 'deco4',
       'archer_lv1',
       'archer_lv2',
       'archer_lv3',
