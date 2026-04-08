@@ -74,7 +74,7 @@ export type TowerType = keyof typeof TOWER_CONFIG;
 export const BARRACKS_CONFIG = {
   maxSoldiers: 3,
   respawnTime: 10000, // ms
-  engagementRange: 40,
+  engagementRange: 80,
   levels: [
     { hp: 100, damage: 8, attackInterval: 1000 },
     { hp: 130, damage: 12, attackInterval: 1000 },
@@ -153,26 +153,26 @@ export const UPGRADE_CONFIG = {
 };
 
 export const WAVE_CONFIG: WaveEntry[][] = [
-  // Wave 1 — tutorial
-  [{ type: 'normal', count: 5 }],
+  // Wave 1 — tutorial: very easy
+  [{ type: 'normal', count: 4 }],
   // Wave 2 — introduce fast
-  [{ type: 'normal', count: 6 }, { type: 'fast', count: 2 }],
+  [{ type: 'normal', count: 4 }, { type: 'fast', count: 2 }],
   // Wave 3 — introduce heavy
-  [{ type: 'normal', count: 4 }, { type: 'fast', count: 4 }, { type: 'heavy', count: 1 }],
-  // Wave 4 — mixed
-  [{ type: 'normal', count: 3 }, { type: 'fast', count: 6 }, { type: 'heavy', count: 2 }],
+  [{ type: 'normal', count: 3 }, { type: 'fast', count: 3 }, { type: 'heavy', count: 1 }],
+  // Wave 4 — building up
+  [{ type: 'normal', count: 3 }, { type: 'fast', count: 4 }, { type: 'heavy', count: 1 }],
   // Wave 5 — speed pressure
-  [{ type: 'fast', count: 8 }, { type: 'heavy', count: 3 }],
+  [{ type: 'fast', count: 6 }, { type: 'heavy', count: 2 }],
   // Wave 6 — introduce flying
-  [{ type: 'normal', count: 4 }, { type: 'fast', count: 3 }, { type: 'heavy', count: 4 }, { type: 'flying', count: 2 }],
+  [{ type: 'normal', count: 3 }, { type: 'fast', count: 3 }, { type: 'heavy', count: 2 }, { type: 'flying', count: 2 }],
   // Wave 7 — air+ground
-  [{ type: 'fast', count: 6 }, { type: 'heavy', count: 5 }, { type: 'flying', count: 3 }],
+  [{ type: 'fast', count: 4 }, { type: 'heavy', count: 3 }, { type: 'flying', count: 2 }],
   // Wave 8 — full mix
-  [{ type: 'normal', count: 4 }, { type: 'fast', count: 8 }, { type: 'heavy', count: 4 }, { type: 'flying', count: 4 }],
+  [{ type: 'normal', count: 3 }, { type: 'fast', count: 5 }, { type: 'heavy', count: 3 }, { type: 'flying', count: 3 }],
   // Wave 9 — intense
-  [{ type: 'normal', count: 3 }, { type: 'fast', count: 10 }, { type: 'heavy', count: 5 }, { type: 'flying', count: 5 }],
-  // Wave 10 — final boss wave (big but not impossible)
-  [{ type: 'normal', count: 6 }, { type: 'fast', count: 10 }, { type: 'heavy', count: 6 }, { type: 'flying', count: 6 }],
+  [{ type: 'normal', count: 2 }, { type: 'fast', count: 6 }, { type: 'heavy', count: 4 }, { type: 'flying', count: 3 }],
+  // Wave 10 — final push
+  [{ type: 'normal', count: 4 }, { type: 'fast', count: 7 }, { type: 'heavy', count: 4 }, { type: 'flying', count: 4 }],
 ];
 
 export const SPAWN_INTERVAL = 800;

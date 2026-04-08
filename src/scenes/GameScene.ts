@@ -118,14 +118,6 @@ export class GameScene extends Phaser.Scene {
         gfx.strokeRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
       }
     }
-
-    gfx.lineStyle(3, 0xCE93D8, 0.45);
-    gfx.beginPath();
-    gfx.moveTo(flyingPath[0].x, flyingPath[0].y - 18);
-    for (let i = 1; i < flyingPath.length; i++) {
-      gfx.lineTo(flyingPath[i].x, flyingPath[i].y - 18);
-    }
-    gfx.strokePath();
   }
 
   private drawBuildSpots() {

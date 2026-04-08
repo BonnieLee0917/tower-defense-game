@@ -46,7 +46,7 @@ export class BaseTower {
     this.rangeGfx = scene.add.graphics();
 
     if (this.isBarracks()) {
-      this.rallyPoints = [-18, 0, 18].map((dx) => ({ x: this.x + dx, y: this.y + 30 }));
+      this.rallyPoints = [-24, 0, 24].map((dx) => ({ x: this.x + dx, y: this.y + 36 }));
       this.respawnTimers = [0, 0, 0];
       this.soldiers = [null, null, null];
       this.spawnInitialSoldiers();
