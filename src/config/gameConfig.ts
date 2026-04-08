@@ -95,6 +95,7 @@ export const ENEMY_CONFIG = {
     magicResist: 0,
     isFlying: false,
     retaliationDamage: 8,
+    facesRight: true,
   },
   fast: {
     name: 'Fast',
@@ -108,6 +109,7 @@ export const ENEMY_CONFIG = {
     magicResist: 0,
     isFlying: false,
     retaliationDamage: 6,
+    facesRight: false, // CraftPix wolf sprite faces left by default
   },
   heavy: {
     name: 'Heavy Armor',
@@ -121,6 +123,7 @@ export const ENEMY_CONFIG = {
     magicResist: 10,
     isFlying: false,
     retaliationDamage: 18,
+    facesRight: true,
   },
   flying: {
     name: 'Flying',
@@ -134,6 +137,7 @@ export const ENEMY_CONFIG = {
     magicResist: 0,
     isFlying: true,
     retaliationDamage: 5,
+    facesRight: true,
   },
 } as const;
 

@@ -120,7 +120,15 @@ export class BaseEnemy {
     // Position sprite and scale to current logical size
     this.sprite.setPosition(this.x, this.y + (this.isFlying ? -6 : 0));
     this.sprite.setOrigin(0.5, 0.5);
-    this.sprite.setFlipX(Math.cos(this.angle) < -0.1);
+    const movingRight = Math.cos(this.angle) > 0.1;
+    const movingLeft = Math.cos(this.angle) < -0.1;
+    const facesRight = (this.config as any).facesRight !== false; // default true
+    // Flip sprite when moving opposite to its default facing direction
+    if (facesRight) {
+      this.sprite.setFlipX(movingLeft);
+    } else {
+      this.sprite.setFlipX(movingRight);
+    }
     // Slightly larger than strict hitbox size for better readability on the map
     this.sprite.setScale((c.width / 48) * 1.6, (c.height / 48) * 1.6);
 
