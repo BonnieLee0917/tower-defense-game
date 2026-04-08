@@ -410,8 +410,8 @@ export class GameScene extends Phaser.Scene {
     this.waveText = this.add.text(370, 8, '', style).setDepth(100);
     this.enemiesText = this.add.text(560, 8, '', style).setDepth(100);
 
-    this.nextWaveBtn = this.add.text(GAME_WIDTH - 200, 6, '▶ Next Wave', {
-      fontSize: '16px', color: '#ffffff', backgroundColor: '#1976D2', padding: { x: 12, y: 6 },
+    this.nextWaveBtn = this.add.text(GAME_WIDTH - 190, GAME_HEIGHT - 50, '▶ Next Wave', {
+      fontSize: '16px', color: '#ffffff', backgroundColor: '#1976D2', padding: { x: 14, y: 8 },
     }).setDepth(100).setInteractive({ useHandCursor: true });
     this.nextWaveBtn.on('pointerdown', () => {
       if (this.waveManager.isAllDone() || this.gameOver) return;
