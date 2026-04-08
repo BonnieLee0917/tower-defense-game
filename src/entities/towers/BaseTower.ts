@@ -211,28 +211,33 @@ export class BaseTower {
       this.gfx.fillStyle(0xffffff, 0.2);
       this.gfx.fillCircle(this.x - 5, this.y - 6, 3);
     } else if (this.type === 'cannon') {
-      const colors = [0x616161, 0x424242, 0x212121]; // darker each level
-      const cSize = 14 + this.level * 2;
-      const turretR = 10 + this.level * 2;
-      // Barrel
-      this.gfx.fillStyle(colors[this.level - 1] || colors[0], 1);
-      this.gfx.fillRoundedRect(this.x - cSize, this.y - 4, cSize * 2, 20, 4);
-      // Turret dome
-      this.gfx.fillCircle(this.x, this.y - 6, turretR);
-      // Barrel shading
-      this.gfx.fillStyle(0x333333, 0.4);
-      this.gfx.fillRoundedRect(this.x - cSize, this.y + 6, cSize * 2, 10, { tl: 0, tr: 0, bl: 4, br: 4 });
-      // Barrel tip / cannon mouth
-      this.gfx.fillStyle(0x888888, 0.8);
-      this.gfx.fillCircle(this.x + cSize - 4, this.y + 4, 4);
-      // Outline
-      this.gfx.lineStyle(1, 0x999999, 0.5);
-      this.gfx.strokeCircle(this.x, this.y - 6, turretR);
+      const cSize = 16 + this.level * 2;
+      const barrelW = 6 + this.level * 2; // wider barrel each level
+      // Base platform (brick red)
+      const baseColors = [0xBF360C, 0xA52D08, 0x8B2506];
+      this.gfx.fillStyle(baseColors[this.level - 1] || baseColors[0], 1);
+      this.gfx.fillRect(this.x - cSize, this.y - 2, cSize * 2, 22);
+      // Base shading
+      this.gfx.fillStyle(0x000000, 0.15);
+      this.gfx.fillRect(this.x - cSize, this.y + 12, cSize * 2, 8);
+      // Barrel (dark metal)
+      this.gfx.fillStyle(0x424242, 1);
+      this.gfx.fillRect(this.x - barrelW / 2, this.y - 16, barrelW, 14);
+      // Barrel bore
+      this.gfx.fillStyle(0x212121, 1);
+      this.gfx.fillCircle(this.x, this.y - 16, barrelW / 2 - 1);
+      // Barrel outline
+      this.gfx.lineStyle(1, 0x212121, 1);
+      this.gfx.strokeRect(this.x - barrelW / 2, this.y - 16, barrelW, 14);
+      // Cannon ball detail
+      this.gfx.fillStyle(0x333333, 1);
+      this.gfx.fillCircle(this.x + cSize - 4, this.y + 8, 3);
+      // Level 3 glow
       if (this.level >= 3) {
         this.gfx.lineStyle(2, 0xFF6D00, 0.4);
-        this.gfx.strokeCircle(this.x, this.y, cSize + 6);
+        this.gfx.strokeCircle(this.x, this.y, cSize + 8);
       }
-      this.gfx.fillStyle(0xffffff, 0.2);
+      this.gfx.fillStyle(0xffffff, 0.15);
       this.gfx.fillCircle(this.x - 5, this.y - 10, 3);
     } else {
       this.gfx.fillStyle(this.baseConfig.color, 1);
