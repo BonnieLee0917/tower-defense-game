@@ -1,5 +1,8 @@
 import Phaser from 'phaser';
 import { MAP_DATA } from '../maps/map1';
+import { MAP2_DATA } from '../maps/map2';
+import { MAP3_DATA } from '../maps/map3';
+import { MapData } from '../maps/map1';
 import { PathManager } from '../systems/PathManager';
 import { EconomyManager } from '../systems/EconomyManager';
 import { WaveManager } from '../systems/WaveManager';
@@ -26,6 +29,9 @@ export class GameScene extends Phaser.Scene {
 
   private lives = STARTING_LIVES;
   private gameOver = false;
+  private currentMap: MapData = MAP_DATA;
+  private static ALL_MAPS = [MAP_DATA, MAP2_DATA, MAP3_DATA];
+  private static mapIndex = 0;
   private gameWon = false;
 
   private totalKills = 0;
@@ -74,7 +80,13 @@ export class GameScene extends Phaser.Scene {
     this.waveCountdown = -1;
     this.firstWaveStarted = false;
 
-    this.pathManager = new PathManager(MAP_DATA);
+    // Map selection from scene data or static index
+    const data = this.scene.settings.data as any;
+    if (data?.mapIndex !== undefined) {
+      GameScene.mapIndex = data.mapIndex;
+    }
+    this.currentMap = GameScene.ALL_MAPS[GameScene.mapIndex] || MAP_DATA;
+    this.pathManager = new PathManager(this.currentMap);
     this.economy = new EconomyManager(this);
     this.waveManager = new WaveManager();
     this.statusEffects = new StatusEffectManager();
@@ -133,8 +145,8 @@ export class GameScene extends Phaser.Scene {
     const grassKeys = ['grass1', 'grass2', 'grass3', 'grass4', 'grass5', 'grass6'];
 
     // Grass base layer
-    for (let r = 0; r < MAP_DATA.rows; r++) {
-      for (let c = 0; c < MAP_DATA.cols; c++) {
+    for (let r = 0; r < this.currentMap.rows; r++) {
+      for (let c = 0; c < this.currentMap.cols; c++) {
         const tx = c * TILE_SIZE + TILE_SIZE / 2;
         const ty = r * TILE_SIZE + TILE_SIZE / 2;
         const s = seed(c, r);
@@ -152,9 +164,9 @@ export class GameScene extends Phaser.Scene {
 
     // Base road strips
     pathGfx.fillStyle(0x9C6B30, 1);
-    for (let i = 0; i < MAP_DATA.waypoints.length - 1; i++) {
-      const a = MAP_DATA.waypoints[i];
-      const b = MAP_DATA.waypoints[i + 1];
+    for (let i = 0; i < this.currentMap.waypoints.length - 1; i++) {
+      const a = this.currentMap.waypoints[i];
+      const b = this.currentMap.waypoints[i + 1];
       if (a.y === b.y) {
         pathGfx.fillRect(Math.min(a.x, b.x), a.y - roadWidth / 2, Math.abs(b.x - a.x), roadWidth);
       } else {
@@ -163,32 +175,32 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Rounded joints to remove staircase corners
-    for (const p of MAP_DATA.waypoints) {
+    for (const p of this.currentMap.waypoints) {
       pathGfx.fillCircle(p.x, p.y, roadWidth / 2);
     }
 
     // Light center highlight for readability
     pathGfx.fillStyle(0xB9823C, 0.35);
     const innerWidth = 34;
-    for (let i = 0; i < MAP_DATA.waypoints.length - 1; i++) {
-      const a = MAP_DATA.waypoints[i];
-      const b = MAP_DATA.waypoints[i + 1];
+    for (let i = 0; i < this.currentMap.waypoints.length - 1; i++) {
+      const a = this.currentMap.waypoints[i];
+      const b = this.currentMap.waypoints[i + 1];
       if (a.y === b.y) {
         pathGfx.fillRect(Math.min(a.x, b.x), a.y - innerWidth / 2, Math.abs(b.x - a.x), innerWidth);
       } else {
         pathGfx.fillRect(a.x - innerWidth / 2, Math.min(a.y, b.y), innerWidth, Math.abs(b.y - a.y));
       }
     }
-    for (const p of MAP_DATA.waypoints) {
+    for (const p of this.currentMap.waypoints) {
       pathGfx.fillCircle(p.x, p.y, innerWidth / 2);
     }
 
     // Scatter decorations (trees/bushes) on grass tiles far from path and build spots
-    const pathSet = new Set(MAP_DATA.pathTiles.map((t) => `${t.col},${t.row}`));
-    const buildSpotSet = new Set(MAP_DATA.buildSpots.map((s) => `${Math.floor(s.x / TILE_SIZE)},${Math.floor(s.y / TILE_SIZE)}`));
+    const pathSet = new Set(this.currentMap.pathTiles.map((t) => `${t.col},${t.row}`));
+    const buildSpotSet = new Set(this.currentMap.buildSpots.map((s) => `${Math.floor(s.x / TILE_SIZE)},${Math.floor(s.y / TILE_SIZE)}`));
     const decoKeys = ['deco1', 'deco2', 'deco3', 'deco4'];
-    for (let r = 0; r < MAP_DATA.rows; r++) {
-      for (let c = 0; c < MAP_DATA.cols; c++) {
+    for (let r = 0; r < this.currentMap.rows; r++) {
+      for (let c = 0; c < this.currentMap.cols; c++) {
         const key = `${c},${r}`;
         if (pathSet.has(key) || buildSpotSet.has(key)) continue;
         // Check if adjacent to path (don't place decorations next to path)
@@ -196,7 +208,7 @@ export class GameScene extends Phaser.Scene {
         if (adjPath) continue;
         // Deterministic random: ~10% of eligible tiles get decoration (edges preferred)
         const s = seed(c, r);
-        const isEdge = c <= 1 || c >= MAP_DATA.cols - 2 || r <= 1 || r >= MAP_DATA.rows - 2;
+        const isEdge = c <= 1 || c >= this.currentMap.cols - 2 || r <= 1 || r >= this.currentMap.rows - 2;
         const decoChance = isEdge ? 20 : 8; // edges get more decoration
         if (s % 100 < decoChance) {
           const tx = c * TILE_SIZE + TILE_SIZE / 2;
@@ -212,7 +224,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drawBuildSpots() {
-    for (const spot of MAP_DATA.buildSpots) {
+    for (const spot of this.currentMap.buildSpots) {
       const gfx = this.add.graphics();
       // KR-style soft build spot marker (Vivian: subtle, not attention-grabbing)
       gfx.fillStyle(0xF0E6D3, 0.08);
@@ -1072,5 +1084,25 @@ export class GameScene extends Phaser.Scene {
     btn.on('pointerdown', () => {
       this.scene.restart();
     });
+
+    // Victory: Next Map button (if more maps available)
+    if (won && GameScene.mapIndex < GameScene.ALL_MAPS.length - 1) {
+      const nextBtnY = btnY + btnH + 16;
+      const nextBtnGfx = this.add.graphics().setDepth(201);
+      nextBtnGfx.fillStyle(0x1565C0, 1);
+      nextBtnGfx.fillRoundedRect(btnX, nextBtnY, btnW, btnH, 12);
+      nextBtnGfx.fillStyle(0xffffff, 0.1);
+      nextBtnGfx.fillRoundedRect(btnX + 4, nextBtnY + 4, btnW - 8, btnH / 2 - 4, { tl: 10, tr: 10, bl: 0, br: 0 });
+
+      const nextBtn = this.add.text(GAME_WIDTH / 2, nextBtnY + btnH / 2, '▶ Next Map', {
+        fontSize: '22px', color: '#ffffff', fontStyle: 'bold', fontFamily: 'Arial',
+        shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 3, fill: true, stroke: false },
+      }).setOrigin(0.5).setDepth(202).setInteractive({ useHandCursor: true });
+
+      nextBtn.on('pointerdown', () => {
+        GameScene.mapIndex++;
+        this.scene.restart({ mapIndex: GameScene.mapIndex });
+      });
+    }
   }
 }
