@@ -40,6 +40,8 @@ export class GameScene extends Phaser.Scene {
 
   private buildMenu: Phaser.GameObjects.Container | null = null;
   private towerMenu: Phaser.GameObjects.Container | null = null;
+  private rallyFlagGfx: Phaser.GameObjects.Graphics | null = null;
+  private rallyFlagTower: BaseTower | null = null;
   private selectedSpot: { x: number; y: number } | null = null;
 
   private spotGfxList: { gfx: Phaser.GameObjects.Graphics; spot: { x: number; y: number }; occupied: boolean }[] = [];
@@ -241,6 +243,7 @@ export class GameScene extends Phaser.Scene {
       this.towerMenu.destroy();
       this.towerMenu = null;
     }
+    this.destroyRallyFlag();
   }
 
   private closeAllMenus() {
@@ -338,6 +341,83 @@ export class GameScene extends Phaser.Scene {
     container.add(closeBtn);
 
     this.towerMenu = container;
+
+    // Rally flag for barracks
+    if (tower.isBarracks()) {
+      this.createRallyFlag(tower);
+    }
+  }
+
+  private createRallyFlag(tower: BaseTower) {
+    this.destroyRallyFlag();
+    this.rallyFlagTower = tower;
+
+    // Calculate center of rally points
+    const cx = tower.rallyPoints.reduce((s, p) => s + p.x, 0) / tower.rallyPoints.length;
+    const cy = tower.rallyPoints.reduce((s, p) => s + p.y, 0) / tower.rallyPoints.length;
+
+    const gfx = this.add.graphics().setDepth(100);
+    this.rallyFlagGfx = gfx;
+
+    const drawFlag = (fx: number, fy: number) => {
+      gfx.clear();
+      // Dotted line from tower to flag
+      gfx.lineStyle(1, 0xFFD600, 0.4);
+      const dx = fx - tower.x;
+      const dy = fy - tower.y;
+      const dist = Math.hypot(dx, dy);
+      const segments = Math.floor(dist / 6);
+      for (let i = 0; i < segments; i += 2) {
+        const t1 = i / segments;
+        const t2 = Math.min((i + 1) / segments, 1);
+        gfx.lineBetween(
+          tower.x + dx * t1, tower.y + dy * t1,
+          tower.x + dx * t2, tower.y + dy * t2
+        );
+      }
+      // Flag pole
+      gfx.lineStyle(2, 0x795548, 1);
+      gfx.lineBetween(fx, fy, fx, fy - 16);
+      // Pennant
+      gfx.fillStyle(0xFFD600, 1);
+      gfx.fillTriangle(fx, fy - 16, fx + 10, fy - 12, fx, fy - 8);
+    };
+
+    drawFlag(cx, cy);
+
+    // Interactive drag zone
+    const zone = this.add.zone(cx, cy, 24, 24).setDepth(101).setInteractive({ draggable: true, useHandCursor: true });
+    this.input.setDraggable(zone);
+
+    zone.on('drag', (_pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+      zone.setPosition(dragX, dragY);
+      drawFlag(dragX, dragY);
+    });
+
+    zone.on('dragend', (_pointer: Phaser.Input.Pointer) => {
+      const fx = zone.x;
+      const fy = zone.y;
+      // Update rally points spread around new position
+      tower.rallyPoints = [-24, 0, 24].map(dx => ({ x: fx + dx, y: fy }));
+      // Reposition idle soldiers
+      for (let i = 0; i < tower.soldiers.length; i++) {
+        const s = tower.soldiers[i];
+        if (s) s.setRallyPoint(tower.rallyPoints[i].x, tower.rallyPoints[i].y);
+      }
+    });
+
+    // Store zone ref for cleanup
+    (gfx as any)._rallyZone = zone;
+  }
+
+  private destroyRallyFlag() {
+    if (this.rallyFlagGfx) {
+      const zone = (this.rallyFlagGfx as any)._rallyZone;
+      if (zone) zone.destroy();
+      this.rallyFlagGfx.destroy();
+      this.rallyFlagGfx = null;
+    }
+    this.rallyFlagTower = null;
   }
 
   private upgradeTower(tower: BaseTower) {

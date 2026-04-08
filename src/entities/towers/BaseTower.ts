@@ -27,8 +27,10 @@ export class BaseTower {
   private totalInvested: number;
 
   public soldiers: Array<Soldier | null> = [];
-  private respawnTimers: number[] = [];
+  public respawnTimers: number[] = [];
   public rallyPoints: { x: number; y: number }[] = [];
+  private statusGfx: Phaser.GameObjects.Graphics | null = null;
+  private statusText: Phaser.GameObjects.Text | null = null;
 
   constructor(scene: Phaser.Scene, type: TowerType, x: number, y: number) {
     this.scene = scene;
@@ -46,6 +48,7 @@ export class BaseTower {
     this.rangeGfx = scene.add.graphics();
 
     if (this.isBarracks()) {
+      this.statusGfx = scene.add.graphics().setDepth(10);
       this.rallyPoints = [-24, 0, 24].map((dx) => ({ x: this.x + dx, y: this.y + 36 }));
       this.respawnTimers = [0, 0, 0];
       this.soldiers = [null, null, null];
@@ -128,6 +131,9 @@ export class BaseTower {
           this.gfx.fillCircle(this.x - 10 + i * 10, this.y - 23, 3);
         }
       }
+
+      // Status display
+      this.drawBarracksStatus();
     } else if (this.type === 'archer') {
       // Circle with arrow tip triangle on top
       this.gfx.fillStyle(this.baseConfig.color, 1);
@@ -179,6 +185,35 @@ export class BaseTower {
         fontStyle: 'bold',
         fontFamily: 'Arial',
       }).setOrigin(0.5);
+    }
+  }
+
+  private drawBarracksStatus() {
+    if (!this.statusGfx) return;
+    this.statusGfx.clear();
+
+    const aliveCount = this.soldiers.filter(s => s?.alive).length;
+    const total = BARRACKS_CONFIG.maxSoldiers;
+    const statusY = this.y + 24;
+
+    for (let i = 0; i < total; i++) {
+      const sx = this.x - 12 + i * 12;
+      if (this.soldiers[i]?.alive) {
+        this.statusGfx.fillStyle(0xFFB300, 1);
+        this.statusGfx.fillCircle(sx, statusY, 4);
+      } else {
+        this.statusGfx.fillStyle(0x616161, 1);
+        this.statusGfx.fillCircle(sx, statusY, 4);
+      }
+    }
+
+    const countStr = `${aliveCount}/${total}`;
+    if (this.statusText) {
+      this.statusText.setText(countStr).setPosition(this.x, statusY + 10);
+    } else {
+      this.statusText = this.scene.add.text(this.x, statusY + 10, countStr, {
+        fontSize: '9px', color: '#FFE082', fontFamily: 'Arial', fontStyle: 'bold',
+      }).setOrigin(0.5).setDepth(10);
     }
   }
 
@@ -252,6 +287,8 @@ export class BaseTower {
   }
 
   destroy() {
+    this.statusGfx?.destroy();
+    this.statusText?.destroy();
     this.gfx.destroy();
     this.rangeGfx.destroy();
     this.label?.destroy();
