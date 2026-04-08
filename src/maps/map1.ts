@@ -50,22 +50,19 @@ const waypoints = [
 export const MAP_DATA: MapData = {
   waypoints,
   buildSpots: [
-    // Left section
-    { x: 96, y: 96 },    // top-left, above first horizontal path
-    { x: 96, y: 480 },   // below first vertical drop
-    { x: 320, y: 288 },  // between first zigzag arms
-    // Middle-left section
-    { x: 320, y: 544 },  // below second horizontal path
-    { x: 544, y: 352 },  // between vertical segments
-    { x: 544, y: 544 },  // below middle area
-    // Middle-right section
-    { x: 832, y: 96 },   // top, away from path
-    { x: 832, y: 288 },  // middle, between paths
-    { x: 832, y: 608 },  // bottom area, clear of path
-    // Right section
-    { x: 1056, y: 160 }, // above right path
-    { x: 1056, y: 416 }, // below right path
-    { x: 1184, y: 160 }, // near exit, top
+    // KR-style: 72px from path center, corners prioritized, evenly distributed
+    { x: 96, y: 152 },   // above first horizontal
+    { x: 120, y: 320 },  // left of first vertical drop
+    { x: 264, y: 296 },  // inside first corner turn
+    { x: 264, y: 488 },  // below-right of second corner
+    { x: 376, y: 288 },  // left of second vertical up
+    { x: 520, y: 232 },  // right-below third corner
+    { x: 576, y: 88 },   // above middle horizontal
+    { x: 632, y: 232 },  // left-below fourth corner
+    { x: 776, y: 408 },  // right-above fifth corner
+    { x: 888, y: 384 },  // left of last vertical up
+    { x: 1032, y: 360 }, // right-below sixth corner
+    { x: 1120, y: 216 }, // above last horizontal
   ],
   cols: 20, // 1280/64
   rows: 11, // 704/64 (leave top 16px for HUD rendered on top)
