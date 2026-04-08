@@ -114,7 +114,18 @@ export class BaseEnemy {
       this.gfx.fillStyle(0x000000, 0.22);
       this.gfx.fillEllipse(this.x, this.y + 12, c.width, 8);
 
-      // Triangle pointing in movement direction + wing lines
+      // Motion lines behind
+      const backAngle = this.angle + Math.PI;
+      for (let i = 1; i <= 2; i++) {
+        const lx = this.x + Math.cos(backAngle) * (c.width * 0.5 + i * 8);
+        const ly = bodyY + Math.sin(backAngle) * (c.height * 0.5 + i * 8);
+        const lex = lx + Math.cos(backAngle) * 10;
+        const ley = ly + Math.sin(backAngle) * 10;
+        this.gfx.lineStyle(1, c.color, 0.5 - i * 0.15);
+        this.gfx.lineBetween(lx, ly, lex, ley);
+      }
+
+      // Triangle body
       const tipX = this.x + Math.cos(this.angle) * (c.width * 0.7);
       const tipY = bodyY + Math.sin(this.angle) * (c.height * 0.7);
       const perpAngle = this.angle + Math.PI / 2;
@@ -125,15 +136,43 @@ export class BaseEnemy {
 
       this.gfx.fillStyle(c.color, 1);
       this.gfx.fillTriangle(tipX, tipY, backX1, backY1, backX2, backY2);
+      // Outline
+      this.gfx.lineStyle(2, Phaser.Display.Color.IntegerToColor(c.color).darken(30).color, 0.8);
+      this.gfx.strokeTriangle(tipX, tipY, backX1, backY1, backX2, backY2);
 
       // Wing lines
       this.gfx.lineStyle(2, 0xE1BEE7, 0.9);
       this.gfx.lineBetween(backX1, backY1, backX1 + Math.cos(perpAngle) * 8, backY1 + Math.sin(perpAngle) * 8 - 4);
       this.gfx.lineBetween(backX2, backY2, backX2 - Math.cos(perpAngle) * 8, backY2 - Math.sin(perpAngle) * 8 - 4);
     } else if (this.type === 'fast') {
-      // Diamond/rhombus shape
+      // Shadow
+      this.gfx.fillStyle(0x000000, 0.2);
+      this.gfx.fillEllipse(this.x, this.y + c.height / 2 + 3, c.width, 6);
+
+      // Speed lines behind
+      const backAngle = this.angle + Math.PI;
+      for (let i = 1; i <= 2; i++) {
+        const offset = (i % 2 === 0 ? 3 : -3);
+        const perpA = this.angle + Math.PI / 2;
+        const lx = this.x + Math.cos(backAngle) * (c.width * 0.6) + Math.cos(perpA) * offset;
+        const ly = this.y + Math.sin(backAngle) * (c.height * 0.6) + Math.sin(perpA) * offset;
+        const lex = lx + Math.cos(backAngle) * 12;
+        const ley = ly + Math.sin(backAngle) * 12;
+        this.gfx.lineStyle(1, c.color, 0.4);
+        this.gfx.lineBetween(lx, ly, lex, ley);
+      }
+
+      // Diamond shape
       this.gfx.fillStyle(c.color, 1);
       this.gfx.fillPoints([
+        new Phaser.Geom.Point(this.x, this.y - c.height / 2 - 2),
+        new Phaser.Geom.Point(this.x + c.width / 2 + 2, this.y),
+        new Phaser.Geom.Point(this.x, this.y + c.height / 2 + 2),
+        new Phaser.Geom.Point(this.x - c.width / 2 - 2, this.y),
+      ], true);
+      // Outline
+      this.gfx.lineStyle(2, Phaser.Display.Color.IntegerToColor(c.color).darken(30).color, 0.8);
+      this.gfx.strokePoints([
         new Phaser.Geom.Point(this.x, this.y - c.height / 2 - 2),
         new Phaser.Geom.Point(this.x + c.width / 2 + 2, this.y),
         new Phaser.Geom.Point(this.x, this.y + c.height / 2 + 2),
@@ -155,19 +194,36 @@ export class BaseEnemy {
         ay - Math.sin(pAngle) * arrowSize * 0.5,
       );
     } else {
+      // Shadow
+      this.gfx.fillStyle(0x000000, 0.2);
+      this.gfx.fillEllipse(this.x, this.y + c.height / 2 + 3, c.width, 6);
+
       // Normal and Heavy: rectangle
       this.gfx.fillStyle(c.color, 1);
       this.gfx.fillRect(this.x - c.width / 2, this.y - c.height / 2, c.width, c.height);
+      // Outline
+      this.gfx.lineStyle(2, Phaser.Display.Color.IntegerToColor(c.color).darken(30).color, 0.8);
+      this.gfx.strokeRect(this.x - c.width / 2, this.y - c.height / 2, c.width, c.height);
 
       if (this.type === 'heavy') {
-        // Shield overlay: darker inner rectangle
+        // Shield overlay
         this.gfx.fillStyle(0x455A64, 0.9);
         this.gfx.fillRect(this.x - 7, this.y - 9, 14, 18);
         this.gfx.lineStyle(1, 0x263238, 1);
         this.gfx.strokeRect(this.x - 7, this.y - 9, 14, 18);
+        // Horizontal stripes for texture
+        for (let s = 0; s < 3; s++) {
+          this.gfx.lineStyle(1, 0x607D8B, 0.5);
+          this.gfx.lineBetween(this.x - 6, this.y - 6 + s * 6, this.x + 6, this.y - 6 + s * 6);
+        }
         // Shield highlight
         this.gfx.fillStyle(0x607D8B, 0.5);
         this.gfx.fillRect(this.x - 4, this.y - 6, 8, 3);
+      } else if (this.type === 'normal') {
+        // Eye dots
+        this.gfx.fillStyle(0xffffff, 0.9);
+        this.gfx.fillCircle(this.x - 3, this.y - c.height / 4, 1.5);
+        this.gfx.fillCircle(this.x + 3, this.y - c.height / 4, 1.5);
       }
 
       // Direction arrow
@@ -186,12 +242,17 @@ export class BaseEnemy {
       );
     }
 
+    // Slow effect: blue tint overlay when speedMultiplier < 1
     this.slowGfx.clear();
     if (this.slowed) {
       this.slowGfx.fillStyle(0xB388FF, 0.4);
       this.slowGfx.fillCircle(this.x, this.y, c.width / 2 + 4);
       this.slowGfx.lineStyle(1, 0x7C4DFF, 0.6);
       this.slowGfx.strokeCircle(this.x, this.y, c.width / 2 + 4);
+    }
+    if (this.speedMultiplier < 1 && !this.slowed) {
+      this.slowGfx.fillStyle(0x2196F3, 0.25);
+      this.slowGfx.fillCircle(this.x, this.y, c.width / 2 + 3);
     }
 
     this.hpBar.clear();

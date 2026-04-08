@@ -118,31 +118,53 @@ export class BaseTower {
   private draw() {
     this.gfx.clear();
 
+    // Drop shadow under tower
+    this.gfx.fillStyle(0x000000, 0.3);
+    this.gfx.fillEllipse(this.x + 3, this.y + 5, 44, 22);
+
+    // Base platform
     this.gfx.fillStyle(0x78909C, 1);
     this.gfx.fillRect(this.x - 24, this.y - 24, 48, 48);
+    // Darker bottom half for shading
+    this.gfx.fillStyle(0x607D8B, 0.4);
+    this.gfx.fillRect(this.x - 24, this.y, 48, 24);
 
     if (this.isBarracks()) {
       // House shape: rectangle body + triangle roof
       this.gfx.fillStyle(0xFFB300, 1);
       this.gfx.fillRect(this.x - 16, this.y - 8, 32, 26);
+      // Darker bottom shading
+      this.gfx.fillStyle(0xE6A200, 0.5);
+      this.gfx.fillRect(this.x - 16, this.y + 6, 32, 12);
       this.gfx.fillTriangle(this.x - 20, this.y - 8, this.x + 20, this.y - 8, this.x, this.y - 22);
       this.gfx.lineStyle(2, 0xF57C00, 1);
       this.gfx.strokeRect(this.x - 16, this.y - 8, 32, 26);
       this.gfx.strokeTriangle(this.x - 20, this.y - 8, this.x + 20, this.y - 8, this.x, this.y - 22);
+      // Door detail
+      this.gfx.fillStyle(0x8D6E00, 1);
+      this.gfx.fillRect(this.x - 4, this.y + 6, 8, 12);
+      this.gfx.lineStyle(1, 0x5D4E37, 1);
+      this.gfx.strokeRect(this.x - 4, this.y + 6, 8, 12);
+      // Specular highlight
+      this.gfx.fillStyle(0xffffff, 0.2);
+      this.gfx.fillCircle(this.x - 10, this.y - 14, 4);
 
-      // Status display (text only, no dot indicators)
       this.drawBarracksStatus();
     } else if (this.type === 'archer') {
-      // Circle with arrow tip triangle on top
       this.gfx.fillStyle(this.baseConfig.color, 1);
       this.gfx.fillCircle(this.x, this.y, this.baseConfig.radius);
+      // Shading: darker bottom half
+      this.gfx.fillStyle(0x388E3C, 0.4);
+      this.gfx.fillRect(this.x - this.baseConfig.radius, this.y, this.baseConfig.radius * 2, this.baseConfig.radius);
       this.gfx.fillTriangle(
         this.x, this.y - this.baseConfig.radius - 10,
         this.x - 6, this.y - this.baseConfig.radius + 2,
         this.x + 6, this.y - this.baseConfig.radius + 2,
       );
+      // Specular highlight
+      this.gfx.fillStyle(0xffffff, 0.2);
+      this.gfx.fillCircle(this.x - 6, this.y - 8, 4);
     } else if (this.type === 'magic') {
-      // Tall diamond/rhombus
       const r = this.baseConfig.radius;
       this.gfx.fillStyle(this.baseConfig.color, 1);
       this.gfx.fillPoints([
@@ -151,17 +173,35 @@ export class BaseTower {
         new Phaser.Geom.Point(this.x, this.y + r + 4),
         new Phaser.Geom.Point(this.x - r + 2, this.y),
       ], true);
-      // Energy orb at top (Vivian's suggestion)
+      // Outline
+      this.gfx.lineStyle(1, 0x7B1FA2, 0.6);
+      this.gfx.strokePoints([
+        new Phaser.Geom.Point(this.x, this.y - r - 4),
+        new Phaser.Geom.Point(this.x + r - 2, this.y),
+        new Phaser.Geom.Point(this.x, this.y + r + 4),
+        new Phaser.Geom.Point(this.x - r + 2, this.y),
+      ], true);
+      // Energy orb at top
       this.gfx.fillStyle(0xE0B0FF, 1);
       this.gfx.fillCircle(this.x, this.y - r - 2, 3);
+      // Specular highlight
+      this.gfx.fillStyle(0xffffff, 0.2);
+      this.gfx.fillCircle(this.x - 5, this.y - 6, 3);
     } else if (this.type === 'cannon') {
-      // Wide rectangle base + circle on top
       this.gfx.fillStyle(this.baseConfig.color, 1);
       this.gfx.fillRect(this.x - 16, this.y - 4, 32, 20);
       this.gfx.fillCircle(this.x, this.y - 6, 12);
+      // Darker bottom shading on barrel
+      this.gfx.fillStyle(0x424242, 0.4);
+      this.gfx.fillRect(this.x - 16, this.y + 6, 32, 10);
+      // Specular highlight
+      this.gfx.fillStyle(0xffffff, 0.2);
+      this.gfx.fillCircle(this.x - 5, this.y - 10, 3);
     } else {
       this.gfx.fillStyle(this.baseConfig.color, 1);
       this.gfx.fillCircle(this.x, this.y, this.baseConfig.radius);
+      this.gfx.fillStyle(0xffffff, 0.2);
+      this.gfx.fillCircle(this.x - 6, this.y - 8, 4);
     }
 
     if (this.level >= 2) {
@@ -182,6 +222,7 @@ export class BaseTower {
         color: '#ffffff',
         fontStyle: 'bold',
         fontFamily: 'Arial',
+        shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 3, fill: true, stroke: false },
       }).setOrigin(0.5);
     }
   }

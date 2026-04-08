@@ -109,22 +109,92 @@ export class GameScene extends Phaser.Scene {
   private drawMap() {
     const gfx = this.add.graphics();
     const pathSet = new Set(MAP_DATA.pathTiles.map((t) => `${t.col},${t.row}`));
+    const buildSpotSet = new Set(MAP_DATA.buildSpots.map((s) => `${Math.floor(s.x / TILE_SIZE)},${Math.floor(s.y / TILE_SIZE)}`));
+
+    // Seeded random for deterministic decoration
+    const seed = (c: number, r: number) => ((c * 7 + r * 13 + 37) * 2654435761) >>> 0;
+    const seedF = (c: number, r: number, i: number) => ((seed(c, r) + i * 9973) % 1000) / 1000;
 
     for (let r = 0; r < MAP_DATA.rows; r++) {
       for (let c = 0; c < MAP_DATA.cols; c++) {
         const isPath = pathSet.has(`${c},${r}`);
-        // Checkerboard pattern for grass, subtle variation for path
         const isEven = (r + c) % 2 === 0;
-        const grassColor = isEven ? 0x3A7D44 : 0x327038;
-        const pathColor = isEven ? 0xC4956A : 0xB8895E;
-        gfx.fillStyle(isPath ? pathColor : grassColor, 1);
-        gfx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        const tx = c * TILE_SIZE;
+        const ty = r * TILE_SIZE;
+
         if (isPath) {
-          gfx.lineStyle(1, 0x8D6E3F, 0.5);
+          const pathColor = isEven ? 0xC4956A : 0xB8895E;
+          gfx.fillStyle(pathColor, 1);
+          gfx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+
+          // Path edge darkening: darken edges that touch grass
+          const edgeColor = 0x8D6E3F;
+          if (!pathSet.has(`${c},${r - 1}`)) { gfx.fillStyle(edgeColor, 0.3); gfx.fillRect(tx, ty, TILE_SIZE, 3); }
+          if (!pathSet.has(`${c},${r + 1}`)) { gfx.fillStyle(edgeColor, 0.3); gfx.fillRect(tx, ty + TILE_SIZE - 3, TILE_SIZE, 3); }
+          if (!pathSet.has(`${c - 1},${r}`)) { gfx.fillStyle(edgeColor, 0.3); gfx.fillRect(tx, ty, 3, TILE_SIZE); }
+          if (!pathSet.has(`${c + 1},${r}`)) { gfx.fillStyle(edgeColor, 0.3); gfx.fillRect(tx + TILE_SIZE - 3, ty, 3, TILE_SIZE); }
+
+          // Subtle path grain
+          for (let i = 0; i < 3; i++) {
+            const px = tx + seedF(c, r, i * 2) * TILE_SIZE;
+            const py = ty + seedF(c, r, i * 2 + 1) * TILE_SIZE;
+            gfx.fillStyle(0x000000, 0.06);
+            gfx.fillCircle(px, py, 2 + seedF(c, r, i + 10) * 3);
+          }
         } else {
-          gfx.lineStyle(1, 0x000000, 0.08);
+          const grassColor = isEven ? 0x3A7D44 : 0x327038;
+          gfx.fillStyle(grassColor, 1);
+          gfx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+
+          // Subtle noise patches on grass
+          for (let i = 0; i < 4; i++) {
+            const px = tx + seedF(c, r, i * 3) * TILE_SIZE;
+            const py = ty + seedF(c, r, i * 3 + 1) * TILE_SIZE;
+            const darker = seedF(c, r, i * 3 + 2) > 0.5;
+            gfx.fillStyle(darker ? 0x2A5A30 : 0x4A9050, 0.3);
+            gfx.fillCircle(px, py, 3 + seedF(c, r, i + 20) * 5);
+          }
+
+          // Flowers/stones on ~20% of grass tiles
+          if (seedF(c, r, 50) < 0.2) {
+            const dotColors = [0xFFEB3B, 0xFF5722, 0xE91E63, 0x9E9E9E, 0x8BC34A];
+            const numDots = seedF(c, r, 51) > 0.5 ? 2 : 1;
+            for (let d = 0; d < numDots; d++) {
+              const dx = tx + 8 + seedF(c, r, 60 + d) * (TILE_SIZE - 16);
+              const dy = ty + 8 + seedF(c, r, 70 + d) * (TILE_SIZE - 16);
+              const col = dotColors[Math.floor(seedF(c, r, 80 + d) * dotColors.length)];
+              gfx.fillStyle(col, 0.7);
+              gfx.fillCircle(dx, dy, 1.5);
+            }
+          }
+
+          // Trees/bushes on ~10% of non-path, non-buildspot tiles
+          const isBuildSpot = buildSpotSet.has(`${c},${r}`);
+          if (!isBuildSpot && seedF(c, r, 90) < 0.1) {
+            const cx2 = tx + 16 + seedF(c, r, 91) * (TILE_SIZE - 32);
+            const cy2 = ty + 16 + seedF(c, r, 92) * (TILE_SIZE - 32);
+            const treeR = 6 + seedF(c, r, 93) * 4;
+            // Shadow
+            gfx.fillStyle(0x000000, 0.15);
+            gfx.fillEllipse(cx2 + 2, cy2 + treeR * 0.6, treeR * 1.8, treeR * 0.8);
+            // Trunk
+            gfx.fillStyle(0x5D4037, 1);
+            gfx.fillRect(cx2 - 1.5, cy2, 3, treeR * 0.6);
+            // Canopy
+            gfx.fillStyle(0x2E7D32, 1);
+            gfx.fillCircle(cx2, cy2 - 2, treeR);
+            gfx.lineStyle(1, 0x1B5E20, 0.8);
+            gfx.strokeCircle(cx2, cy2 - 2, treeR);
+          }
         }
-        gfx.strokeRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+        // Subtle grid lines
+        if (isPath) {
+          gfx.lineStyle(1, 0x8D6E3F, 0.3);
+        } else {
+          gfx.lineStyle(1, 0x000000, 0.06);
+        }
+        gfx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
       }
     }
   }
@@ -158,6 +228,12 @@ export class GameScene extends Phaser.Scene {
     const { x, y } = entry.spot;
     const container = this.add.container(x, y).setDepth(150);
 
+    // Semi-transparent dark backdrop circle
+    const backdrop = this.add.graphics();
+    backdrop.fillStyle(0x000000, 0.35);
+    backdrop.fillCircle(0, 0, 80);
+    container.add(backdrop);
+
     // Close button at center
     const closeBtn = this.add.text(0, 0, '✕', {
       fontSize: '14px', color: '#B0BEC5', fontFamily: 'Arial', fontStyle: 'bold',
@@ -185,12 +261,22 @@ export class GameScene extends Phaser.Scene {
       btnContainer.setScale(0);
       btnContainer.setAlpha(0);
 
-      // Circle background
+      // Circle background with shadow
       const circle = this.add.graphics();
+      // Shadow behind button
+      circle.fillStyle(0x000000, 0.3);
+      circle.fillCircle(2, 3, 25);
       circle.fillStyle(canAfford ? cfg.color : 0x616161, alpha);
       circle.fillCircle(0, 0, 24);
       circle.lineStyle(2, canAfford ? 0xffffff : 0x444444, alpha * 0.6);
       circle.strokeCircle(0, 0, 24);
+      // Inner highlight ring
+      if (canAfford) {
+        const lighterColor = Phaser.Display.Color.IntegerToColor(cfg.color);
+        lighterColor.lighten(30);
+        circle.lineStyle(1, lighterColor.color, 0.4);
+        circle.strokeCircle(0, 0, 20);
+      }
       btnContainer.add(circle);
 
       // Icon
@@ -502,10 +588,19 @@ export class GameScene extends Phaser.Scene {
 
   private createHUD() {
     const hudBg = this.add.graphics().setDepth(99);
-    hudBg.fillStyle(0x111122, 0.85);
+    // Gradient effect: darker top to slightly lighter bottom
+    hudBg.fillStyle(0x0a0a1a, 0.9);
     hudBg.fillRect(0, 0, GAME_WIDTH, 36);
+    hudBg.fillStyle(0x1a1a2e, 0.6);
+    hudBg.fillRect(0, 24, GAME_WIDTH, 12);
+    // Accent line at bottom
+    hudBg.lineStyle(1, 0x42A5F5, 0.7);
+    hudBg.lineBetween(0, 36, GAME_WIDTH, 36);
 
-    const style = { fontSize: '18px', color: '#ffffff', fontFamily: 'Arial' };
+    const style: Phaser.Types.GameObjects.Text.TextStyle = {
+      fontSize: '19px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
+      shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 2, fill: true, stroke: true },
+    };
 
     this.livesText = this.add.text(20, 8, '', style).setDepth(100);
     this.goldText = this.add.text(180, 8, '', style).setDepth(100);
@@ -697,10 +792,23 @@ export class GameScene extends Phaser.Scene {
     overlay.fillStyle(0x000000, 0.75);
     overlay.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
+    // Victory rays effect
+    if (won) {
+      const rays = this.add.graphics().setDepth(200);
+      for (let i = 0; i < 16; i++) {
+        const angle = (i / 16) * Math.PI * 2;
+        const endX = GAME_WIDTH / 2 + Math.cos(angle) * 500;
+        const endY = GAME_HEIGHT / 2 + Math.sin(angle) * 500;
+        rays.lineStyle(3, 0xFFD600, 0.08 + (i % 2) * 0.04);
+        rays.lineBetween(GAME_WIDTH / 2, GAME_HEIGHT / 2, endX, endY);
+      }
+    }
+
     const msg = won ? '🎉 Victory!' : '💀 Defeat!';
     const titleColor = won ? '#44ff88' : '#ff4444';
     this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 100, msg, {
-      fontSize: '52px', color: titleColor, fontStyle: 'bold', fontFamily: 'Arial',
+      fontSize: '58px', color: titleColor, fontStyle: 'bold', fontFamily: 'Arial',
+      shadow: { offsetX: 3, offsetY: 3, color: '#000000', blur: 6, fill: true, stroke: false },
     }).setOrigin(0.5).setDepth(201);
 
     const statsLines = [
@@ -712,6 +820,18 @@ export class GameScene extends Phaser.Scene {
     if (!won) {
       statsLines.push(`🌊 Reached Wave: ${this.waveManager.getCurrentWave()}/${TOTAL_WAVES}`);
     }
+
+    // Stats panel bordered box
+    const panelW = 320;
+    const panelH = statsLines.length * 28 + 30;
+    const panelX = GAME_WIDTH / 2 - panelW / 2;
+    const panelY = GAME_HEIGHT / 2 - 40 - panelH / 2;
+    const panelGfx = this.add.graphics().setDepth(201);
+    panelGfx.fillStyle(0x111122, 0.7);
+    panelGfx.fillRoundedRect(panelX, panelY, panelW, panelH, 8);
+    panelGfx.lineStyle(1, 0x42A5F5, 0.5);
+    panelGfx.strokeRoundedRect(panelX, panelY, panelW, panelH, 8);
+
     this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 10, statsLines.join('\n'), {
       fontSize: '18px', color: '#ccccdd', fontFamily: 'Arial', lineSpacing: 8, align: 'center',
     }).setOrigin(0.5).setDepth(201);
