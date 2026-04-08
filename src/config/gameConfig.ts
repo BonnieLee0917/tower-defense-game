@@ -149,11 +149,93 @@ export interface WaveEntry {
 }
 
 export const UPGRADE_CONFIG = {
-  levels: 3,
-  costMultiplier: [0, 1.0, 1.5],
-  damageMultiplier: [1.0, 1.5, 2.2],
-  rangeMultiplier: [1.0, 1.1, 1.2],
-  attackSpeedMultiplier: [1.0, 1.15, 1.3],
+  levels: 4, // Lv4 = specialization
+  costMultiplier: [0, 1.0, 1.5, 2.5], // Lv4 costs 2.5x base
+  damageMultiplier: [1.0, 1.5, 2.2, 3.0],
+  rangeMultiplier: [1.0, 1.1, 1.2, 1.3],
+  attackSpeedMultiplier: [1.0, 1.15, 1.3, 1.5],
+};
+
+// Lv4 Specialization definitions (KR-style dual path)
+export interface Specialization {
+  name: string;
+  description: string;
+  cost: number;
+  stats: {
+    damageMultiplier: number;
+    rangeMultiplier: number;
+    attackSpeedMultiplier: number;
+    splashOverride?: number;
+    special?: string;
+  };
+  color: number; // visual accent
+}
+
+export const SPECIALIZATIONS: Record<TowerType, [Specialization, Specialization]> = {
+  archer: [
+    {
+      name: 'Rangers Lodge',
+      description: 'Long range, high speed',
+      cost: 230,
+      stats: { damageMultiplier: 2.5, rangeMultiplier: 1.6, attackSpeedMultiplier: 2.0 },
+      color: 0x2E7D32,
+    },
+    {
+      name: 'Musketeer',
+      description: 'Massive damage, slow',
+      cost: 230,
+      stats: { damageMultiplier: 5.0, rangeMultiplier: 1.4, attackSpeedMultiplier: 0.6 },
+      color: 0xC62828,
+    },
+  ],
+  magic: [
+    {
+      name: 'Arcane Wizard',
+      description: 'AoE magic burst',
+      cost: 300,
+      stats: { damageMultiplier: 3.5, rangeMultiplier: 1.3, attackSpeedMultiplier: 0.8, splashOverride: 80 },
+      color: 0x4A148C,
+    },
+    {
+      name: 'Sorcerer',
+      description: 'Slow + weaken enemies',
+      cost: 300,
+      stats: { damageMultiplier: 2.0, rangeMultiplier: 1.5, attackSpeedMultiplier: 1.5, special: 'massDebuff' },
+      color: 0x00838F,
+    },
+  ],
+  cannon: [
+    {
+      name: 'Big Bertha',
+      description: 'Huge AoE explosions',
+      cost: 350,
+      stats: { damageMultiplier: 4.0, rangeMultiplier: 1.2, attackSpeedMultiplier: 0.4, splashOverride: 120 },
+      color: 0xBF360C,
+    },
+    {
+      name: 'Tesla',
+      description: 'Chain lightning',
+      cost: 350,
+      stats: { damageMultiplier: 2.5, rangeMultiplier: 1.4, attackSpeedMultiplier: 1.2, special: 'chainLightning' },
+      color: 0x0277BD,
+    },
+  ],
+  barracks: [
+    {
+      name: 'Holy Order',
+      description: 'Tanky paladins, heal',
+      cost: 230,
+      stats: { damageMultiplier: 2.0, rangeMultiplier: 1.0, attackSpeedMultiplier: 1.0, special: 'heal' },
+      color: 0xFDD835,
+    },
+    {
+      name: 'Assassin Guild',
+      description: 'Fast deadly rogues',
+      cost: 230,
+      stats: { damageMultiplier: 4.0, rangeMultiplier: 1.0, attackSpeedMultiplier: 2.0, special: 'criticalHit' },
+      color: 0x6A1B9A,
+    },
+  ],
 };
 
 export const WAVE_CONFIG: WaveEntry[][] = [

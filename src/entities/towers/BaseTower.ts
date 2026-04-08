@@ -12,6 +12,7 @@ export class BaseTower {
   public x: number;
   public y: number;
   public level = 1;
+  public specialization: import('../../config/gameConfig').Specialization | null = null;
   public readonly barracksId: number | null;
 
   private baseConfig: typeof TOWER_CONFIG[TowerType];
@@ -83,28 +84,50 @@ export class BaseTower {
   }
 
   private recalcStats() {
-    const lvlIdx = this.level - 1;
+    const lvlIdx = Math.min(this.level - 1, UPGRADE_CONFIG.damageMultiplier.length - 1);
     if (!this.isBarracks()) {
-      this.damage = this.baseConfig.damage * UPGRADE_CONFIG.damageMultiplier[lvlIdx];
-      this.range = this.baseConfig.range * UPGRADE_CONFIG.rangeMultiplier[lvlIdx];
-      this.attackSpeed = this.baseConfig.attackSpeed * UPGRADE_CONFIG.attackSpeedMultiplier[lvlIdx];
+      if (this.level === 4 && this.specialization) {
+        // Lv4 uses specialization multipliers
+        const s = this.specialization.stats;
+        this.damage = this.baseConfig.damage * s.damageMultiplier;
+        this.range = this.baseConfig.range * s.rangeMultiplier;
+        this.attackSpeed = this.baseConfig.attackSpeed * s.attackSpeedMultiplier;
+      } else {
+        this.damage = this.baseConfig.damage * UPGRADE_CONFIG.damageMultiplier[lvlIdx];
+        this.range = this.baseConfig.range * UPGRADE_CONFIG.rangeMultiplier[lvlIdx];
+        this.attackSpeed = this.baseConfig.attackSpeed * UPGRADE_CONFIG.attackSpeedMultiplier[lvlIdx];
+      }
     }
 
     for (const soldier of this.soldiers) {
-      soldier?.setLevel(this.level);
+      soldier?.setLevel(Math.min(this.level, 3)); // soldier stats cap at Lv3 config
     }
   }
 
   upgrade(): boolean {
-    if (this.level >= UPGRADE_CONFIG.levels) return false;
+    if (this.level >= 4) return false; // max level
+    if (this.level === 3 && !this.specialization) return false; // need specialization choice first
     this.level++;
     this.recalcStats();
     this.draw();
     return true;
   }
 
+  specialize(spec: import('../../config/gameConfig').Specialization): boolean {
+    if (this.level !== 3 || this.specialization) return false;
+    this.specialization = spec;
+    this.level = 4;
+    this.recalcStats();
+    this.draw();
+    return true;
+  }
+
+  needsSpecialization(): boolean {
+    return this.level === 3 && !this.specialization;
+  }
+
   getUpgradeCost(): number | null {
-    if (this.level >= UPGRADE_CONFIG.levels) return null;
+    if (this.level >= 3) return null; // Lv3→4 uses specialization cost, not upgrade
     return Math.round(this.baseConfig.cost * UPGRADE_CONFIG.costMultiplier[this.level]);
   }
 
@@ -264,7 +287,9 @@ export class BaseTower {
     }
 
     const letterMap: Record<TowerType, string> = { archer: 'A', cannon: 'C', magic: 'M', barracks: 'B' };
-    const labelText = `${letterMap[this.type]}${this.level}`;
+    const labelText = this.specialization
+      ? this.specialization.name.split(' ').map(w => w[0]).join('')
+      : `${letterMap[this.type]}${this.level}`;
     if (this.label) {
       this.label.setText(labelText);
     } else {

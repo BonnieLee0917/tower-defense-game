@@ -10,7 +10,7 @@ import { BaseTower } from '../entities/towers/BaseTower';
 import { Projectile } from '../entities/projectiles/Projectile';
 import {
   GAME_WIDTH, GAME_HEIGHT, TILE_SIZE, STARTING_LIVES, TOTAL_WAVES,
-  TOWER_CONFIG, UPGRADE_CONFIG, TowerType, EnemyType, EARLY_WAVE_BONUS, WAVE_COUNTDOWN, BARRACKS_CONFIG,
+  TOWER_CONFIG, UPGRADE_CONFIG, TowerType, EnemyType, EARLY_WAVE_BONUS, WAVE_COUNTDOWN, BARRACKS_CONFIG, SPECIALIZATIONS,
 } from '../config/gameConfig';
 
 export class GameScene extends Phaser.Scene {
@@ -194,9 +194,11 @@ export class GameScene extends Phaser.Scene {
         // Check if adjacent to path (don't place decorations next to path)
         const adjPath = [[-1,0],[1,0],[0,-1],[0,1]].some(([dc,dr]) => pathSet.has(`${c+dc},${r+dr}`));
         if (adjPath) continue;
-        // Deterministic random: ~15% of eligible tiles get decoration
+        // Deterministic random: ~10% of eligible tiles get decoration (edges preferred)
         const s = seed(c, r);
-        if (s % 100 < 15) {
+        const isEdge = c <= 1 || c >= MAP_DATA.cols - 2 || r <= 1 || r >= MAP_DATA.rows - 2;
+        const decoChance = isEdge ? 20 : 8; // edges get more decoration
+        if (s % 100 < decoChance) {
           const tx = c * TILE_SIZE + TILE_SIZE / 2;
           const ty = r * TILE_SIZE + TILE_SIZE / 2;
           const decoKey = decoKeys[s % decoKeys.length];
@@ -212,14 +214,14 @@ export class GameScene extends Phaser.Scene {
   private drawBuildSpots() {
     for (const spot of MAP_DATA.buildSpots) {
       const gfx = this.add.graphics();
-      // KR-style soft build spot marker
-      gfx.fillStyle(0xFFFFFF, 0.12);
+      // KR-style soft build spot marker (Vivian: subtle, not attention-grabbing)
+      gfx.fillStyle(0xF0E6D3, 0.08);
       gfx.fillRoundedRect(spot.x - 26, spot.y - 26, 52, 52, 8);
-      gfx.lineStyle(2, 0xFFFFFF, 0.35);
+      gfx.lineStyle(1.5, 0xF0E6D3, 0.4);
       gfx.strokeRoundedRect(spot.x - 26, spot.y - 26, 52, 52, 8);
-      // Corner accents (KR has small corner marks)
+      // Subtle corner accents
       const cx = spot.x, cy = spot.y, s = 24, m = 8;
-      gfx.lineStyle(2, 0xFFD600, 0.5);
+      gfx.lineStyle(1.5, 0xFFD600, 0.3);
       gfx.lineBetween(cx - s, cy - s, cx - s + m, cy - s);
       gfx.lineBetween(cx - s, cy - s, cx - s, cy - s + m);
       gfx.lineBetween(cx + s, cy - s, cx + s - m, cy - s);
@@ -373,7 +375,62 @@ export class GameScene extends Phaser.Scene {
     const upgradeCost = tower.getUpgradeCost();
     let btnIndex = 0;
 
-    // Top: Upgrade button
+    // Lv3 → Lv4: Show specialization choice (2 options side by side)
+    if (tower.needsSpecialization()) {
+      const specs = SPECIALIZATIONS[tower.type];
+      specs.forEach((spec, i) => {
+        const canAfford = this.economy.canAfford(spec.cost);
+        const alpha = canAfford ? 1.0 : 0.4;
+        const dx = i === 0 ? -45 : 45;
+
+        const specBtn = this.add.container(0, 0).setScale(0).setAlpha(0);
+        const bg = this.add.graphics();
+        bg.fillStyle(spec.color, alpha * 0.9);
+        bg.fillRoundedRect(-30, -30, 60, 60, 8);
+        bg.lineStyle(2, 0xFFD600, alpha * 0.6);
+        bg.strokeRoundedRect(-30, -30, 60, 60, 8);
+        specBtn.add(bg);
+
+        const nameText = this.add.text(0, -10, spec.name.split(' ').map(w => w[0]).join(''), {
+          fontSize: '18px', color: '#ffffff', fontFamily: 'Arial', fontStyle: 'bold',
+        }).setOrigin(0.5).setAlpha(alpha);
+        specBtn.add(nameText);
+
+        const costText = this.add.text(0, 10, `${spec.cost}g`, {
+          fontSize: '11px', color: canAfford ? '#FFD600' : '#616161', fontFamily: 'Arial', fontStyle: 'bold',
+        }).setOrigin(0.5).setAlpha(alpha);
+        specBtn.add(costText);
+
+        // Tooltip below
+        const descText = this.add.text(0, 38, spec.name, {
+          fontSize: '9px', color: '#cccccc', fontFamily: 'Arial',
+        }).setOrigin(0.5).setAlpha(alpha);
+        specBtn.add(descText);
+
+        if (canAfford) {
+          const zone = this.add.zone(0, 0, 60, 60).setInteractive({ useHandCursor: true });
+          zone.on('pointerdown', () => {
+            if (this.economy.spend(spec.cost)) {
+              tower.addInvestment(spec.cost);
+              tower.specialize(spec);
+              this.showFloatingText(tower.x, tower.y - 30, `★ ${spec.name}`, '#FFD600');
+              this.closeTowerMenu();
+              this.updateHUD();
+            }
+          });
+          specBtn.add(zone);
+        }
+
+        container.add(specBtn);
+        this.tweens.add({
+          targets: specBtn, x: dx, y: -65, scaleX: 1, scaleY: 1, alpha: 1,
+          duration: 250, delay: i * 50, ease: 'Back.easeOut',
+        });
+      });
+      btnIndex += 2;
+    }
+
+    // Top: Upgrade button (Lv1→2, Lv2→3)
     if (upgradeCost !== null) {
       const canAfford = this.economy.canAfford(upgradeCost);
       const alpha = canAfford ? 1.0 : 0.4;
