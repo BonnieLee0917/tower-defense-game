@@ -1082,7 +1082,7 @@ export class GameScene extends Phaser.Scene {
       btnGfx.fillRoundedRect(btnX + 4, btnY + 4, btnW - 8, btnH / 2 - 4, { tl: 10, tr: 10, bl: 0, br: 0 });
     });
     btn.on('pointerdown', () => {
-      this.scene.restart();
+      this.scene.start('MapSelectScene');
     });
 
     // Victory: Next Map button (if more maps available)

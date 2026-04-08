@@ -66,38 +66,7 @@ export class MenuScene extends Phaser.Scene {
       btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, 12);
     });
     zone.on('pointerdown', () => {
-      this.scene.start('GameScene', { mapIndex: this.selectedMap });
-    });
-
-    // Map selection
-    const mapNames = ['Green Valley', 'Forest Path', 'Fortress'];
-    const mapY = btnY + btnH + 40;
-    this.add.text(GAME_WIDTH / 2, mapY, 'Select Map', {
-      fontSize: '16px', color: '#90A4AE', fontFamily: 'Arial',
-    }).setOrigin(0.5);
-
-    mapNames.forEach((name, i) => {
-      const mx = GAME_WIDTH / 2 + (i - 1) * 140;
-      const my = mapY + 35;
-      const mbg = this.add.graphics();
-      const isSelected = i === this.selectedMap;
-      mbg.fillStyle(isSelected ? 0x1976D2 : 0x263238, 1);
-      mbg.fillRoundedRect(mx - 55, my - 18, 110, 36, 6);
-      if (isSelected) {
-        mbg.lineStyle(2, 0x42A5F5, 1);
-        mbg.strokeRoundedRect(mx - 55, my - 18, 110, 36, 6);
-      }
-
-      this.add.text(mx, my, `${i + 1}. ${name}`, {
-        fontSize: '13px', color: isSelected ? '#ffffff' : '#90A4AE',
-        fontFamily: 'Arial', fontStyle: isSelected ? 'bold' : 'normal',
-      }).setOrigin(0.5);
-
-      const mzone = this.add.zone(mx, my, 110, 36).setInteractive({ useHandCursor: true });
-      mzone.on('pointerdown', () => {
-        this.selectedMap = i;
-        this.scene.restart();
-      });
+      this.scene.start('MapSelectScene');
     });
 
     // Version / footer
