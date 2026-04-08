@@ -52,8 +52,8 @@ export class BaseEnemy {
     this.hpBar = scene.add.graphics().setDepth(6);
     this.slowGfx = scene.add.graphics().setDepth(6);
 
-    // Normal and Fast: use hand-drawn humanoid graphics instead of blobby sprites
-    if (this.type === 'normal' || this.type === 'fast') {
+    // Fast only: use hand-drawn humanoid graphics instead of blobby sprite
+    if (this.type === 'fast') {
       this.sprite.setVisible(false);
       this.bodyGfx = scene.add.graphics().setDepth(5);
     } else {
