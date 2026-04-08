@@ -21,7 +21,8 @@ export class BaseEnemy {
   public angle = 0;
   public distance = 0;
 
-  private gfx: Phaser.GameObjects.Graphics;
+  private shadowGfx: Phaser.GameObjects.Graphics;
+  private sprite: Phaser.GameObjects.Sprite;
   private hpBar: Phaser.GameObjects.Graphics;
   private slowGfx: Phaser.GameObjects.Graphics;
   private pathManager: PathManager;
@@ -45,9 +46,11 @@ export class BaseEnemy {
       this.flyingPath = null; // use main path via pathManager
     }
 
-    this.gfx = scene.add.graphics();
-    this.hpBar = scene.add.graphics();
-    this.slowGfx = scene.add.graphics();
+    this.shadowGfx = scene.add.graphics();
+    this.sprite = scene.add.sprite(0, 0, this.getTextureKey(), 0).setDepth(5);
+    this.hpBar = scene.add.graphics().setDepth(6);
+    this.slowGfx = scene.add.graphics().setDepth(6);
+    this.sprite.play(this.getAnimationKey());
     this.draw();
   }
 
@@ -105,142 +108,20 @@ export class BaseEnemy {
 
   private draw() {
     const c = this.config;
-    this.gfx.clear();
+    this.shadowGfx.clear();
 
-    if (this.isFlying) {
-      const bodyY = this.y - 6;
+    // Keep shadow/outline style from the previous visual polish
+    const shadowY = this.isFlying ? this.y + 12 : this.y + c.height / 2 + 3;
+    const shadowW = this.isFlying ? c.width : c.width;
+    const shadowH = this.isFlying ? 8 : 6;
+    this.shadowGfx.fillStyle(0x000000, this.isFlying ? 0.22 : 0.2);
+    this.shadowGfx.fillEllipse(this.x, shadowY, shadowW, shadowH);
 
-      // Shadow
-      this.gfx.fillStyle(0x000000, 0.22);
-      this.gfx.fillEllipse(this.x, this.y + 12, c.width, 8);
-
-      // Motion lines behind
-      const backAngle = this.angle + Math.PI;
-      for (let i = 1; i <= 2; i++) {
-        const lx = this.x + Math.cos(backAngle) * (c.width * 0.5 + i * 8);
-        const ly = bodyY + Math.sin(backAngle) * (c.height * 0.5 + i * 8);
-        const lex = lx + Math.cos(backAngle) * 10;
-        const ley = ly + Math.sin(backAngle) * 10;
-        this.gfx.lineStyle(1, c.color, 0.5 - i * 0.15);
-        this.gfx.lineBetween(lx, ly, lex, ley);
-      }
-
-      // Triangle body
-      const tipX = this.x + Math.cos(this.angle) * (c.width * 0.7);
-      const tipY = bodyY + Math.sin(this.angle) * (c.height * 0.7);
-      const perpAngle = this.angle + Math.PI / 2;
-      const backX1 = this.x + Math.cos(perpAngle) * (c.width * 0.5) - Math.cos(this.angle) * (c.width * 0.4);
-      const backY1 = bodyY + Math.sin(perpAngle) * (c.height * 0.5) - Math.sin(this.angle) * (c.height * 0.4);
-      const backX2 = this.x - Math.cos(perpAngle) * (c.width * 0.5) - Math.cos(this.angle) * (c.width * 0.4);
-      const backY2 = bodyY - Math.sin(perpAngle) * (c.height * 0.5) - Math.sin(this.angle) * (c.height * 0.4);
-
-      this.gfx.fillStyle(c.color, 1);
-      this.gfx.fillTriangle(tipX, tipY, backX1, backY1, backX2, backY2);
-      // Outline
-      this.gfx.lineStyle(2, Phaser.Display.Color.IntegerToColor(c.color).darken(30).color, 0.8);
-      this.gfx.strokeTriangle(tipX, tipY, backX1, backY1, backX2, backY2);
-
-      // Wing lines
-      this.gfx.lineStyle(2, 0xE1BEE7, 0.9);
-      this.gfx.lineBetween(backX1, backY1, backX1 + Math.cos(perpAngle) * 8, backY1 + Math.sin(perpAngle) * 8 - 4);
-      this.gfx.lineBetween(backX2, backY2, backX2 - Math.cos(perpAngle) * 8, backY2 - Math.sin(perpAngle) * 8 - 4);
-    } else if (this.type === 'fast') {
-      // Shadow
-      this.gfx.fillStyle(0x000000, 0.2);
-      this.gfx.fillEllipse(this.x, this.y + c.height / 2 + 3, c.width, 6);
-
-      // Speed lines behind
-      const backAngle = this.angle + Math.PI;
-      for (let i = 1; i <= 2; i++) {
-        const offset = (i % 2 === 0 ? 3 : -3);
-        const perpA = this.angle + Math.PI / 2;
-        const lx = this.x + Math.cos(backAngle) * (c.width * 0.6) + Math.cos(perpA) * offset;
-        const ly = this.y + Math.sin(backAngle) * (c.height * 0.6) + Math.sin(perpA) * offset;
-        const lex = lx + Math.cos(backAngle) * 12;
-        const ley = ly + Math.sin(backAngle) * 12;
-        this.gfx.lineStyle(1, c.color, 0.4);
-        this.gfx.lineBetween(lx, ly, lex, ley);
-      }
-
-      // Diamond shape
-      this.gfx.fillStyle(c.color, 1);
-      this.gfx.fillPoints([
-        new Phaser.Geom.Point(this.x, this.y - c.height / 2 - 2),
-        new Phaser.Geom.Point(this.x + c.width / 2 + 2, this.y),
-        new Phaser.Geom.Point(this.x, this.y + c.height / 2 + 2),
-        new Phaser.Geom.Point(this.x - c.width / 2 - 2, this.y),
-      ], true);
-      // Outline
-      this.gfx.lineStyle(2, Phaser.Display.Color.IntegerToColor(c.color).darken(30).color, 0.8);
-      this.gfx.strokePoints([
-        new Phaser.Geom.Point(this.x, this.y - c.height / 2 - 2),
-        new Phaser.Geom.Point(this.x + c.width / 2 + 2, this.y),
-        new Phaser.Geom.Point(this.x, this.y + c.height / 2 + 2),
-        new Phaser.Geom.Point(this.x - c.width / 2 - 2, this.y),
-      ], true);
-
-      // Direction arrow
-      const arrowSize = 5;
-      const ax = this.x + Math.cos(this.angle) * (c.width / 2 + 4);
-      const ay = this.y + Math.sin(this.angle) * (c.height / 2 + 4);
-      const pAngle = this.angle + Math.PI / 2;
-      this.gfx.fillStyle(0xffffff, 0.7);
-      this.gfx.fillTriangle(
-        ax + Math.cos(this.angle) * arrowSize,
-        ay + Math.sin(this.angle) * arrowSize,
-        ax + Math.cos(pAngle) * arrowSize * 0.5,
-        ay + Math.sin(pAngle) * arrowSize * 0.5,
-        ax - Math.cos(pAngle) * arrowSize * 0.5,
-        ay - Math.sin(pAngle) * arrowSize * 0.5,
-      );
-    } else {
-      // Shadow
-      this.gfx.fillStyle(0x000000, 0.2);
-      this.gfx.fillEllipse(this.x, this.y + c.height / 2 + 3, c.width, 6);
-
-      // Normal and Heavy: rectangle
-      this.gfx.fillStyle(c.color, 1);
-      this.gfx.fillRect(this.x - c.width / 2, this.y - c.height / 2, c.width, c.height);
-      // Outline
-      this.gfx.lineStyle(2, Phaser.Display.Color.IntegerToColor(c.color).darken(30).color, 0.8);
-      this.gfx.strokeRect(this.x - c.width / 2, this.y - c.height / 2, c.width, c.height);
-
-      if (this.type === 'heavy') {
-        // Shield overlay
-        this.gfx.fillStyle(0x455A64, 0.9);
-        this.gfx.fillRect(this.x - 7, this.y - 9, 14, 18);
-        this.gfx.lineStyle(1, 0x263238, 1);
-        this.gfx.strokeRect(this.x - 7, this.y - 9, 14, 18);
-        // Horizontal stripes for texture
-        for (let s = 0; s < 3; s++) {
-          this.gfx.lineStyle(1, 0x607D8B, 0.5);
-          this.gfx.lineBetween(this.x - 6, this.y - 6 + s * 6, this.x + 6, this.y - 6 + s * 6);
-        }
-        // Shield highlight
-        this.gfx.fillStyle(0x607D8B, 0.5);
-        this.gfx.fillRect(this.x - 4, this.y - 6, 8, 3);
-      } else if (this.type === 'normal') {
-        // Eye dots
-        this.gfx.fillStyle(0xffffff, 0.9);
-        this.gfx.fillCircle(this.x - 3, this.y - c.height / 4, 1.5);
-        this.gfx.fillCircle(this.x + 3, this.y - c.height / 4, 1.5);
-      }
-
-      // Direction arrow
-      const arrowSize = 6;
-      const ax = this.x + Math.cos(this.angle) * (c.width / 2 + 2);
-      const ay = this.y + Math.sin(this.angle) * (c.height / 2 + 2);
-      const perpAngle = this.angle + Math.PI / 2;
-      this.gfx.fillStyle(0xffffff, 0.7);
-      this.gfx.fillTriangle(
-        ax + Math.cos(this.angle) * arrowSize,
-        ay + Math.sin(this.angle) * arrowSize,
-        ax + Math.cos(perpAngle) * arrowSize * 0.5,
-        ay + Math.sin(perpAngle) * arrowSize * 0.5,
-        ax - Math.cos(perpAngle) * arrowSize * 0.5,
-        ay - Math.sin(perpAngle) * arrowSize * 0.5,
-      );
-    }
+    // Position sprite and scale to current logical size
+    this.sprite.setPosition(this.x, this.y + (this.isFlying ? -6 : 0));
+    this.sprite.setOrigin(0.5, 0.5);
+    this.sprite.setFlipX(Math.cos(this.angle) < -0.1);
+    this.sprite.setScale(c.width / 48, c.height / 48);
 
     // Slow effect: blue tint overlay when speedMultiplier < 1
     this.slowGfx.clear();
@@ -268,10 +149,31 @@ export class BaseEnemy {
     this.hpBar.fillRect(bx, by, barW * ratio, barH);
   }
 
+  private getTextureKey(): string {
+    switch (this.type) {
+      case 'normal': return 'enemy_normal_walk';
+      case 'fast': return 'enemy_fast_walk';
+      case 'heavy': return 'enemy_heavy_walk';
+      case 'flying': return 'enemy_flying_walk';
+      default: return 'enemy_normal_walk';
+    }
+  }
+
+  private getAnimationKey(): string {
+    switch (this.type) {
+      case 'normal': return 'enemy_normal_walk_anim';
+      case 'fast': return 'enemy_fast_walk_anim';
+      case 'heavy': return 'enemy_heavy_walk_anim';
+      case 'flying': return 'enemy_flying_walk_anim';
+      default: return 'enemy_normal_walk_anim';
+    }
+  }
+
   destroy() {
     if (this.destroyed) return;
     this.destroyed = true;
-    this.gfx.destroy();
+    this.shadowGfx.destroy();
+    this.sprite.destroy();
     this.hpBar.destroy();
     this.slowGfx.destroy();
   }

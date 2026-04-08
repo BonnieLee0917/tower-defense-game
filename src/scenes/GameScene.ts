@@ -107,7 +107,6 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drawMap() {
-    const gfx = this.add.graphics();
     const pathSet = new Set(MAP_DATA.pathTiles.map((t) => `${t.col},${t.row}`));
     const buildSpotSet = new Set(MAP_DATA.buildSpots.map((s) => `${Math.floor(s.x / TILE_SIZE)},${Math.floor(s.y / TILE_SIZE)}`));
 
@@ -115,86 +114,65 @@ export class GameScene extends Phaser.Scene {
     const seed = (c: number, r: number) => ((c * 7 + r * 13 + 37) * 2654435761) >>> 0;
     const seedF = (c: number, r: number, i: number) => ((seed(c, r) + i * 9973) % 1000) / 1000;
 
+    // Tileset frames:
+    // Row 0 (frames 0-7): grass variants
+    // Row 1 (frames 8-15): more grass / transition
+    // Row 2 (frames 16-23): path/dirt tiles
+    // Row 3 (frames 24-31): more path variants
+    // We'll use frames 0,1,8,9 for grass, frames 16,17,18,24,25 for path
+    const grassFrames = [0, 1, 8, 9];
+    const pathFrames = [16, 17, 18, 24, 25, 26];
+
     for (let r = 0; r < MAP_DATA.rows; r++) {
       for (let c = 0; c < MAP_DATA.cols; c++) {
         const isPath = pathSet.has(`${c},${r}`);
-        const isEven = (r + c) % 2 === 0;
-        const tx = c * TILE_SIZE;
-        const ty = r * TILE_SIZE;
+        const tx = c * TILE_SIZE + TILE_SIZE / 2;
+        const ty = r * TILE_SIZE + TILE_SIZE / 2;
 
-        if (isPath) {
-          const pathColor = isEven ? 0xC4956A : 0xB8895E;
-          gfx.fillStyle(pathColor, 1);
-          gfx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
+        // Pick a deterministic frame
+        const s = seed(c, r);
+        const frames = isPath ? pathFrames : grassFrames;
+        const frameIdx = frames[s % frames.length];
 
-          // Path edge darkening: darken edges that touch grass
-          const edgeColor = 0x8D6E3F;
-          if (!pathSet.has(`${c},${r - 1}`)) { gfx.fillStyle(edgeColor, 0.3); gfx.fillRect(tx, ty, TILE_SIZE, 3); }
-          if (!pathSet.has(`${c},${r + 1}`)) { gfx.fillStyle(edgeColor, 0.3); gfx.fillRect(tx, ty + TILE_SIZE - 3, TILE_SIZE, 3); }
-          if (!pathSet.has(`${c - 1},${r}`)) { gfx.fillStyle(edgeColor, 0.3); gfx.fillRect(tx, ty, 3, TILE_SIZE); }
-          if (!pathSet.has(`${c + 1},${r}`)) { gfx.fillStyle(edgeColor, 0.3); gfx.fillRect(tx + TILE_SIZE - 3, ty, 3, TILE_SIZE); }
+        const tile = this.add.image(tx, ty, 'tileset', frameIdx)
+          .setScale(TILE_SIZE / 32) // 32px tiles scaled to TILE_SIZE (64)
+          .setDepth(0);
 
-          // Subtle path grain
-          for (let i = 0; i < 3; i++) {
-            const px = tx + seedF(c, r, i * 2) * TILE_SIZE;
-            const py = ty + seedF(c, r, i * 2 + 1) * TILE_SIZE;
-            gfx.fillStyle(0x000000, 0.06);
-            gfx.fillCircle(px, py, 2 + seedF(c, r, i + 10) * 3);
-          }
-        } else {
-          const grassColor = isEven ? 0x3A7D44 : 0x327038;
-          gfx.fillStyle(grassColor, 1);
-          gfx.fillRect(tx, ty, TILE_SIZE, TILE_SIZE);
-
-          // Subtle noise patches on grass
-          for (let i = 0; i < 4; i++) {
-            const px = tx + seedF(c, r, i * 3) * TILE_SIZE;
-            const py = ty + seedF(c, r, i * 3 + 1) * TILE_SIZE;
-            const darker = seedF(c, r, i * 3 + 2) > 0.5;
-            gfx.fillStyle(darker ? 0x2A5A30 : 0x4A9050, 0.3);
-            gfx.fillCircle(px, py, 3 + seedF(c, r, i + 20) * 5);
-          }
+        // Decorations on grass tiles (trees/flowers using Graphics on top)
+        if (!isPath) {
+          const isBuildSpot = buildSpotSet.has(`${c},${r}`);
+          const gfx = this.add.graphics().setDepth(1);
+          const txPos = c * TILE_SIZE;
+          const tyPos = r * TILE_SIZE;
 
           // Flowers/stones on ~20% of grass tiles
           if (seedF(c, r, 50) < 0.2) {
             const dotColors = [0xFFEB3B, 0xFF5722, 0xE91E63, 0x9E9E9E, 0x8BC34A];
             const numDots = seedF(c, r, 51) > 0.5 ? 2 : 1;
             for (let d = 0; d < numDots; d++) {
-              const dx = tx + 8 + seedF(c, r, 60 + d) * (TILE_SIZE - 16);
-              const dy = ty + 8 + seedF(c, r, 70 + d) * (TILE_SIZE - 16);
+              const dx = txPos + 8 + seedF(c, r, 60 + d) * (TILE_SIZE - 16);
+              const dy = tyPos + 8 + seedF(c, r, 70 + d) * (TILE_SIZE - 16);
               const col = dotColors[Math.floor(seedF(c, r, 80 + d) * dotColors.length)];
               gfx.fillStyle(col, 0.7);
               gfx.fillCircle(dx, dy, 1.5);
             }
           }
 
-          // Trees/bushes on ~10% of non-path, non-buildspot tiles
-          const isBuildSpot = buildSpotSet.has(`${c},${r}`);
+          // Trees on ~10% of non-buildspot tiles
           if (!isBuildSpot && seedF(c, r, 90) < 0.1) {
-            const cx2 = tx + 16 + seedF(c, r, 91) * (TILE_SIZE - 32);
-            const cy2 = ty + 16 + seedF(c, r, 92) * (TILE_SIZE - 32);
+            const cx2 = txPos + 16 + seedF(c, r, 91) * (TILE_SIZE - 32);
+            const cy2 = tyPos + 16 + seedF(c, r, 92) * (TILE_SIZE - 32);
             const treeR = 6 + seedF(c, r, 93) * 4;
-            // Shadow
             gfx.fillStyle(0x000000, 0.15);
             gfx.fillEllipse(cx2 + 2, cy2 + treeR * 0.6, treeR * 1.8, treeR * 0.8);
-            // Trunk
             gfx.fillStyle(0x5D4037, 1);
             gfx.fillRect(cx2 - 1.5, cy2, 3, treeR * 0.6);
-            // Canopy
             gfx.fillStyle(0x2E7D32, 1);
             gfx.fillCircle(cx2, cy2 - 2, treeR);
             gfx.lineStyle(1, 0x1B5E20, 0.8);
             gfx.strokeCircle(cx2, cy2 - 2, treeR);
           }
         }
-
-        // Subtle grid lines
-        if (isPath) {
-          gfx.lineStyle(1, 0x8D6E3F, 0.3);
-        } else {
-          gfx.lineStyle(1, 0x000000, 0.06);
-        }
-        gfx.strokeRect(tx, ty, TILE_SIZE, TILE_SIZE);
       }
     }
   }

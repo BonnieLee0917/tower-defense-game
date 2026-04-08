@@ -16,6 +16,7 @@ export class BaseTower {
 
   private baseConfig: typeof TOWER_CONFIG[TowerType];
   private gfx: Phaser.GameObjects.Graphics;
+  private archerSprite: Phaser.GameObjects.Image | Phaser.GameObjects.Sprite | null = null;
   private rangeGfx: Phaser.GameObjects.Graphics;
   private cooldown = 0;
   private label: Phaser.GameObjects.Text | null = null;
@@ -125,9 +126,13 @@ export class BaseTower {
     // Base platform
     this.gfx.fillStyle(0x78909C, 1);
     this.gfx.fillRect(this.x - 24, this.y - 24, 48, 48);
-    // Darker bottom half for shading
     this.gfx.fillStyle(0x607D8B, 0.4);
     this.gfx.fillRect(this.x - 24, this.y, 48, 24);
+
+    if (this.archerSprite) {
+      this.archerSprite.destroy();
+      this.archerSprite = null;
+    }
 
     if (this.isBarracks()) {
       // House shape: rectangle body + triangle roof
@@ -151,19 +156,22 @@ export class BaseTower {
 
       this.drawBarracksStatus();
     } else if (this.type === 'archer') {
-      this.gfx.fillStyle(this.baseConfig.color, 1);
-      this.gfx.fillCircle(this.x, this.y, this.baseConfig.radius);
-      // Shading: darker bottom half
-      this.gfx.fillStyle(0x388E3C, 0.4);
-      this.gfx.fillRect(this.x - this.baseConfig.radius, this.y, this.baseConfig.radius * 2, this.baseConfig.radius);
-      this.gfx.fillTriangle(
-        this.x, this.y - this.baseConfig.radius - 10,
-        this.x - 6, this.y - this.baseConfig.radius + 2,
-        this.x + 6, this.y - this.baseConfig.radius + 2,
-      );
-      // Specular highlight
-      this.gfx.fillStyle(0xffffff, 0.2);
-      this.gfx.fillCircle(this.x - 6, this.y - 8, 4);
+      const spriteY = this.y - 6;
+      if (this.level === 1) {
+        this.archerSprite = this.scene.add.image(this.x, spriteY, 'archer_lv1').setDepth(5);
+        this.archerSprite.setScale(48 / 70);
+      } else if (this.level === 2) {
+        const sprite = this.scene.add.sprite(this.x, spriteY, 'archer_lv2', 0).setDepth(5);
+        sprite.play('archer_lv2_idle');
+        sprite.setScale(48 / 70);
+        this.archerSprite = sprite;
+      } else {
+        const sprite = this.scene.add.sprite(this.x, spriteY, 'archer_lv3', 0).setDepth(5);
+        sprite.play('archer_lv3_idle');
+        sprite.setScale(48 / 70);
+        this.archerSprite = sprite;
+      }
+      this.archerSprite.setOrigin(0.5, 0.8);
     } else if (this.type === 'magic') {
       const r = this.baseConfig.radius;
       this.gfx.fillStyle(this.baseConfig.color, 1);
@@ -224,6 +232,11 @@ export class BaseTower {
         fontFamily: 'Arial',
         shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 3, fill: true, stroke: false },
       }).setOrigin(0.5);
+    }
+
+    if (this.label) {
+      this.label.setDepth(8);
+      this.label.setPosition(this.x, this.y + 34);
     }
   }
 
@@ -328,6 +341,7 @@ export class BaseTower {
   destroy() {
     this.statusGfx?.destroy();
     this.statusText?.destroy();
+    this.archerSprite?.destroy();
     this.gfx.destroy();
     this.rangeGfx.destroy();
     this.label?.destroy();
