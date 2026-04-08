@@ -123,11 +123,12 @@ export class BaseTower {
     this.gfx.fillStyle(0x000000, 0.15);
     this.gfx.fillEllipse(this.x + 2, this.y + 4, 40, 18);
 
-    // Base platform — earthy tone to blend with map
+    // Base platform — earthy tone, scales with level
+    const baseSize = 20 + this.level * 2; // 22/24/26 per level
     this.gfx.fillStyle(0x8D6E4C, 0.85);
-    this.gfx.fillRect(this.x - 22, this.y - 22, 44, 44);
+    this.gfx.fillRect(this.x - baseSize, this.y - baseSize, baseSize * 2, baseSize * 2);
     this.gfx.fillStyle(0x6B5334, 0.3);
-    this.gfx.fillRect(this.x - 22, this.y, 44, 22);
+    this.gfx.fillRect(this.x - baseSize, this.y, baseSize * 2, baseSize);
 
     if (this.archerSprite) {
       this.archerSprite.destroy();
@@ -135,22 +136,25 @@ export class BaseTower {
     }
 
     if (this.isBarracks()) {
-      // House shape: rectangle body + triangle roof
-      this.gfx.fillStyle(0xFFB300, 1);
-      this.gfx.fillRect(this.x - 16, this.y - 8, 32, 26);
-      // Darker bottom shading
+      const bSize = 14 + this.level * 2; // grows with level
+      const colors = [0xFFB300, 0xF59600, 0xE68000]; // deeper each level
+      this.gfx.fillStyle(colors[this.level - 1] || colors[0], 1);
+      this.gfx.fillRect(this.x - bSize, this.y - 8, bSize * 2, 26);
       this.gfx.fillStyle(0xE6A200, 0.5);
-      this.gfx.fillRect(this.x - 16, this.y + 6, 32, 12);
-      this.gfx.fillTriangle(this.x - 20, this.y - 8, this.x + 20, this.y - 8, this.x, this.y - 22);
+      this.gfx.fillRect(this.x - bSize, this.y + 6, bSize * 2, 12);
+      this.gfx.fillTriangle(this.x - bSize - 4, this.y - 8, this.x + bSize + 4, this.y - 8, this.x, this.y - 22);
       this.gfx.lineStyle(2, 0xF57C00, 1);
-      this.gfx.strokeRect(this.x - 16, this.y - 8, 32, 26);
-      this.gfx.strokeTriangle(this.x - 20, this.y - 8, this.x + 20, this.y - 8, this.x, this.y - 22);
-      // Door detail
+      this.gfx.strokeRect(this.x - bSize, this.y - 8, bSize * 2, 26);
+      this.gfx.strokeTriangle(this.x - bSize - 4, this.y - 8, this.x + bSize + 4, this.y - 8, this.x, this.y - 22);
       this.gfx.fillStyle(0x8D6E00, 1);
       this.gfx.fillRect(this.x - 4, this.y + 6, 8, 12);
       this.gfx.lineStyle(1, 0x5D4E37, 1);
       this.gfx.strokeRect(this.x - 4, this.y + 6, 8, 12);
-      // Specular highlight
+      // Level 3 glow
+      if (this.level >= 3) {
+        this.gfx.lineStyle(2, 0xFFD600, 0.4);
+        this.gfx.strokeCircle(this.x, this.y, bSize + 10);
+      }
       this.gfx.fillStyle(0xffffff, 0.2);
       this.gfx.fillCircle(this.x - 10, this.y - 14, 4);
 
@@ -172,37 +176,49 @@ export class BaseTower {
         this.archerSprite = sprite;
       }
       this.archerSprite.setOrigin(0.5, 0.8);
+      // Tint to match map color temperature (Vivian: CraftPix warm → Kenney cool)
+      this.archerSprite.setTint(0xddffdd);
     } else if (this.type === 'magic') {
-      const r = this.baseConfig.radius;
-      this.gfx.fillStyle(this.baseConfig.color, 1);
+      const r = this.baseConfig.radius + this.level * 2; // grows with level
+      const colors = [0xAB47BC, 0x8E24AA, 0x6A1B9A]; // deeper purple each level
+      this.gfx.fillStyle(colors[this.level - 1] || colors[0], 1);
       this.gfx.fillPoints([
         new Phaser.Geom.Point(this.x, this.y - r - 4),
         new Phaser.Geom.Point(this.x + r - 2, this.y),
         new Phaser.Geom.Point(this.x, this.y + r + 4),
         new Phaser.Geom.Point(this.x - r + 2, this.y),
       ], true);
-      // Outline
-      this.gfx.lineStyle(1, 0x7B1FA2, 0.6);
+      this.gfx.lineStyle(1, 0x4A148C, 0.6);
       this.gfx.strokePoints([
         new Phaser.Geom.Point(this.x, this.y - r - 4),
         new Phaser.Geom.Point(this.x + r - 2, this.y),
         new Phaser.Geom.Point(this.x, this.y + r + 4),
         new Phaser.Geom.Point(this.x - r + 2, this.y),
       ], true);
-      // Energy orb at top
+      // Energy orb grows with level
+      const orbSize = 2 + this.level;
       this.gfx.fillStyle(0xE0B0FF, 1);
-      this.gfx.fillCircle(this.x, this.y - r - 2, 3);
-      // Specular highlight
+      this.gfx.fillCircle(this.x, this.y - r - 2, orbSize);
+      // Level 3 glow ring
+      if (this.level >= 3) {
+        this.gfx.lineStyle(2, 0xE040FB, 0.4);
+        this.gfx.strokeCircle(this.x, this.y, r + 6);
+      }
       this.gfx.fillStyle(0xffffff, 0.2);
       this.gfx.fillCircle(this.x - 5, this.y - 6, 3);
     } else if (this.type === 'cannon') {
-      this.gfx.fillStyle(this.baseConfig.color, 1);
-      this.gfx.fillRect(this.x - 16, this.y - 4, 32, 20);
-      this.gfx.fillCircle(this.x, this.y - 6, 12);
-      // Darker bottom shading on barrel
+      const colors = [0x616161, 0x424242, 0x212121]; // darker each level
+      this.gfx.fillStyle(colors[this.level - 1] || colors[0], 1);
+      const cSize = 14 + this.level * 2; // grows with level
+      this.gfx.fillRect(this.x - cSize, this.y - 4, cSize * 2, 20);
+      this.gfx.fillCircle(this.x, this.y - 6, 10 + this.level * 2);
       this.gfx.fillStyle(0x424242, 0.4);
-      this.gfx.fillRect(this.x - 16, this.y + 6, 32, 10);
-      // Specular highlight
+      this.gfx.fillRect(this.x - cSize, this.y + 6, cSize * 2, 10);
+      // Level 3 glow
+      if (this.level >= 3) {
+        this.gfx.lineStyle(2, 0xFF6D00, 0.4);
+        this.gfx.strokeCircle(this.x, this.y, cSize + 6);
+      }
       this.gfx.fillStyle(0xffffff, 0.2);
       this.gfx.fillCircle(this.x - 5, this.y - 10, 3);
     } else {
