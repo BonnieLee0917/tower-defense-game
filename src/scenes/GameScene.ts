@@ -577,9 +577,8 @@ export class GameScene extends Phaser.Scene {
     this.input.on('pointerdown', (ptr: Phaser.Input.Pointer, objects: Phaser.GameObjects.GameObject[]) => {
       // Check if any clicked object is a build spot zone (has __buildSpot marker)
       const clickedBuildSpot = objects.some((obj: any) => obj.__isBuildSpot);
-      if (clickedBuildSpot) return; // build spot handles its own click
 
-      // Try to find a tower at click position
+      // Try to find a tower at click position FIRST (tower menu takes priority)
       let clickedTower: BaseTower | null = null;
       for (const tower of this.towers) {
         const d = Math.hypot(ptr.x - tower.x, ptr.y - tower.y);
@@ -588,12 +587,16 @@ export class GameScene extends Phaser.Scene {
           break;
         }
       }
+
       if (clickedTower) {
         this.closeAllMenus();
         this.showTowerMenu(clickedTower);
-      } else if (objects.length === 0) {
-        this.closeAllMenus();
+        return;
       }
+
+      if (clickedBuildSpot) return; // unoccupied build spot handles its own click
+
+      this.closeAllMenus();
     });
 
     this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {

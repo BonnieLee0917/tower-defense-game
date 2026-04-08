@@ -125,9 +125,9 @@ export class BaseTower {
 
     // Base platform — earthy tone to blend with map
     this.gfx.fillStyle(0x8D6E4C, 0.85);
-    this.gfx.fillRoundedRect(this.x - 22, this.y - 22, 44, 44, 6);
+    this.gfx.fillRect(this.x - 22, this.y - 22, 44, 44);
     this.gfx.fillStyle(0x6B5334, 0.3);
-    this.gfx.fillRoundedRect(this.x - 22, this.y, 44, 22, { tl: 0, tr: 0, bl: 6, br: 6 });
+    this.gfx.fillRect(this.x - 22, this.y, 44, 22);
 
     if (this.archerSprite) {
       this.archerSprite.destroy();
