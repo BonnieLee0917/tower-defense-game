@@ -110,11 +110,14 @@ export class BaseEnemy {
     const c = this.config;
     this.shadowGfx.clear();
 
-    // Keep shadow/outline style from the previous visual polish
-    const shadowY = this.isFlying ? this.y + 12 : this.y + c.height / 2 + 3;
-    const shadowW = this.isFlying ? c.width : c.width;
-    const shadowH = this.isFlying ? 8 : 6;
-    this.shadowGfx.fillStyle(0x000000, this.isFlying ? 0.22 : 0.2);
+    // Shadow scaled to match actual displayed size
+    const scaleMap2: Record<string, number> = { normal: 2.0, fast: 1.8, heavy: 2.5, flying: 2.0 };
+    const enemyScale = scaleMap2[this.type] || 2.0;
+    const displayW = 48 * enemyScale;
+    const shadowY = this.isFlying ? this.y + 16 : this.y + displayW / 2 + 2;
+    const shadowW = displayW * 0.7;
+    const shadowH = this.isFlying ? 10 : 8;
+    this.shadowGfx.fillStyle(0x000000, this.isFlying ? 0.25 : 0.3);
     this.shadowGfx.fillEllipse(this.x, shadowY, shadowW, shadowH);
 
     // Position sprite and scale to current logical size
@@ -129,11 +132,9 @@ export class BaseEnemy {
     } else {
       this.sprite.setFlipX(movingRight);
     }
-    // Scale enemies to be clearly visible on map
-    // Normal/Fast: ~44px, Heavy: ~52px, all clearly readable on 64px tiles
-    const sizeMap: Record<string, number> = { normal: 44, fast: 40, heavy: 52, flying: 42 };
-    const displaySize = sizeMap[this.type] || 44;
-    const scale = displaySize / 48;
+    // Scale enemies per Vivian's spec — clearly visible on 64px tiles
+    const scaleMap: Record<string, number> = { normal: 2.0, fast: 1.8, heavy: 2.5, flying: 2.0 };
+    const scale = scaleMap[this.type] || 2.0;
     this.sprite.setScale(scale, scale);
 
     // Slow effect: blue tint overlay when speedMultiplier < 1
