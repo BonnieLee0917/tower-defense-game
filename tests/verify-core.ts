@@ -196,6 +196,56 @@ for (const wave of WAVE_CONFIG) {
 }
 console.log(`  📊 全关卡击杀总奖励: ${totalReward}g`);
 
+// ===== Phase 3 预留测试（待功能合入后自动激活）=====
+console.log('\n🚀 Phase 3 预检');
+
+// 全局技能
+try {
+  const gc = require('../src/config/gameConfig');
+  if (gc.GLOBAL_SKILLS_CONFIG) {
+    console.log('\n🔥 10. 全局技能');
+    const rof = gc.GLOBAL_SKILLS_CONFIG.rainOfFire;
+    const reinf = gc.GLOBAL_SKILLS_CONFIG.reinforcements;
+    if (rof) {
+      assert(rof.cooldown > 0, 'Rain of Fire 冷却 > 0');
+      assert(rof.damage > 0, 'Rain of Fire 伤害 > 0');
+      assert(rof.radius > 0, 'Rain of Fire 范围 > 0');
+    }
+    if (reinf) {
+      assert(reinf.cooldown > 0, 'Reinforcements 冷却 > 0');
+      assert(reinf.duration > 0, 'Reinforcements 持续 > 0');
+    }
+  } else { console.log('  ⏳ 全局技能 — 待合入'); }
+} catch { console.log('  ⏳ 全局技能 — 待合入'); }
+
+// Lv4 专精
+try {
+  const gc = require('../src/config/gameConfig');
+  if (gc.SPECIALIZATION_CONFIG) {
+    console.log('\n⭐ 11. Lv4 专精');
+    const specs = Object.keys(gc.SPECIALIZATION_CONFIG);
+    assert(specs.length >= 8, `${specs.length} 种专精（目标 8）`);
+  } else { console.log('  ⏳ Lv4 专精 — 待合入'); }
+} catch { console.log('  ⏳ Lv4 专精 — 待合入'); }
+
+// 星级评价
+try {
+  const gc = require('../src/config/gameConfig');
+  if (gc.STAR_RATING_CONFIG) {
+    console.log('\n⭐ 12. 星级评价');
+    assert(gc.STAR_RATING_CONFIG.thresholds !== undefined, '星级阈值配置存在');
+  } else { console.log('  ⏳ 星级评价 — 待合入'); }
+} catch { console.log('  ⏳ 星级评价 — 待合入'); }
+
+// 多关卡
+try {
+  const gc = require('../src/config/gameConfig');
+  if (gc.MAP_LIST && gc.MAP_LIST.length > 1) {
+    console.log('\n🗺️ 13. 多关卡');
+    assert(gc.MAP_LIST.length >= 3, `${gc.MAP_LIST.length} 张地图（目标 3）`);
+  } else { console.log('  ⏳ 多关卡 — 待合入'); }
+} catch { console.log('  ⏳ 多关卡 — 待合入'); }
+
 // ===== 总结 =====
 console.log('\n' + '='.repeat(50));
 console.log(`🧪 完整验证完成: ${passed} 通过, ${failed} 失败`);
