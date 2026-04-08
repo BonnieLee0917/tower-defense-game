@@ -7,17 +7,17 @@ export class PreloadScene extends Phaser.Scene {
 
   preload() {
     // Grass tiles (GREEN) - verified by Vivian's color analysis
-    this.load.image('grass1', 'assets/tiles/towerDefense_tile024.png'); // pure green
-    this.load.image('grass2', 'assets/tiles/towerDefense_tile069.png'); // grass variant
-    this.load.image('grass3', 'assets/tiles/towerDefense_tile070.png'); // grass variant
-    this.load.image('grass4', 'assets/tiles/towerDefense_tile249.png'); // green ground
-    this.load.image('grass5', 'assets/tiles/towerDefense_tile038.png'); // grass variant
-    this.load.image('grass6', 'assets/tiles/towerDefense_tile071.png'); // grass variant
+    this.load.image('grass1', 'assets/tiles/kenney/towerDefense_tile024.png'); // pure green
+    this.load.image('grass2', 'assets/tiles/kenney/towerDefense_tile069.png'); // grass variant
+    this.load.image('grass3', 'assets/tiles/kenney/towerDefense_tile070.png'); // grass variant
+    this.load.image('grass4', 'assets/tiles/kenney/towerDefense_tile249.png'); // green ground
+    this.load.image('grass5', 'assets/tiles/kenney/towerDefense_tile038.png'); // grass variant
+    this.load.image('grass6', 'assets/tiles/kenney/towerDefense_tile071.png'); // grass variant
     // Path tiles (BROWN/SAND)
-    this.load.image('path1', 'assets/tiles/towerDefense_tile001.png');
-    this.load.image('path2', 'assets/tiles/towerDefense_tile002.png');
-    this.load.image('path3', 'assets/tiles/towerDefense_tile003.png');
-    this.load.image('path4', 'assets/tiles/towerDefense_tile004.png');
+    this.load.image('path1', 'assets/tiles/kenney/towerDefense_tile001.png');
+    this.load.image('path2', 'assets/tiles/kenney/towerDefense_tile002.png');
+    this.load.image('path3', 'assets/tiles/kenney/towerDefense_tile003.png');
+    this.load.image('path4', 'assets/tiles/kenney/towerDefense_tile004.png');
 
     // --- Tower sprites (archer only) ---
     // 1.png = 70x130 single frame, 3.png = 280x130 (4 frames), 5.png = 420x130 (6 frames)
