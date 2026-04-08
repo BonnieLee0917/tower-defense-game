@@ -125,7 +125,7 @@ assert(archerVsFlying === 10, '弓箭塔对飞行单位满伤害');
 
 // ===== 6. 升级系统 =====
 console.log('\n⬆️ 6. 升级系统');
-assert(UPGRADE_CONFIG.levels === 3, '3 级升级');
+assert(UPGRADE_CONFIG.levels === 4, '4 级升级（Lv4 = 专精）');
 assert(UPGRADE_CONFIG.damageMultiplier[2] === 2.2, 'Lv3 伤害 ×2.2');
 assert(UPGRADE_CONFIG.rangeMultiplier[2] === 1.2, 'Lv3 射程 ×1.2');
 assert(UPGRADE_CONFIG.attackSpeedMultiplier[2] === 1.3, 'Lv3 攻速 ×1.3');
@@ -196,14 +196,34 @@ for (const wave of WAVE_CONFIG) {
 }
 console.log(`  📊 全关卡击杀总奖励: ${totalReward}g`);
 
+// ===== 10. Lv4 专精系统 =====
+console.log('\n⭐ 10. Lv4 专精系统');
+import { SPECIALIZATIONS } from '../src/config/gameConfig';
+assert(Object.keys(SPECIALIZATIONS).length === 4, '4 种塔都有专精');
+for (const [type, specs] of Object.entries(SPECIALIZATIONS)) {
+  assert(specs.length === 2, `${type} 有 2 种专精分支`);
+  for (const spec of specs) {
+    assert(spec.name.length > 0, `${type} 专精名称非空`);
+    assert(spec.cost > 0, `${spec.name} 专精费用 > 0`);
+    assert(spec.stats.damageMultiplier > 0, `${spec.name} 伤害倍率 > 0`);
+  }
+}
+
+// ===== 11. 多关卡 =====
+console.log('\n🗺️ 11. 多关卡');
+import { MAP2_DATA } from '../src/maps/map2';
+import { MAP3_DATA } from '../src/maps/map3';
+assert(MAP2_DATA.waypoints.length >= 4, 'Map2 有足够路径点');
+assert(MAP2_DATA.buildSpots.length >= 8, 'Map2 有足够建塔点');
+assert(MAP3_DATA.waypoints.length >= 4, 'Map3 有足够路径点');
+assert(MAP3_DATA.buildSpots.length >= 8, 'Map3 有足够建塔点');
+
 // ===== Phase 3 预留测试（待功能合入后自动激活）=====
 console.log('\n🚀 Phase 3 预检');
-
-// 全局技能
 try {
   const gc = require('../src/config/gameConfig');
   if (gc.GLOBAL_SKILLS_CONFIG) {
-    console.log('\n🔥 10. 全局技能');
+    console.log('\n🔥 12. 全局技能');
     const rof = gc.GLOBAL_SKILLS_CONFIG.rainOfFire;
     const reinf = gc.GLOBAL_SKILLS_CONFIG.reinforcements;
     if (rof) {
@@ -217,34 +237,6 @@ try {
     }
   } else { console.log('  ⏳ 全局技能 — 待合入'); }
 } catch { console.log('  ⏳ 全局技能 — 待合入'); }
-
-// Lv4 专精
-try {
-  const gc = require('../src/config/gameConfig');
-  if (gc.SPECIALIZATION_CONFIG) {
-    console.log('\n⭐ 11. Lv4 专精');
-    const specs = Object.keys(gc.SPECIALIZATION_CONFIG);
-    assert(specs.length >= 8, `${specs.length} 种专精（目标 8）`);
-  } else { console.log('  ⏳ Lv4 专精 — 待合入'); }
-} catch { console.log('  ⏳ Lv4 专精 — 待合入'); }
-
-// 星级评价
-try {
-  const gc = require('../src/config/gameConfig');
-  if (gc.STAR_RATING_CONFIG) {
-    console.log('\n⭐ 12. 星级评价');
-    assert(gc.STAR_RATING_CONFIG.thresholds !== undefined, '星级阈值配置存在');
-  } else { console.log('  ⏳ 星级评价 — 待合入'); }
-} catch { console.log('  ⏳ 星级评价 — 待合入'); }
-
-// 多关卡
-try {
-  const gc = require('../src/config/gameConfig');
-  if (gc.MAP_LIST && gc.MAP_LIST.length > 1) {
-    console.log('\n🗺️ 13. 多关卡');
-    assert(gc.MAP_LIST.length >= 3, `${gc.MAP_LIST.length} 张地图（目标 3）`);
-  } else { console.log('  ⏳ 多关卡 — 待合入'); }
-} catch { console.log('  ⏳ 多关卡 — 待合入'); }
 
 // ===== 总结 =====
 console.log('\n' + '='.repeat(50));
