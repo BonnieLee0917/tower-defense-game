@@ -52,13 +52,8 @@ export class BaseEnemy {
     this.hpBar = scene.add.graphics().setDepth(6);
     this.slowGfx = scene.add.graphics().setDepth(6);
 
-    // Fast only: use hand-drawn humanoid graphics instead of blobby sprite
-    if (this.type === 'fast') {
-      this.sprite.setVisible(false);
-      this.bodyGfx = scene.add.graphics().setDepth(5);
-    } else {
-      this.sprite.play(this.getAnimationKey());
-    }
+    // All enemies use sprite animations for visual consistency
+    this.sprite.play(this.getAnimationKey());
     this.draw();
   }
 
@@ -163,71 +158,6 @@ export class BaseEnemy {
     if (this.sprite.visible && this.sprite.preFX) {
       this.sprite.preFX.clear();
       this.sprite.preFX.addGlow(0x000000, 2, 0, false, 0.3, 12);
-    }
-
-    // Hand-drawn humanoid bodies for normal/fast (replaces blobby sprites)
-    if (this.bodyGfx) {
-      this.bodyGfx.clear();
-      const bx = this.x, by = this.y;
-      const facing = movingLeft ? -1 : 1;
-      if (this.type === 'normal') {
-        // Red infantry soldier
-        // Legs (walking animation via offset)
-        const walkCycle = Math.sin(Date.now() * 0.008) * 4;
-        this.bodyGfx.fillStyle(0x5D4037, 1); // brown boots
-        this.bodyGfx.fillRect(bx - 5 * facing + walkCycle, by + 6, 4, 8);
-        this.bodyGfx.fillRect(bx + 3 * facing - walkCycle, by + 6, 4, 8);
-        // Body (red tunic)
-        this.bodyGfx.fillStyle(0xC62828, 1);
-        this.bodyGfx.fillRect(bx - 7, by - 8, 14, 16);
-        // Belt
-        this.bodyGfx.fillStyle(0x5D4037, 1);
-        this.bodyGfx.fillRect(bx - 7, by + 4, 14, 3);
-        // Head
-        this.bodyGfx.fillStyle(0xE8C4A0, 1);
-        this.bodyGfx.fillCircle(bx, by - 14, 6);
-        // Helmet
-        this.bodyGfx.fillStyle(0x757575, 1);
-        this.bodyGfx.fillRect(bx - 6, by - 20, 12, 4);
-        // Eyes
-        this.bodyGfx.fillStyle(0x000000, 1);
-        this.bodyGfx.fillCircle(bx + 2 * facing, by - 15, 1.5);
-        // Shield
-        this.bodyGfx.fillStyle(0x8D6E00, 1);
-        this.bodyGfx.fillRect(bx - 10 * facing, by - 6, 4, 10);
-        // Sword
-        this.bodyGfx.fillStyle(0xBDBDBD, 1);
-        this.bodyGfx.fillRect(bx + 8 * facing, by - 10, 2, 14);
-        // Outline
-        this.bodyGfx.lineStyle(1, 0x000000, 0.5);
-        this.bodyGfx.strokeRect(bx - 7, by - 8, 14, 16);
-      } else if (this.type === 'fast') {
-        // Green scout / rogue
-        const walkCycle = Math.sin(Date.now() * 0.012) * 5;
-        // Legs (thin, fast stride)
-        this.bodyGfx.fillStyle(0x4E342E, 1);
-        this.bodyGfx.fillRect(bx - 3 + walkCycle, by + 4, 3, 8);
-        this.bodyGfx.fillRect(bx + 1 - walkCycle, by + 4, 3, 8);
-        // Body (green cloak, triangular)
-        this.bodyGfx.fillStyle(0x558B2F, 1);
-        this.bodyGfx.fillTriangle(bx, by - 10, bx - 8, by + 5, bx + 8, by + 5);
-        // Hood
-        this.bodyGfx.fillStyle(0x33691E, 1);
-        this.bodyGfx.fillTriangle(bx, by - 18, bx - 6, by - 8, bx + 6, by - 8);
-        // Face
-        this.bodyGfx.fillStyle(0xE8C4A0, 1);
-        this.bodyGfx.fillCircle(bx, by - 12, 4);
-        // Eyes
-        this.bodyGfx.fillStyle(0x000000, 1);
-        this.bodyGfx.fillCircle(bx + 1.5 * facing, by - 13, 1);
-        // Dagger
-        this.bodyGfx.fillStyle(0xBDBDBD, 1);
-        this.bodyGfx.fillRect(bx + 7 * facing, by - 4, 2, 10);
-        // Speed trail
-        this.bodyGfx.lineStyle(1.5, 0xFFD600, 0.4);
-        this.bodyGfx.lineBetween(bx - 12 * facing, by - 2, bx - 20 * facing, by);
-        this.bodyGfx.lineBetween(bx - 12 * facing, by + 4, bx - 18 * facing, by + 6);
-      }
     }
 
     // Slow effect: blue tint overlay when speedMultiplier < 1
