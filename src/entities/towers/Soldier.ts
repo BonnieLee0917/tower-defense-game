@@ -229,17 +229,19 @@ export class Soldier {
       this.gfx.lineBetween(midX + 4, midY - 4, midX - 4, midY + 4);
     }
 
-    // Health bar - always visible
-    const barW = 20;
-    const barH = 3;
-    const bx = this.x - barW / 2;
-    const by = this.y - 12 - drawR;
-    this.gfx.fillStyle(0x37474F, 1);
-    this.gfx.fillRect(bx, by, barW, barH);
-    const hpRatio = this.hp / this.maxHp;
-    const hpColor = hpRatio > 0.5 ? 0x4CAF50 : hpRatio > 0.25 ? 0xFF9800 : 0xF44336;
-    this.gfx.fillStyle(hpColor, 1);
-    this.gfx.fillRect(bx, by, barW * hpRatio, barH);
+    // Health bar - only show when damaged (KR style)
+    if (this.hp < this.maxHp) {
+      const barW = 20;
+      const barH = 3;
+      const bx = this.x - barW / 2;
+      const by = this.y - 12 - drawR;
+      this.gfx.fillStyle(0x37474F, 1);
+      this.gfx.fillRect(bx, by, barW, barH);
+      const hpRatio = this.hp / this.maxHp;
+      const hpColor = hpRatio > 0.5 ? 0x4CAF50 : hpRatio > 0.25 ? 0xFF9800 : 0xF44336;
+      this.gfx.fillStyle(hpColor, 1);
+      this.gfx.fillRect(bx, by, barW * hpRatio, barH);
+    }
 
     this.label.setPosition(this.x, this.y);
   }

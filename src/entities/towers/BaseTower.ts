@@ -130,14 +130,7 @@ export class BaseTower {
       this.gfx.strokeRect(this.x - 16, this.y - 8, 32, 26);
       this.gfx.strokeTriangle(this.x - 20, this.y - 8, this.x + 20, this.y - 8, this.x, this.y - 22);
 
-      for (let i = 0; i < this.soldiers.length; i++) {
-        if (this.soldiers[i]?.alive) {
-          this.gfx.fillStyle(0xFFE082, 1);
-          this.gfx.fillCircle(this.x - 10 + i * 10, this.y - 23, 3);
-        }
-      }
-
-      // Status display
+      // Status display (text only, no dot indicators)
       this.drawBarracksStatus();
     } else if (this.type === 'archer') {
       // Circle with arrow tip triangle on top
