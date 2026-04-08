@@ -95,7 +95,7 @@ export const ENEMY_CONFIG = {
     magicResist: 0,
     isFlying: false,
     retaliationDamage: 8,
-    facesRight: true, // pack2/2 U_Walk faces right
+    facesRight: false, // pack2 sprites face left by default
   },
   fast: {
     name: 'Fast',
@@ -109,7 +109,7 @@ export const ENEMY_CONFIG = {
     magicResist: 0,
     isFlying: false,
     retaliationDamage: 6,
-    facesRight: true, // pack2/1 S_Walk — symmetric, default right
+    facesRight: false, // pack2 sprites face left by default
   },
   heavy: {
     name: 'Heavy Armor',
@@ -123,7 +123,7 @@ export const ENEMY_CONFIG = {
     magicResist: 10,
     isFlying: false,
     retaliationDamage: 18,
-    facesRight: true, // pack2/3 D_Walk — symmetric, default right
+    facesRight: false, // pack2 sprites face left by default
   },
   flying: {
     name: 'Flying',
@@ -137,7 +137,7 @@ export const ENEMY_CONFIG = {
     magicResist: 0,
     isFlying: true,
     retaliationDamage: 5,
-    facesRight: true, // pack2/4 D_Walk — symmetric, default right
+    facesRight: false, // pack2 sprites face left by default
   },
 } as const;
 
