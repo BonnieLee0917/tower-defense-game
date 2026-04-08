@@ -118,8 +118,8 @@ export class GameScene extends Phaser.Scene {
     // Row 0 (frames 0-7): grass variants
     // Row 1 (frames 8-15): more grass / transition
     // Kenney TD tiles: individual 64x64 PNGs (no spritesheet needed)
-    const grassKeys = ['grass1', 'grass2', 'grass3'];
-    const pathKeys = ['path1', 'path2'];
+    const grassKeys = ['grass1', 'grass2', 'grass3', 'grass4'];
+    const pathKeys = ['path1', 'path2', 'path3'];
 
     for (let r = 0; r < MAP_DATA.rows; r++) {
       for (let c = 0; c < MAP_DATA.cols; c++) {
