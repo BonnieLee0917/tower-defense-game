@@ -179,8 +179,12 @@ export class BaseTower {
       // Tint to match map color temperature (Vivian: CraftPix warm → Kenney cool)
       this.archerSprite.setTint(0xddffdd);
     } else if (this.type === 'magic') {
-      const r = this.baseConfig.radius + this.level * 2; // grows with level
-      const colors = [0xAB47BC, 0x8E24AA, 0x6A1B9A]; // deeper purple each level
+      const r = this.baseConfig.radius + this.level * 2;
+      const colors = [0x5C35B0, 0x6A1FCC, 0x7B1FA2]; // deeper purple each level
+      // Bottom platform ellipse
+      this.gfx.fillStyle(colors[this.level - 1] || colors[0], 0.7);
+      this.gfx.fillEllipse(this.x, this.y + 8, 36 + this.level * 2, 12);
+      // Main diamond body
       this.gfx.fillStyle(colors[this.level - 1] || colors[0], 1);
       this.gfx.fillPoints([
         new Phaser.Geom.Point(this.x, this.y - r - 4),
@@ -197,12 +201,12 @@ export class BaseTower {
       ], true);
       // Energy orb grows with level
       const orbSize = 2 + this.level;
-      this.gfx.fillStyle(0xE0B0FF, 1);
+      this.gfx.fillStyle(0xE040FB, 0.8);
       this.gfx.fillCircle(this.x, this.y - r - 2, orbSize);
       // Level 3 glow ring
       if (this.level >= 3) {
-        this.gfx.lineStyle(2, 0xE040FB, 0.4);
-        this.gfx.strokeCircle(this.x, this.y, r + 6);
+        this.gfx.lineStyle(2, 0xB388FF, 0.4);
+        this.gfx.strokeCircle(this.x, this.y, r + 8);
       }
       this.gfx.fillStyle(0xffffff, 0.2);
       this.gfx.fillCircle(this.x - 5, this.y - 6, 3);
