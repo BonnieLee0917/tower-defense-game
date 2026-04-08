@@ -133,7 +133,7 @@ export class BaseEnemy {
       this.sprite.setFlipX(movingRight);
     }
     // Scale enemies — balanced for path width readability
-    const scaleMap: Record<string, number> = { normal: 1.5, fast: 1.3, heavy: 1.8, flying: 1.5 };
+    const scaleMap: Record<string, number> = { normal: 1.5, fast: 1.5, heavy: 1.8, flying: 1.5 };
     const scale = scaleMap[this.type] || 1.5;
     this.sprite.setScale(scale, scale);
 
