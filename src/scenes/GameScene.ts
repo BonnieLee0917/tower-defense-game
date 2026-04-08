@@ -117,7 +117,11 @@ export class GameScene extends Phaser.Scene {
         const pathColor = isEven ? 0xC4956A : 0xB8895E;
         gfx.fillStyle(isPath ? pathColor : grassColor, 1);
         gfx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        gfx.lineStyle(1, 0x000000, 0.08);
+        if (isPath) {
+          gfx.lineStyle(1, 0x8D6E3F, 0.5);
+        } else {
+          gfx.lineStyle(1, 0x000000, 0.08);
+        }
         gfx.strokeRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
       }
     }
