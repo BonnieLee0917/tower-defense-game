@@ -74,7 +74,7 @@ export type TowerType = keyof typeof TOWER_CONFIG;
 export const BARRACKS_CONFIG = {
   maxSoldiers: 3,
   respawnTime: 10000, // ms
-  engagementRange: 80,
+  engagementRange: 120,
   levels: [
     { hp: 100, damage: 8, attackInterval: 1000 },
     { hp: 130, damage: 12, attackInterval: 1000 },

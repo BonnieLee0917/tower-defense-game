@@ -271,7 +271,7 @@ export class GameScene extends Phaser.Scene {
       this.towerMenu.destroy();
       this.towerMenu = null;
     }
-    this.destroyRallyFlag();
+    // Rally flag stays visible — only destroyed when selecting different tower/spot
   }
 
   private closeAllMenus() {
@@ -590,13 +590,19 @@ export class GameScene extends Phaser.Scene {
 
       if (clickedTower) {
         this.closeAllMenus();
+        // Destroy rally flag if switching to a non-barracks tower
+        if (!clickedTower.isBarracks()) this.destroyRallyFlag();
         this.showTowerMenu(clickedTower);
         return;
       }
 
-      if (clickedBuildSpot) return; // unoccupied build spot handles its own click
+      if (clickedBuildSpot) {
+        this.destroyRallyFlag();
+        return; // unoccupied build spot handles its own click
+      }
 
       this.closeAllMenus();
+      this.destroyRallyFlag();
     });
 
     this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {

@@ -83,7 +83,10 @@ export class Soldier {
       let nearestDist = Infinity;
       for (const enemy of enemies) {
         if (!enemy.alive || enemy.isFlying || !enemy.canBeBlockedBy(this.barracksId)) continue;
-        const d = Math.hypot(enemy.x - this.rallyX, enemy.y - this.rallyY);
+        // Use current soldier position for distance (not just rally), so engaged soldiers can switch targets
+        const dFromSelf = Math.hypot(enemy.x - this.x, enemy.y - this.y);
+        const dFromRally = Math.hypot(enemy.x - this.rallyX, enemy.y - this.rallyY);
+        const d = Math.min(dFromSelf, dFromRally);
         if (d <= BARRACKS_CONFIG.engagementRange && d < nearestDist) {
           nearest = enemy;
           nearestDist = d;
