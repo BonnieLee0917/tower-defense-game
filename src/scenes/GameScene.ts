@@ -107,14 +107,17 @@ export class GameScene extends Phaser.Scene {
   private drawMap() {
     const gfx = this.add.graphics();
     const pathSet = new Set(MAP_DATA.pathTiles.map((t) => `${t.col},${t.row}`));
-    const flyingPath = this.pathManager.getFlyingPath();
 
     for (let r = 0; r < MAP_DATA.rows; r++) {
       for (let c = 0; c < MAP_DATA.cols; c++) {
         const isPath = pathSet.has(`${c},${r}`);
-        gfx.fillStyle(isPath ? 0xC4956A : 0x3A7D44, 1);
+        // Checkerboard pattern for grass, subtle variation for path
+        const isEven = (r + c) % 2 === 0;
+        const grassColor = isEven ? 0x3A7D44 : 0x327038;
+        const pathColor = isEven ? 0xC4956A : 0xB8895E;
+        gfx.fillStyle(isPath ? pathColor : grassColor, 1);
         gfx.fillRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        gfx.lineStyle(1, 0x000000, 0.10);
+        gfx.lineStyle(1, 0x000000, 0.08);
         gfx.strokeRect(c * TILE_SIZE, r * TILE_SIZE, TILE_SIZE, TILE_SIZE);
       }
     }
