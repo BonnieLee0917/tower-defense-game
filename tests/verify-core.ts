@@ -67,7 +67,7 @@ assert(TOWER_CONFIG.barracks.damageType === 'physical', '兵营物理伤害');
 console.log('\n⚔️ 3. 兵营系统');
 assert(BARRACKS_CONFIG.maxSoldiers === 3, '最多 3 个士兵');
 assert(BARRACKS_CONFIG.respawnTime === 10000, '重生冷却 10s');
-assert(BARRACKS_CONFIG.engagementRange === 40, '拦截范围 40px');
+assert(BARRACKS_CONFIG.engagementRange === 80, '拦截范围 80px');
 assert(BARRACKS_CONFIG.levels.length === 3, '3 级士兵属性');
 assert(BARRACKS_CONFIG.levels[0].hp === 100, 'Lv1 士兵 100HP');
 assert(BARRACKS_CONFIG.levels[0].damage === 8, 'Lv1 士兵 8dmg');
