@@ -155,6 +155,15 @@ export class BaseTower {
         this.gfx.lineStyle(2, 0xFFD600, 0.4);
         this.gfx.strokeCircle(this.x, this.y, bSize + 10);
       }
+      // Flagpole + pennant (Vivian spec)
+      this.gfx.lineStyle(2, 0x5D4037, 1);
+      this.gfx.lineBetween(this.x + bSize - 2, this.y - 22, this.x + bSize - 2, this.y - 34);
+      this.gfx.fillStyle(0xFFB300, 1);
+      this.gfx.fillTriangle(
+        this.x + bSize - 2, this.y - 34,
+        this.x + bSize - 2, this.y - 28,
+        this.x + bSize + 8, this.y - 31
+      );
       this.gfx.fillStyle(0xffffff, 0.2);
       this.gfx.fillCircle(this.x - 10, this.y - 14, 4);
 
