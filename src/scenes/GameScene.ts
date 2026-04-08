@@ -209,7 +209,7 @@ export class GameScene extends Phaser.Scene {
         // Deterministic random: ~10% of eligible tiles get decoration (edges preferred)
         const s = seed(c, r);
         const isEdge = c <= 1 || c >= this.currentMap.cols - 2 || r <= 1 || r >= this.currentMap.rows - 2;
-        const decoChance = isEdge ? 20 : 8; // edges get more decoration
+        const decoChance = isEdge ? 12 : 5; // reduced: edges 12%, interior 5%
         if (s % 100 < decoChance) {
           const tx = c * TILE_SIZE + TILE_SIZE / 2;
           const ty = r * TILE_SIZE + TILE_SIZE / 2;
@@ -226,22 +226,11 @@ export class GameScene extends Phaser.Scene {
   private drawBuildSpots() {
     for (const spot of this.currentMap.buildSpots) {
       const gfx = this.add.graphics();
-      // KR-style soft build spot marker (Vivian: subtle, not attention-grabbing)
-      gfx.fillStyle(0xF0E6D3, 0.08);
-      gfx.fillRoundedRect(spot.x - 26, spot.y - 26, 52, 52, 8);
-      gfx.lineStyle(1.5, 0xF0E6D3, 0.4);
-      gfx.strokeRoundedRect(spot.x - 26, spot.y - 26, 52, 52, 8);
-      // Subtle corner accents
-      const cx = spot.x, cy = spot.y, s = 24, m = 8;
-      gfx.lineStyle(1.5, 0xFFD600, 0.3);
-      gfx.lineBetween(cx - s, cy - s, cx - s + m, cy - s);
-      gfx.lineBetween(cx - s, cy - s, cx - s, cy - s + m);
-      gfx.lineBetween(cx + s, cy - s, cx + s - m, cy - s);
-      gfx.lineBetween(cx + s, cy - s, cx + s, cy - s + m);
-      gfx.lineBetween(cx - s, cy + s, cx - s + m, cy + s);
-      gfx.lineBetween(cx - s, cy + s, cx - s, cy + s - m);
-      gfx.lineBetween(cx + s, cy + s, cx + s - m, cy + s);
-      gfx.lineBetween(cx + s, cy + s, cx + s, cy + s - m);
+      // KR-style subtle stone platform marker
+      gfx.fillStyle(0xA1887F, 0.15);
+      gfx.fillEllipse(spot.x, spot.y, 40, 16);
+      gfx.lineStyle(1, 0x8D6E63, 0.25);
+      gfx.strokeEllipse(spot.x, spot.y, 40, 16);
 
       const entry = { gfx, spot, occupied: false };
       this.spotGfxList.push(entry);
