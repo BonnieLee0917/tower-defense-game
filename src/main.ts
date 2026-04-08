@@ -19,3 +19,4 @@ const config: Phaser.Types.Core.GameConfig = {
 };
 
 new Phaser.Game(config);
+// deploy trigger 1775661547
