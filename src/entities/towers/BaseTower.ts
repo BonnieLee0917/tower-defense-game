@@ -49,7 +49,12 @@ export class BaseTower {
 
     if (this.isBarracks()) {
       this.statusGfx = scene.add.graphics().setDepth(10);
-      this.rallyPoints = [-24, 0, 24].map((dx) => ({ x: this.x + dx, y: this.y + 36 }));
+      // Triangle formation around rally point to avoid overlap
+      this.rallyPoints = [
+        { x: this.x - 20, y: this.y + 40 },
+        { x: this.x + 20, y: this.y + 40 },
+        { x: this.x, y: this.y + 56 },
+      ];
       this.respawnTimers = [0, 0, 0];
       this.soldiers = [null, null, null];
       this.spawnInitialSoldiers();

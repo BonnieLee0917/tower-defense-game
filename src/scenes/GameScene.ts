@@ -405,7 +405,12 @@ export class GameScene extends Phaser.Scene {
       const fx = zone.x;
       const fy = zone.y;
       // Update rally points spread around new position
-      tower.rallyPoints = [-24, 0, 24].map(dx => ({ x: fx + dx, y: fy }));
+      // Triangle formation around dragged position
+      tower.rallyPoints = [
+        { x: fx - 20, y: fy },
+        { x: fx + 20, y: fy },
+        { x: fx, y: fy + 16 },
+      ];
       // Reposition idle soldiers
       for (let i = 0; i < tower.soldiers.length; i++) {
         const s = tower.soldiers[i];
