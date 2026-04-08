@@ -95,7 +95,7 @@ export const ENEMY_CONFIG = {
     magicResist: 0,
     isFlying: false,
     retaliationDamage: 8,
-    facesRight: true,
+    facesRight: false, // CraftPix sprites face left by default
   },
   fast: {
     name: 'Fast',
@@ -123,7 +123,7 @@ export const ENEMY_CONFIG = {
     magicResist: 10,
     isFlying: false,
     retaliationDamage: 18,
-    facesRight: true,
+    facesRight: false, // CraftPix sprites face left by default
   },
   flying: {
     name: 'Flying',
@@ -137,7 +137,7 @@ export const ENEMY_CONFIG = {
     magicResist: 0,
     isFlying: true,
     retaliationDamage: 5,
-    facesRight: true,
+    facesRight: false, // CraftPix sprites face left by default
   },
 } as const;
 
