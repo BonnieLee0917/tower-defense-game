@@ -611,6 +611,9 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.input.on('pointerdown', (ptr: Phaser.Input.Pointer, objects: Phaser.GameObjects.GameObject[]) => {
+      // Block all interaction when game is over
+      if (this.gameOver) return;
+
       // Rally drag zone must not be interrupted by global click handling
       const clickedRallyZone = objects.some((obj: any) => obj.__isRallyZone);
       if (clickedRallyZone) return;
@@ -642,10 +645,11 @@ export class GameScene extends Phaser.Scene {
       }
 
       this.closeAllMenus();
-      this.destroyRallyFlag();
+      // Keep rally flag visible — only destroyed when selecting other tower/spot
     });
 
     this.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
+      if (this.gameOver) return;
       for (const tower of this.towers) {
         const d = Math.hypot(ptr.x - tower.x, ptr.y - tower.y);
         tower.setShowRange(d < 30);
