@@ -212,7 +212,7 @@ export class GameScene extends Phaser.Scene {
         // Deterministic random: ~10% of eligible tiles get decoration (edges preferred)
         const s = seed(c, r);
         const isEdge = c <= 1 || c >= this.currentMap.cols - 2 || r <= 1 || r >= this.currentMap.rows - 2;
-        const decoChance = isEdge ? 12 : 5; // reduced: edges 12%, interior 5%
+        const decoChance = isEdge ? 12 : 5; // edges 12%, interior 5%
         if (s % 100 < decoChance) {
           const tx = c * TILE_SIZE + TILE_SIZE / 2;
           const ty = r * TILE_SIZE + TILE_SIZE / 2;
