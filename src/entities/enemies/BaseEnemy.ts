@@ -41,7 +41,8 @@ export class BaseEnemy {
     this.isFlying = this.config.isFlying;
 
     if (this.isFlying) {
-      this.flyingPath = pathManager.getFlyingPath();
+      // Flying enemies use the same ground path but are immune to barracks
+      this.flyingPath = null; // use main path via pathManager
     }
 
     this.gfx = scene.add.graphics();
@@ -96,7 +97,7 @@ export class BaseEnemy {
     }
 
     this.x = pos.x;
-    this.y = pos.y;
+    this.y = this.isFlying ? pos.y - 16 : pos.y; // flying enemies hover above the path
     this.angle = pos.angle;
     this.draw();
     return false;

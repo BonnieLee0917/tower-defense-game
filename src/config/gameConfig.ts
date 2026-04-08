@@ -4,7 +4,7 @@ export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
 export const TILE_SIZE = 64;
 
-export const STARTING_GOLD = 400;
+export const STARTING_GOLD = 500;
 export const STARTING_LIVES = 20;
 export const TOTAL_WAVES = 10;
 
@@ -14,7 +14,7 @@ export const TOWER_CONFIG = {
   archer: {
     name: 'Archer Tower',
     cost: 70,
-    range: 150,
+    range: 180,
     damage: 10,
     attackSpeed: 1.0,
     color: 0x4CAF50,
@@ -28,7 +28,7 @@ export const TOWER_CONFIG = {
   cannon: {
     name: 'Cannon Tower',
     cost: 125,
-    range: 120,
+    range: 110,
     damage: 25,
     attackSpeed: 0.5,
     color: 0xE64A19,
@@ -42,7 +42,7 @@ export const TOWER_CONFIG = {
   magic: {
     name: 'Magic Tower',
     cost: 100,
-    range: 130,
+    range: 140,
     damage: 15,
     attackSpeed: 0.7,
     color: 0x7C4DFF,
@@ -87,7 +87,7 @@ export const ENEMY_CONFIG = {
     name: 'Normal',
     hp: 100,
     speed: 80,
-    reward: 5,
+    reward: 8,
     color: 0x42A5F5,
     width: 24,
     height: 24,
@@ -100,7 +100,7 @@ export const ENEMY_CONFIG = {
     name: 'Fast',
     hp: 60,
     speed: 140,
-    reward: 7,
+    reward: 10,
     color: 0xFFCA28,
     width: 20,
     height: 20,
@@ -113,7 +113,7 @@ export const ENEMY_CONFIG = {
     name: 'Heavy Armor',
     hp: 300,
     speed: 50,
-    reward: 20,
+    reward: 25,
     color: 0x78909C,
     width: 28,
     height: 28,
@@ -126,7 +126,7 @@ export const ENEMY_CONFIG = {
     name: 'Flying',
     hp: 120,
     speed: 100,
-    reward: 12,
+    reward: 15,
     color: 0xCE93D8,
     width: 20,
     height: 20,
