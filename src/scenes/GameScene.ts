@@ -166,10 +166,22 @@ export class GameScene extends Phaser.Scene {
   private drawBuildSpots() {
     for (const spot of MAP_DATA.buildSpots) {
       const gfx = this.add.graphics();
-      gfx.lineStyle(3, 0xFFFFFF, 0.8);
-      gfx.strokeRect(spot.x - 28, spot.y - 28, 56, 56);
-      gfx.fillStyle(0xFFFFFF, 0.25);
-      gfx.fillRect(spot.x - 28, spot.y - 28, 56, 56);
+      // KR-style soft build spot marker
+      gfx.fillStyle(0xFFFFFF, 0.12);
+      gfx.fillRoundedRect(spot.x - 26, spot.y - 26, 52, 52, 8);
+      gfx.lineStyle(2, 0xFFFFFF, 0.35);
+      gfx.strokeRoundedRect(spot.x - 26, spot.y - 26, 52, 52, 8);
+      // Corner accents (KR has small corner marks)
+      const cx = spot.x, cy = spot.y, s = 24, m = 8;
+      gfx.lineStyle(2, 0xFFD600, 0.5);
+      gfx.lineBetween(cx - s, cy - s, cx - s + m, cy - s);
+      gfx.lineBetween(cx - s, cy - s, cx - s, cy - s + m);
+      gfx.lineBetween(cx + s, cy - s, cx + s - m, cy - s);
+      gfx.lineBetween(cx + s, cy - s, cx + s, cy - s + m);
+      gfx.lineBetween(cx - s, cy + s, cx - s + m, cy + s);
+      gfx.lineBetween(cx - s, cy + s, cx - s, cy + s - m);
+      gfx.lineBetween(cx + s, cy + s, cx + s - m, cy + s);
+      gfx.lineBetween(cx + s, cy + s, cx + s, cy + s - m);
 
       const entry = { gfx, spot, occupied: false };
       this.spotGfxList.push(entry);
@@ -505,10 +517,10 @@ export class GameScene extends Phaser.Scene {
       if (entry.spot.x === tower.x && entry.spot.y === tower.y) {
         entry.occupied = false;
         entry.gfx.clear();
-        entry.gfx.lineStyle(2, 0xF0E6D3, 0.6);
-        entry.gfx.strokeRect(entry.spot.x - 28, entry.spot.y - 28, 56, 56);
-        entry.gfx.fillStyle(0xF0E6D3, 0.15);
-        entry.gfx.fillRect(entry.spot.x - 28, entry.spot.y - 28, 56, 56);
+        entry.gfx.fillStyle(0xFFFFFF, 0.12);
+        entry.gfx.fillRoundedRect(entry.spot.x - 26, entry.spot.y - 26, 52, 52, 8);
+        entry.gfx.lineStyle(2, 0xFFFFFF, 0.35);
+        entry.gfx.strokeRoundedRect(entry.spot.x - 26, entry.spot.y - 26, 52, 52, 8);
         break;
       }
     }
