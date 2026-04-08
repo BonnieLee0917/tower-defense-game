@@ -35,7 +35,7 @@ const ROF_WAVES = 3; // number of damage pulses
 const ROF_WAVE_INTERVAL = 400;
 
 // Reinforcements constants
-const REINF_SOLDIER_COUNT = 2;
+const REINF_SOLDIER_COUNT = 3;
 const REINF_DURATION = 15000; // 15 seconds
 const REINF_SOLDIER_HP = 150;
 const REINF_SOLDIER_DAMAGE = 12;
@@ -69,13 +69,24 @@ export class GlobalSkillManager {
       const y = startY - i * 55;
       const container = this.scene.add.container(x, y).setDepth(100);
 
-      // Button background
+      // Button background — color per skill
       const bg = this.scene.add.graphics();
-      bg.fillStyle(0x263238, 0.9);
+      const btnColor = key === 'rainOfFire' ? 0xD32F2F : 0x1565C0;
+      bg.fillStyle(btnColor, 0.9);
       bg.fillCircle(0, 0, 22);
-      bg.lineStyle(2, 0x42A5F5, 0.8);
+      bg.lineStyle(2, key === 'rainOfFire' ? 0xFF5722 : 0x42A5F5, 0.8);
       bg.strokeCircle(0, 0, 22);
       container.add(bg);
+
+      // Ready pulse
+      this.scene.tweens.add({
+        targets: container,
+        scaleX: 1.05, scaleY: 1.05,
+        duration: 1000,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
 
       // Icon
       const icon = this.scene.add.text(0, 0, config.icon, {
@@ -124,9 +135,6 @@ export class GlobalSkillManager {
       this.targetCircle = this.scene.add.graphics().setDepth(150);
     }
 
-    const radius = skillKey === 'rainOfFire' ? ROF_RADIUS : 60;
-    const color = skillKey === 'rainOfFire' ? 0xFF4444 : 0x44FF88;
-
     this.scene.input.on('pointermove', this.onTargetMove);
     this.scene.input.once('pointerdown', (ptr: Phaser.Input.Pointer) => {
       this.executeSkill(skillKey, ptr.x, ptr.y);
@@ -134,22 +142,24 @@ export class GlobalSkillManager {
     });
 
     // Draw initial circle
-    this.drawTargetCircle(GAME_WIDTH / 2, GAME_HEIGHT / 2, radius, color);
+    const initRadius = skillKey === 'rainOfFire' ? ROF_RADIUS : 60;
+    const initColor = skillKey === 'rainOfFire' ? 0xFF5722 : 0x42A5F5;
+    this.drawTargetCircle(GAME_WIDTH / 2, GAME_HEIGHT / 2, initRadius, initColor);
   }
 
   private onTargetMove = (ptr: Phaser.Input.Pointer) => {
     if (!this.activeSkill || !this.targetCircle) return;
     const radius = this.activeSkill === 'rainOfFire' ? ROF_RADIUS : 60;
-    const color = this.activeSkill === 'rainOfFire' ? 0xFF4444 : 0x44FF88;
+    const color = this.activeSkill === 'rainOfFire' ? 0xFF5722 : 0x42A5F5;
     this.drawTargetCircle(ptr.x, ptr.y, radius, color);
   };
 
   private drawTargetCircle(x: number, y: number, radius: number, color: number) {
     if (!this.targetCircle) return;
     this.targetCircle.clear();
-    this.targetCircle.fillStyle(color, 0.15);
+    this.targetCircle.fillStyle(color, 0.1);
     this.targetCircle.fillCircle(x, y, radius);
-    this.targetCircle.lineStyle(2, color, 0.6);
+    this.targetCircle.lineStyle(2, color, 0.5);
     this.targetCircle.strokeCircle(x, y, radius);
   }
 
@@ -192,17 +202,21 @@ export class GlobalSkillManager {
     // Delayed damage waves
     for (let wave = 0; wave < ROF_WAVES; wave++) {
       this.scene.time.delayedCall(ROF_DELAY + wave * ROF_WAVE_INTERVAL, () => {
-        // Visual: fire burst
+        // Visual: fire burst — expanding ring per spec
         const burstGfx = this.scene.add.graphics().setDepth(151);
-        burstGfx.fillStyle(0xFF6600, 0.6);
-        burstGfx.fillCircle(x, y, ROF_RADIUS * 0.8);
-        burstGfx.fillStyle(0xFFCC00, 0.4);
-        burstGfx.fillCircle(x, y, ROF_RADIUS * 0.5);
+        burstGfx.fillStyle(0xFF3D00, 0.8);
+        burstGfx.fillCircle(x, y, 10);
 
         this.scene.tweens.add({
-          targets: burstGfx,
-          alpha: 0,
+          targets: { r: 10 },
+          r: ROF_RADIUS,
           duration: 300,
+          onUpdate: (_tween: Phaser.Tweens.Tween, target: { r: number }) => {
+            burstGfx.clear();
+            const alpha = 0.8 * (1 - target.r / ROF_RADIUS);
+            burstGfx.fillStyle(0xFF3D00, alpha);
+            burstGfx.fillCircle(x, y, target.r);
+          },
           onComplete: () => burstGfx.destroy(),
         });
 
@@ -221,7 +235,7 @@ export class GlobalSkillManager {
   private executeReinforcements(x: number, y: number) {
     // Spawn flash
     const flashGfx = this.scene.add.graphics().setDepth(151);
-    flashGfx.fillStyle(0x44FF88, 0.4);
+    flashGfx.fillStyle(0x42A5F5, 0.4);
     flashGfx.fillCircle(x, y, 40);
     this.scene.tweens.add({
       targets: flashGfx,
@@ -230,18 +244,25 @@ export class GlobalSkillManager {
       onComplete: () => flashGfx.destroy(),
     });
 
+    // Triangle formation offsets
+    const offsets = [
+      { x: 0, y: -15 },
+      { x: -12, y: 10 },
+      { x: 12, y: 10 },
+    ];
+
     // Spawn temporary soldiers
     for (let i = 0; i < REINF_SOLDIER_COUNT; i++) {
-      const offsetX = (i - (REINF_SOLDIER_COUNT - 1) / 2) * 20;
+      const ox = offsets[i]?.x ?? (i - 1) * 20;
+      const oy = offsets[i]?.y ?? 0;
       const soldier = new Soldier(
         this.scene,
-        x + offsetX,
-        y,
-        1, // level 1
+        x + ox,
+        y + oy,
+        1,
         -1, // special barracks ID for reinforcements
         i,
       );
-      // Override stats for reinforcement soldiers
       soldier.hp = REINF_SOLDIER_HP;
       soldier.maxHp = REINF_SOLDIER_HP;
       soldier.damage = REINF_SOLDIER_DAMAGE;
