@@ -773,22 +773,41 @@ export class GameScene extends Phaser.Scene {
     // Victory rays effect
     if (won) {
       const rays = this.add.graphics().setDepth(200);
-      for (let i = 0; i < 16; i++) {
-        const angle = (i / 16) * Math.PI * 2;
-        const endX = GAME_WIDTH / 2 + Math.cos(angle) * 500;
-        const endY = GAME_HEIGHT / 2 + Math.sin(angle) * 500;
-        rays.lineStyle(3, 0xFFD600, 0.08 + (i % 2) * 0.04);
+      for (let i = 0; i < 24; i++) {
+        const angle = (i / 24) * Math.PI * 2;
+        const endX = GAME_WIDTH / 2 + Math.cos(angle) * 600;
+        const endY = GAME_HEIGHT / 2 + Math.sin(angle) * 600;
+        rays.lineStyle(4, 0xFFD600, 0.06 + (i % 3) * 0.03);
         rays.lineBetween(GAME_WIDTH / 2, GAME_HEIGHT / 2, endX, endY);
       }
     }
 
+    // Title
     const msg = won ? '🎉 Victory!' : '💀 Defeat!';
-    const titleColor = won ? '#44ff88' : '#ff4444';
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 100, msg, {
-      fontSize: '58px', color: titleColor, fontStyle: 'bold', fontFamily: 'Arial',
-      shadow: { offsetX: 3, offsetY: 3, color: '#000000', blur: 6, fill: true, stroke: false },
+    const titleColor = won ? '#44FF88' : '#FF4444';
+    this.add.text(GAME_WIDTH / 2, 100, msg, {
+      fontSize: '52px', color: titleColor, fontStyle: 'bold', fontFamily: 'Arial',
+      shadow: { offsetX: 3, offsetY: 3, color: '#000000', blur: 8, fill: true, stroke: false },
     }).setOrigin(0.5).setDepth(201);
 
+    // Star rating (Victory only)
+    if (won) {
+      const stars = this.lives >= 18 ? 3 : this.lives >= 6 ? 2 : 1;
+      const starY = 170;
+      for (let i = 0; i < 3; i++) {
+        const filled = i < stars;
+        const starX = GAME_WIDTH / 2 - 60 + i * 60;
+        this.add.text(starX, starY, filled ? '⭐' : '☆', {
+          fontSize: '48px', color: filled ? '#FFD600' : '#555555', fontFamily: 'Arial',
+        }).setOrigin(0.5).setDepth(201);
+      }
+      const starLabels = ['Good', 'Great', 'Perfect!'];
+      this.add.text(GAME_WIDTH / 2, starY + 40, starLabels[stars - 1], {
+        fontSize: '18px', color: '#FFD600', fontFamily: 'Arial', fontStyle: 'bold',
+      }).setOrigin(0.5).setDepth(201);
+    }
+
+    // Stats card
     const statsLines = [
       `🎯 Enemies Killed: ${this.totalKills}`,
       `💰 Gold Earned: ${this.totalGoldEarned}`,
@@ -799,43 +818,57 @@ export class GameScene extends Phaser.Scene {
       statsLines.push(`🌊 Reached Wave: ${this.waveManager.getCurrentWave()}/${TOTAL_WAVES}`);
     }
 
-    // Stats panel bordered box
-    const panelW = 320;
-    const panelH = statsLines.length * 28 + 30;
-    const panelX = GAME_WIDTH / 2 - panelW / 2;
-    const panelY = GAME_HEIGHT / 2 - 40 - panelH / 2;
-    const panelGfx = this.add.graphics().setDepth(201);
-    panelGfx.fillStyle(0x111122, 0.7);
-    panelGfx.fillRoundedRect(panelX, panelY, panelW, panelH, 8);
-    panelGfx.lineStyle(1, 0x42A5F5, 0.5);
-    panelGfx.strokeRoundedRect(panelX, panelY, panelW, panelH, 8);
+    const cardW = 340;
+    const cardH = statsLines.length * 30 + 40;
+    const cardX = GAME_WIDTH / 2 - cardW / 2;
+    const cardY = won ? 240 : 180;
+    const cardGfx = this.add.graphics().setDepth(201);
 
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 10, statsLines.join('\n'), {
-      fontSize: '18px', color: '#ccccdd', fontFamily: 'Arial', lineSpacing: 8, align: 'center',
+    // Card background
+    cardGfx.fillStyle(won ? 0x1a2a1a : 0x2a1a1a, 0.85);
+    cardGfx.fillRoundedRect(cardX, cardY, cardW, cardH, 12);
+    cardGfx.lineStyle(2, won ? 0x44FF88 : 0xFF4444, 0.5);
+    cardGfx.strokeRoundedRect(cardX, cardY, cardW, cardH, 12);
+    cardGfx.lineStyle(1, 0xffffff, 0.08);
+    cardGfx.strokeRoundedRect(cardX + 2, cardY + 2, cardW - 4, cardH - 4, 10);
+
+    this.add.text(GAME_WIDTH / 2, cardY + cardH / 2, statsLines.join('\n'), {
+      fontSize: '18px', color: '#ddddee', fontFamily: 'Arial', lineSpacing: 10, align: 'center',
     }).setOrigin(0.5).setDepth(201);
 
+    // Button
     const btnLabel = won ? '▶ Play Again' : '🔄 Retry';
-    const btnBg = this.add.graphics().setDepth(201);
-    const btnW = 200;
-    const btnH = 50;
+    const btnW = 220;
+    const btnH = 52;
     const btnX = GAME_WIDTH / 2 - btnW / 2;
-    const btnY = GAME_HEIGHT / 2 + 90;
-    btnBg.fillStyle(0x1976D2, 1);
-    btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, 10);
+    const btnY = cardY + cardH + 30;
+    const btnGfx = this.add.graphics().setDepth(201);
+    const btnColor = won ? 0x2E7D32 : 0xC62828;
+    const btnHover = won ? 0x388E3C : 0xD32F2F;
+
+    btnGfx.fillStyle(btnColor, 1);
+    btnGfx.fillRoundedRect(btnX, btnY, btnW, btnH, 12);
+    btnGfx.fillStyle(0xffffff, 0.1);
+    btnGfx.fillRoundedRect(btnX + 4, btnY + 4, btnW - 8, btnH / 2 - 4, { tl: 10, tr: 10, bl: 0, br: 0 });
 
     const btn = this.add.text(GAME_WIDTH / 2, btnY + btnH / 2, btnLabel, {
-      fontSize: '22px', color: '#ffffff', fontStyle: 'bold', fontFamily: 'Arial',
+      fontSize: '24px', color: '#ffffff', fontStyle: 'bold', fontFamily: 'Arial',
+      shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 3, fill: true, stroke: false },
     }).setOrigin(0.5).setDepth(202).setInteractive({ useHandCursor: true });
 
     btn.on('pointerover', () => {
-      btnBg.clear();
-      btnBg.fillStyle(0x1E88E5, 1);
-      btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, 10);
+      btnGfx.clear();
+      btnGfx.fillStyle(btnHover, 1);
+      btnGfx.fillRoundedRect(btnX, btnY, btnW, btnH, 12);
+      btnGfx.fillStyle(0xffffff, 0.15);
+      btnGfx.fillRoundedRect(btnX + 4, btnY + 4, btnW - 8, btnH / 2 - 4, { tl: 10, tr: 10, bl: 0, br: 0 });
     });
     btn.on('pointerout', () => {
-      btnBg.clear();
-      btnBg.fillStyle(0x1976D2, 1);
-      btnBg.fillRoundedRect(btnX, btnY, btnW, btnH, 10);
+      btnGfx.clear();
+      btnGfx.fillStyle(btnColor, 1);
+      btnGfx.fillRoundedRect(btnX, btnY, btnW, btnH, 12);
+      btnGfx.fillStyle(0xffffff, 0.1);
+      btnGfx.fillRoundedRect(btnX + 4, btnY + 4, btnW - 8, btnH / 2 - 4, { tl: 10, tr: 10, bl: 0, br: 0 });
     });
     btn.on('pointerdown', () => {
       this.scene.restart();
