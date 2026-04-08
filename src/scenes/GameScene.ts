@@ -107,36 +107,59 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drawMap() {
-    const pathSet = new Set(MAP_DATA.pathTiles.map((t) => `${t.col},${t.row}`));
-    const buildSpotSet = new Set(MAP_DATA.buildSpots.map((s) => `${Math.floor(s.x / TILE_SIZE)},${Math.floor(s.y / TILE_SIZE)}`));
-
     // Seeded random for deterministic decoration
     const seed = (c: number, r: number) => ((c * 7 + r * 13 + 37) * 2654435761) >>> 0;
-    const seedF = (c: number, r: number, i: number) => ((seed(c, r) + i * 9973) % 1000) / 1000;
-
-    // Tileset frames:
-    // Row 0 (frames 0-7): grass variants
-    // Row 1 (frames 8-15): more grass / transition
-    // Kenney TD tiles: individual 64x64 PNGs (no spritesheet needed)
     const grassKeys = ['grass1']; // tile024 = pure green, confirmed
-    const pathKeys = ['path1']; // tile005 = pure brown fill, confirmed
 
+    // Grass base layer
     for (let r = 0; r < MAP_DATA.rows; r++) {
       for (let c = 0; c < MAP_DATA.cols; c++) {
-        const isPath = pathSet.has(`${c},${r}`);
         const tx = c * TILE_SIZE + TILE_SIZE / 2;
         const ty = r * TILE_SIZE + TILE_SIZE / 2;
-
         const s = seed(c, r);
-        const keys = isPath ? pathKeys : grassKeys;
-        const key = keys[s % keys.length];
+        const key = grassKeys[s % grassKeys.length];
 
         this.add.image(tx, ty, key)
           .setDisplaySize(TILE_SIZE, TILE_SIZE)
           .setDepth(0);
-
-        // Real tileset handles visual variety — no code-drawn decorations needed
       }
+    }
+
+    // Smooth path overlay (replaces jagged tile edges)
+    const pathGfx = this.add.graphics().setDepth(1);
+    const roadWidth = 58;
+
+    // Base road strips
+    pathGfx.fillStyle(0x9C6B30, 1);
+    for (let i = 0; i < MAP_DATA.waypoints.length - 1; i++) {
+      const a = MAP_DATA.waypoints[i];
+      const b = MAP_DATA.waypoints[i + 1];
+      if (a.y === b.y) {
+        pathGfx.fillRect(Math.min(a.x, b.x), a.y - roadWidth / 2, Math.abs(b.x - a.x), roadWidth);
+      } else {
+        pathGfx.fillRect(a.x - roadWidth / 2, Math.min(a.y, b.y), roadWidth, Math.abs(b.y - a.y));
+      }
+    }
+
+    // Rounded joints to remove staircase corners
+    for (const p of MAP_DATA.waypoints) {
+      pathGfx.fillCircle(p.x, p.y, roadWidth / 2);
+    }
+
+    // Light center highlight for readability
+    pathGfx.fillStyle(0xB9823C, 0.35);
+    const innerWidth = 34;
+    for (let i = 0; i < MAP_DATA.waypoints.length - 1; i++) {
+      const a = MAP_DATA.waypoints[i];
+      const b = MAP_DATA.waypoints[i + 1];
+      if (a.y === b.y) {
+        pathGfx.fillRect(Math.min(a.x, b.x), a.y - innerWidth / 2, Math.abs(b.x - a.x), innerWidth);
+      } else {
+        pathGfx.fillRect(a.x - innerWidth / 2, Math.min(a.y, b.y), innerWidth, Math.abs(b.y - a.y));
+      }
+    }
+    for (const p of MAP_DATA.waypoints) {
+      pathGfx.fillCircle(p.x, p.y, innerWidth / 2);
     }
   }
 
@@ -420,7 +443,8 @@ export class GameScene extends Phaser.Scene {
     (gfx as any)._hintText = hintText;
 
     // Interactive drag zone — larger hit area for touch
-    const zone = this.add.zone(cx, cy, 48, 48).setDepth(101).setInteractive({ draggable: true, useHandCursor: true });
+    const zone = this.add.zone(cx, cy, 56, 56).setDepth(101).setInteractive({ draggable: true, useHandCursor: true });
+    (zone as any).__isRallyZone = true;
     this.input.setDraggable(zone);
 
     zone.on('drag', (_pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
@@ -575,6 +599,10 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.input.on('pointerdown', (ptr: Phaser.Input.Pointer, objects: Phaser.GameObjects.GameObject[]) => {
+      // Rally drag zone must not be interrupted by global click handling
+      const clickedRallyZone = objects.some((obj: any) => obj.__isRallyZone);
+      if (clickedRallyZone) return;
+
       // Check if any clicked object is a build spot zone (has __buildSpot marker)
       const clickedBuildSpot = objects.some((obj: any) => obj.__isBuildSpot);
 

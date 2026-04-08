@@ -50,18 +50,22 @@ const waypoints = [
 export const MAP_DATA: MapData = {
   waypoints,
   buildSpots: [
-    { x: 256, y: 224 },
-    { x: 128, y: 352 },
-    { x: 256, y: 480 },
-    { x: 384, y: 352 },
-    { x: 384, y: 160 },
-    { x: 512, y: 224 },
-    { x: 640, y: 224 },
-    { x: 640, y: 480 },
-    { x: 768, y: 416 },
-    { x: 896, y: 352 },
-    { x: 896, y: 544 },
-    { x: 1024, y: 224 },
+    // Left section
+    { x: 96, y: 96 },    // top-left, above first horizontal path
+    { x: 96, y: 480 },   // below first vertical drop
+    { x: 320, y: 288 },  // between first zigzag arms
+    // Middle-left section
+    { x: 320, y: 544 },  // below second horizontal path
+    { x: 544, y: 352 },  // between vertical segments
+    { x: 544, y: 544 },  // below middle area
+    // Middle-right section
+    { x: 832, y: 96 },   // top, away from path
+    { x: 832, y: 288 },  // middle, between paths
+    { x: 832, y: 608 },  // bottom area, clear of path
+    // Right section
+    { x: 1056, y: 160 }, // above right path
+    { x: 1056, y: 416 }, // below right path
+    { x: 1184, y: 160 }, // near exit, top
   ],
   cols: 20, // 1280/64
   rows: 11, // 704/64 (leave top 16px for HUD rendered on top)
