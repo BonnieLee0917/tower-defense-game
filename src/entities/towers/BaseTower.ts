@@ -120,14 +120,14 @@ export class BaseTower {
     this.gfx.clear();
 
     // Drop shadow under tower
-    this.gfx.fillStyle(0x000000, 0.3);
-    this.gfx.fillEllipse(this.x + 3, this.y + 5, 44, 22);
+    this.gfx.fillStyle(0x000000, 0.15);
+    this.gfx.fillEllipse(this.x + 2, this.y + 4, 40, 18);
 
-    // Base platform
-    this.gfx.fillStyle(0x78909C, 1);
-    this.gfx.fillRect(this.x - 24, this.y - 24, 48, 48);
-    this.gfx.fillStyle(0x607D8B, 0.4);
-    this.gfx.fillRect(this.x - 24, this.y, 48, 24);
+    // Base platform — earthy tone to blend with map
+    this.gfx.fillStyle(0x8D6E4C, 0.85);
+    this.gfx.fillRoundedRect(this.x - 22, this.y - 22, 44, 44, 6);
+    this.gfx.fillStyle(0x6B5334, 0.3);
+    this.gfx.fillRoundedRect(this.x - 22, this.y, 44, 22, { tl: 0, tr: 0, bl: 6, br: 6 });
 
     if (this.archerSprite) {
       this.archerSprite.destroy();
