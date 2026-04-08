@@ -71,6 +71,13 @@ export class WaveManager {
     }
   }
 
+  /** Get upcoming wave composition for preview */
+  getWavePreview(waveIndex?: number): { type: EnemyType; count: number }[] | null {
+    const idx = waveIndex ?? this.currentWave;
+    if (idx >= TOTAL_WAVES) return null;
+    return WAVE_CONFIG[idx];
+  }
+
   update(dt: number) {
     if (!this.waveActive || this.spawnQueue.length === 0) return;
     this.spawnTimer += dt;

@@ -4,6 +4,7 @@ import { PathManager } from '../systems/PathManager';
 import { EconomyManager } from '../systems/EconomyManager';
 import { WaveManager } from '../systems/WaveManager';
 import { StatusEffectManager } from '../systems/StatusEffects';
+import { GlobalSkillManager } from '../systems/GlobalSkillManager';
 import { BaseEnemy } from '../entities/enemies/BaseEnemy';
 import { BaseTower } from '../entities/towers/BaseTower';
 import { Projectile } from '../entities/projectiles/Projectile';
@@ -17,6 +18,7 @@ export class GameScene extends Phaser.Scene {
   private economy!: EconomyManager;
   private waveManager!: WaveManager;
   private statusEffects!: StatusEffectManager;
+  private globalSkills!: GlobalSkillManager;
 
   private enemies: BaseEnemy[] = [];
   private towers: BaseTower[] = [];
@@ -46,6 +48,11 @@ export class GameScene extends Phaser.Scene {
 
   private spotGfxList: { gfx: Phaser.GameObjects.Graphics; spot: { x: number; y: number }; occupied: boolean }[] = [];
   private isTouchDevice = false;
+  private gameSpeed = 1;
+  private paused = false;
+  private speedBtn!: Phaser.GameObjects.Text;
+  private pauseBtn!: Phaser.GameObjects.Text;
+  private wavePreviewContainer: Phaser.GameObjects.Container | null = null;
 
   constructor() {
     super('GameScene');
@@ -72,6 +79,18 @@ export class GameScene extends Phaser.Scene {
     this.waveManager = new WaveManager();
     this.statusEffects = new StatusEffectManager();
 
+    // Global skills
+    this.globalSkills = new GlobalSkillManager(this);
+    this.globalSkills.onDamageEnemies = (x, y, radius, damage, damageType) => {
+      for (const enemy of this.enemies) {
+        if (!enemy.alive) continue;
+        if (Math.hypot(enemy.x - x, enemy.y - y) <= radius) {
+          const died = enemy.takeDamage(damage, damageType);
+          if (died) this.onEnemyKilled(enemy);
+        }
+      }
+    };
+
     this.economy.onChange = () => this.updateHUD();
 
     this.isTouchDevice = this.sys.game.device.input.touch;
@@ -79,6 +98,7 @@ export class GameScene extends Phaser.Scene {
     this.drawMap();
     this.drawBuildSpots();
     this.createHUD();
+    this.globalSkills.createUI();
 
     this.waveManager.onSpawn = (type: EnemyType) => this.spawnEnemy(type);
     this.waveManager.onWaveComplete = () => {
@@ -103,6 +123,7 @@ export class GameScene extends Phaser.Scene {
       this.waveManager.onAllWavesDone = undefined;
       this.economy.onChange = undefined;
       this.input.removeAllListeners();
+      this.globalSkills.cleanup();
     });
   }
 
@@ -635,6 +656,35 @@ export class GameScene extends Phaser.Scene {
       this.updateHUD();
     });
 
+    // Speed / Pause buttons
+    const btnStyle = { fontSize: '14px', color: '#ffffff', backgroundColor: '#37474F', padding: { x: 10, y: 6 } };
+    this.speedBtn = this.add.text(GAME_WIDTH - 80, GAME_HEIGHT - 90, '▶ 1x', btnStyle)
+      .setDepth(100).setInteractive({ useHandCursor: true });
+    this.speedBtn.on('pointerdown', () => {
+      if (this.gameSpeed === 1) {
+        this.gameSpeed = 2;
+        this.speedBtn.setText('▶▶ 2x');
+        this.speedBtn.setStyle({ backgroundColor: '#FF8F00' });
+      } else {
+        this.gameSpeed = 1;
+        this.speedBtn.setText('▶ 1x');
+        this.speedBtn.setStyle({ backgroundColor: '#37474F' });
+      }
+    });
+
+    this.pauseBtn = this.add.text(GAME_WIDTH - 190, GAME_HEIGHT - 90, '⏸ Pause', btnStyle)
+      .setDepth(100).setInteractive({ useHandCursor: true });
+    this.pauseBtn.on('pointerdown', () => {
+      this.paused = !this.paused;
+      if (this.paused) {
+        this.pauseBtn.setText('▶ Resume');
+        this.pauseBtn.setStyle({ backgroundColor: '#1976D2' });
+      } else {
+        this.pauseBtn.setText('⏸ Pause');
+        this.pauseBtn.setStyle({ backgroundColor: '#37474F' });
+      }
+    });
+
     this.input.on('pointerdown', (ptr: Phaser.Input.Pointer, objects: Phaser.GameObjects.GameObject[]) => {
       // Block all interaction when game is over
       if (this.gameOver) return;
@@ -712,13 +762,61 @@ export class GameScene extends Phaser.Scene {
       this.nextWaveBtn.setVisible(true);
       this.nextWaveBtn.setStyle({ backgroundColor: '#1976D2' });
     }
+
+    // Wave preview
+    this.updateWavePreview();
+  }
+
+  private updateWavePreview() {
+    if (this.wavePreviewContainer) {
+      this.wavePreviewContainer.destroy();
+      this.wavePreviewContainer = null;
+    }
+
+    if (this.gameOver || this.waveManager.isAllDone()) return;
+
+    const preview = this.waveManager.getWavePreview();
+    if (!preview) return;
+
+    const ENEMY_ICONS: Record<string, string> = {
+      normal: '\u{1f47a}', // 👺
+      fast: '\u{1f3c3}',   // 🏃
+      heavy: '\u{1f6e1}',  // 🛡
+      flying: '\u{1f47b}', // 👻
+    };
+
+    const container = this.add.container(10, GAME_HEIGHT - 40).setDepth(100);
+    const bg = this.add.graphics();
+    bg.fillStyle(0x0a0a1a, 0.8);
+    bg.fillRoundedRect(0, -6, 200, 32, 4);
+    container.add(bg);
+
+    const label = this.add.text(4, 0, 'Next:', {
+      fontSize: '11px', color: '#90A4AE', fontFamily: 'Arial',
+    });
+    container.add(label);
+
+    let offsetX = 42;
+    for (const entry of preview) {
+      const icon = ENEMY_ICONS[entry.type] ?? '?';
+      const txt = this.add.text(offsetX, 0, `${icon}×${entry.count}`, {
+        fontSize: '12px', color: '#E0E0E0', fontFamily: 'Arial',
+      });
+      container.add(txt);
+      offsetX += txt.width + 10;
+    }
+
+    this.wavePreviewContainer = container;
   }
 
   update(_time: number, delta: number) {
     if (this.gameOver) return;
+    if (this.paused) return;
+
+    const scaledDelta = delta * this.gameSpeed;
 
     if (this.waveCountdown > 0) {
-      this.waveCountdown -= delta;
+      this.waveCountdown -= scaledDelta;
       if (this.waveCountdown <= 0) {
         this.waveCountdown = -1;
         this.waveManager.startNextWave();
@@ -726,12 +824,12 @@ export class GameScene extends Phaser.Scene {
       this.updateHUD();
     }
 
-    this.waveManager.update(delta);
+    this.waveManager.update(scaledDelta);
 
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i];
       if (!enemy.alive) continue;
-      const reachedEnd = enemy.update(delta);
+      const reachedEnd = enemy.update(scaledDelta);
       if (reachedEnd) {
         this.lives--;
         this.waveManager.enemyReachedEnd();
@@ -746,16 +844,16 @@ export class GameScene extends Phaser.Scene {
 
     for (const tower of this.towers) {
       if (tower.isBarracks()) {
-        tower.updateBarracks(delta, this.enemies, (enemy) => this.onEnemyKilled(enemy));
+        tower.updateBarracks(scaledDelta, this.enemies, (enemy) => this.onEnemyKilled(enemy));
       } else {
-        const proj = tower.update(delta, this.enemies);
+        const proj = tower.update(scaledDelta, this.enemies);
         if (proj) this.projectiles.push(proj);
       }
     }
 
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const p = this.projectiles[i];
-      const hit = p.update(delta);
+      const hit = p.update(scaledDelta);
       if (hit) {
         if (p.splash > 0) {
           const hitPos = { x: p.x, y: p.y };
@@ -793,7 +891,10 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    this.statusEffects.update(delta);
+    this.statusEffects.update(scaledDelta);
+
+    // Update global skills (reinforcement soldiers + cooldowns)
+    this.globalSkills.update(scaledDelta, this.enemies, (enemy) => this.onEnemyKilled(enemy));
   }
 
   private onEnemyKilled(enemy: BaseEnemy) {
