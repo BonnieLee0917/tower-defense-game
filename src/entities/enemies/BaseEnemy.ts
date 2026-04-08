@@ -137,6 +137,26 @@ export class BaseEnemy {
     const scale = scaleMap[this.type] || 1.5;
     this.sprite.setScale(scale, scale);
 
+    // Tint per type for visual differentiation (Vivian spec)
+    const tintMap: Record<string, number | null> = {
+      normal: null, // keep original color
+      fast: 0xFFEEAA, // warm yellow = speed
+      heavy: 0xAABBDD, // cool blue-grey = armor
+      flying: null, // keep original (already white)
+    };
+    const tint = tintMap[this.type];
+    if (tint) {
+      this.sprite.setTint(tint);
+    } else {
+      this.sprite.clearTint();
+    }
+
+    // Dark outline for readability against grass (Vivian: 2px black contour)
+    if (this.sprite.preFX) {
+      this.sprite.preFX.clear();
+      this.sprite.preFX.addGlow(0x000000, 2, 0, false, 0.3, 12);
+    }
+
     // Slow effect: blue tint overlay when speedMultiplier < 1
     this.slowGfx.clear();
     if (this.slowed) {
