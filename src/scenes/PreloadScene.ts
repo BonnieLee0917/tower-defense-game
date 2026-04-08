@@ -29,19 +29,19 @@ export class PreloadScene extends Phaser.Scene {
     });
 
     // --- Enemy walk spritesheets: 288x48, 6 frames of 48x48 ---
-    this.load.spritesheet('enemy_normal_walk', 'assets/enemies/normal_walk.png', {
+    this.load.spritesheet('enemy_normal_walk', 'assets/enemies/normal_walk.png?v=2', {
       frameWidth: 48,
       frameHeight: 48,
     });
-    this.load.spritesheet('enemy_fast_walk', 'assets/enemies/fast_walk.png', {
+    this.load.spritesheet('enemy_fast_walk', 'assets/enemies/fast_walk.png?v=2', {
       frameWidth: 48,
       frameHeight: 48,
     });
-    this.load.spritesheet('enemy_heavy_walk', 'assets/enemies/heavy_walk.png', {
+    this.load.spritesheet('enemy_heavy_walk', 'assets/enemies/heavy_walk.png?v=2', {
       frameWidth: 48,
       frameHeight: 48,
     });
-    this.load.spritesheet('enemy_flying_walk', 'assets/enemies/flying_walk.png', {
+    this.load.spritesheet('enemy_flying_walk', 'assets/enemies/flying_walk.png?v=2', {
       frameWidth: 48,
       frameHeight: 48,
     });
