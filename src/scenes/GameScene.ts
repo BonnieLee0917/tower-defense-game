@@ -138,41 +138,7 @@ export class GameScene extends Phaser.Scene {
           .setScale(TILE_SIZE / 32) // 32px tiles scaled to TILE_SIZE (64)
           .setDepth(0);
 
-        // Decorations on grass tiles (trees/flowers using Graphics on top)
-        if (!isPath) {
-          const isBuildSpot = buildSpotSet.has(`${c},${r}`);
-          const gfx = this.add.graphics().setDepth(1);
-          const txPos = c * TILE_SIZE;
-          const tyPos = r * TILE_SIZE;
-
-          // Flowers/stones on ~20% of grass tiles
-          if (seedF(c, r, 50) < 0.2) {
-            const dotColors = [0xFFEB3B, 0xFF5722, 0xE91E63, 0x9E9E9E, 0x8BC34A];
-            const numDots = seedF(c, r, 51) > 0.5 ? 2 : 1;
-            for (let d = 0; d < numDots; d++) {
-              const dx = txPos + 8 + seedF(c, r, 60 + d) * (TILE_SIZE - 16);
-              const dy = tyPos + 8 + seedF(c, r, 70 + d) * (TILE_SIZE - 16);
-              const col = dotColors[Math.floor(seedF(c, r, 80 + d) * dotColors.length)];
-              gfx.fillStyle(col, 0.7);
-              gfx.fillCircle(dx, dy, 1.5);
-            }
-          }
-
-          // Trees on ~10% of non-buildspot tiles
-          if (!isBuildSpot && seedF(c, r, 90) < 0.1) {
-            const cx2 = txPos + 16 + seedF(c, r, 91) * (TILE_SIZE - 32);
-            const cy2 = tyPos + 16 + seedF(c, r, 92) * (TILE_SIZE - 32);
-            const treeR = 6 + seedF(c, r, 93) * 4;
-            gfx.fillStyle(0x000000, 0.15);
-            gfx.fillEllipse(cx2 + 2, cy2 + treeR * 0.6, treeR * 1.8, treeR * 0.8);
-            gfx.fillStyle(0x5D4037, 1);
-            gfx.fillRect(cx2 - 1.5, cy2, 3, treeR * 0.6);
-            gfx.fillStyle(0x2E7D32, 1);
-            gfx.fillCircle(cx2, cy2 - 2, treeR);
-            gfx.lineStyle(1, 0x1B5E20, 0.8);
-            gfx.strokeCircle(cx2, cy2 - 2, treeR);
-          }
-        }
+        // Real tileset handles visual variety — no code-drawn decorations needed
       }
     }
   }
