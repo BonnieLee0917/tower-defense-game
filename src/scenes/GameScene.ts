@@ -8,6 +8,7 @@ import { EconomyManager } from '../systems/EconomyManager';
 import { WaveManager } from '../systems/WaveManager';
 import { StatusEffectManager } from '../systems/StatusEffects';
 import { GlobalSkillManager } from '../systems/GlobalSkillManager';
+import { FXManager } from '../systems/FXManager';
 import { BaseEnemy } from '../entities/enemies/BaseEnemy';
 import { BaseTower } from '../entities/towers/BaseTower';
 import { Projectile } from '../entities/projectiles/Projectile';
@@ -22,6 +23,7 @@ export class GameScene extends Phaser.Scene {
   private waveManager!: WaveManager;
   private statusEffects!: StatusEffectManager;
   private globalSkills!: GlobalSkillManager;
+  private fx!: FXManager;
 
   private enemies: BaseEnemy[] = [];
   private towers: BaseTower[] = [];
@@ -90,6 +92,7 @@ export class GameScene extends Phaser.Scene {
     this.economy = new EconomyManager(this);
     this.waveManager = new WaveManager();
     this.statusEffects = new StatusEffectManager();
+    this.fx = new FXManager(this);
 
     // Global skills
     this.globalSkills = new GlobalSkillManager(this);
@@ -366,12 +369,50 @@ export class GameScene extends Phaser.Scene {
   private showTowerMenu(tower: BaseTower) {
     const container = this.add.container(tower.x, tower.y).setDepth(150);
 
-    // Center: tower info label
+    // Center: tower info panel
     const cfg = TOWER_CONFIG[tower.type];
-    const infoLabel = this.add.text(0, 0, `Lv${tower.level}`, {
-      fontSize: '11px', color: '#FFD600', fontFamily: 'Arial', fontStyle: 'bold',
+    const typeNames: Record<TowerType, string> = {
+      archer: '弓箭塔', cannon: '炮塔', magic: '魔法塔', barracks: '兵营',
+    };
+    const specLabel = tower.specialization ? tower.specialization.name : '';
+    const panelBg = this.add.graphics();
+    panelBg.fillStyle(0x1a1a2e, 0.9);
+    panelBg.fillRoundedRect(-60, 20, 120, 60, 6);
+    panelBg.lineStyle(1, 0x42A5F5, 0.5);
+    panelBg.strokeRoundedRect(-60, 20, 120, 60, 6);
+    container.add(panelBg);
+
+    const titleStr = specLabel || `${typeNames[tower.type]} Lv${tower.level}`;
+    const titleText = this.add.text(0, 28, titleStr, {
+      fontSize: '10px', color: '#FFD600', fontFamily: 'Arial', fontStyle: 'bold',
     }).setOrigin(0.5);
-    container.add(infoLabel);
+    container.add(titleText);
+
+    if (!tower.isBarracks()) {
+      const dmg = Math.round(tower.damage);
+      const rng = Math.round(tower.range);
+      const spd = (tower.attackSpeed / 1000).toFixed(1);
+      const statsStr = `⚔${dmg}  ◎${rng}  ⚡${spd}s`;
+      const statsText = this.add.text(0, 42, statsStr, {
+        fontSize: '9px', color: '#B0BEC5', fontFamily: 'Arial',
+      }).setOrigin(0.5);
+      container.add(statsText);
+
+      if (tower.specialization?.stats.special) {
+        const specialText = this.add.text(0, 56, `✨ ${tower.specialization.stats.special}`, {
+          fontSize: '9px', color: '#CE93D8', fontFamily: 'Arial',
+        }).setOrigin(0.5);
+        container.add(specialText);
+      }
+    } else {
+      const soldierCount = tower.soldiers.filter(s => s?.alive).length;
+      const maxSoldiers = tower.soldiers.length;
+      const statsStr = `⚔️ ${soldierCount}/${maxSoldiers} 士兵`;
+      const statsText = this.add.text(0, 42, statsStr, {
+        fontSize: '9px', color: '#B0BEC5', fontFamily: 'Arial',
+      }).setOrigin(0.5);
+      container.add(statsText);
+    }
 
     const upgradeCost = tower.getUpgradeCost();
     let btnIndex = 0;
@@ -414,6 +455,7 @@ export class GameScene extends Phaser.Scene {
             if (this.economy.spend(spec.cost)) {
               tower.addInvestment(spec.cost);
               tower.specialize(spec);
+              this.fx.upgradeEffect(tower.x, tower.y);
               this.showFloatingText(tower.x, tower.y - 30, `★ ${spec.name}`, '#FFD600');
               this.closeTowerMenu();
               this.updateHUD();
@@ -607,6 +649,7 @@ export class GameScene extends Phaser.Scene {
     if (cost === null || !this.economy.spend(cost)) return;
     tower.addInvestment(cost);
     tower.upgrade();
+    this.fx.upgradeEffect(tower.x, tower.y);
     this.showFloatingText(tower.x, tower.y - 30, `⬆ Lv.${tower.level}`, '#66BB6A');
     this.updateHUD();
   }
@@ -915,6 +958,7 @@ export class GameScene extends Phaser.Scene {
       if (hit) {
         if (p.splash > 0) {
           const hitPos = { x: p.x, y: p.y };
+          this.fx.explosion(hitPos.x, hitPos.y, p.splash);
           for (const enemy of this.enemies) {
             if (!enemy.alive) continue;
             if (Math.hypot(enemy.x - hitPos.x, enemy.y - hitPos.y) <= p.splash) {
@@ -931,7 +975,10 @@ export class GameScene extends Phaser.Scene {
             const died = target.takeDamage(p.damage, p.damageType);
             if (died) this.onEnemyKilled(target);
             if (p.damageType === 'magical') {
+              this.fx.magicHit(target.x, target.y);
               this.statusEffects.applyEffect(target, { type: 'slow', magnitude: 0.3, duration: 2000 });
+            } else {
+              this.fx.hitFlash(target.x, target.y);
             }
           }
         }
@@ -957,6 +1004,7 @@ export class GameScene extends Phaser.Scene {
 
   private onEnemyKilled(enemy: BaseEnemy) {
     if (enemy.alive) return;
+    this.fx.enemyDeath(enemy.x, enemy.y);
     this.economy.earn(enemy.reward);
     this.totalKills++;
     this.totalGoldEarned += enemy.reward;
