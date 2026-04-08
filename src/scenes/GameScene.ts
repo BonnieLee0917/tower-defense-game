@@ -385,12 +385,19 @@ export class GameScene extends Phaser.Scene {
 
     drawFlag(cx, cy);
 
-    // Interactive drag zone
-    const zone = this.add.zone(cx, cy, 24, 24).setDepth(101).setInteractive({ draggable: true, useHandCursor: true });
+    // "Drag me" hint text
+    const hintText = this.add.text(cx, cy + 12, '↕ Drag to move', {
+      fontSize: '10px', color: '#FFD600', fontFamily: 'Arial',
+    }).setOrigin(0.5).setDepth(102).setAlpha(0.8);
+    (gfx as any)._hintText = hintText;
+
+    // Interactive drag zone — larger hit area for touch
+    const zone = this.add.zone(cx, cy, 48, 48).setDepth(101).setInteractive({ draggable: true, useHandCursor: true });
     this.input.setDraggable(zone);
 
     zone.on('drag', (_pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
       zone.setPosition(dragX, dragY);
+      hintText.setPosition(dragX, dragY + 12);
       drawFlag(dragX, dragY);
     });
 
@@ -414,6 +421,8 @@ export class GameScene extends Phaser.Scene {
     if (this.rallyFlagGfx) {
       const zone = (this.rallyFlagGfx as any)._rallyZone;
       if (zone) zone.destroy();
+      const hint = (this.rallyFlagGfx as any)._hintText;
+      if (hint) hint.destroy();
       this.rallyFlagGfx.destroy();
       this.rallyFlagGfx = null;
     }
