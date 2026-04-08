@@ -12,6 +12,7 @@ export class BaseTower {
   public x: number;
   public y: number;
   public level = 1;
+  public specialization: import('../../config/gameConfig').Specialization | null = null;
   public readonly barracksId: number | null;
 
   private baseConfig: typeof TOWER_CONFIG[TowerType];
@@ -83,28 +84,50 @@ export class BaseTower {
   }
 
   private recalcStats() {
-    const lvlIdx = this.level - 1;
+    const lvlIdx = Math.min(this.level - 1, UPGRADE_CONFIG.damageMultiplier.length - 1);
     if (!this.isBarracks()) {
-      this.damage = this.baseConfig.damage * UPGRADE_CONFIG.damageMultiplier[lvlIdx];
-      this.range = this.baseConfig.range * UPGRADE_CONFIG.rangeMultiplier[lvlIdx];
-      this.attackSpeed = this.baseConfig.attackSpeed * UPGRADE_CONFIG.attackSpeedMultiplier[lvlIdx];
+      if (this.level === 4 && this.specialization) {
+        // Lv4 uses specialization multipliers
+        const s = this.specialization.stats;
+        this.damage = this.baseConfig.damage * s.damageMultiplier;
+        this.range = this.baseConfig.range * s.rangeMultiplier;
+        this.attackSpeed = this.baseConfig.attackSpeed * s.attackSpeedMultiplier;
+      } else {
+        this.damage = this.baseConfig.damage * UPGRADE_CONFIG.damageMultiplier[lvlIdx];
+        this.range = this.baseConfig.range * UPGRADE_CONFIG.rangeMultiplier[lvlIdx];
+        this.attackSpeed = this.baseConfig.attackSpeed * UPGRADE_CONFIG.attackSpeedMultiplier[lvlIdx];
+      }
     }
 
     for (const soldier of this.soldiers) {
-      soldier?.setLevel(this.level);
+      soldier?.setLevel(Math.min(this.level, 3)); // soldier stats cap at Lv3 config
     }
   }
 
   upgrade(): boolean {
-    if (this.level >= UPGRADE_CONFIG.levels) return false;
+    if (this.level >= 4) return false; // max level
+    if (this.level === 3 && !this.specialization) return false; // need specialization choice first
     this.level++;
     this.recalcStats();
     this.draw();
     return true;
   }
 
+  specialize(spec: import('../../config/gameConfig').Specialization): boolean {
+    if (this.level !== 3 || this.specialization) return false;
+    this.specialization = spec;
+    this.level = 4;
+    this.recalcStats();
+    this.draw();
+    return true;
+  }
+
+  needsSpecialization(): boolean {
+    return this.level === 3 && !this.specialization;
+  }
+
   getUpgradeCost(): number | null {
-    if (this.level >= UPGRADE_CONFIG.levels) return null;
+    if (this.level >= 3) return null; // Lv3→4 uses specialization cost, not upgrade
     return Math.round(this.baseConfig.cost * UPGRADE_CONFIG.costMultiplier[this.level]);
   }
 
@@ -264,7 +287,9 @@ export class BaseTower {
     }
 
     const letterMap: Record<TowerType, string> = { archer: 'A', cannon: 'C', magic: 'M', barracks: 'B' };
-    const labelText = `${letterMap[this.type]}${this.level}`;
+    const labelText = this.specialization
+      ? this.specialization.name.split(' ').map(w => w[0]).join('')
+      : `${letterMap[this.type]}${this.level}`;
     if (this.label) {
       this.label.setText(labelText);
     } else {
@@ -280,6 +305,11 @@ export class BaseTower {
     if (this.label) {
       this.label.setDepth(8);
       this.label.setPosition(this.x, this.y + 34);
+    }
+
+    // Lv4 Specialization visual accents
+    if (this.specialization) {
+      this.drawSpecialization();
     }
   }
 
@@ -379,6 +409,85 @@ export class BaseTower {
       this.type === 'cannon' ? 6 : this.type === 'magic' ? 5 : 3,
       this.baseConfig.damageType,
     );
+  }
+
+  private drawSpecialization() {
+    if (!this.specialization) return;
+    const spec = this.specialization;
+    const x = this.x, y = this.y;
+
+    // Accent glow ring in spec color
+    this.gfx.lineStyle(2.5, spec.color, 0.6);
+    this.gfx.strokeCircle(x, y, 30);
+
+    switch (spec.name) {
+      case 'Rangers Lodge':
+        // Crosshair scope on top
+        this.gfx.lineStyle(1.5, 0x2E7D32, 0.8);
+        this.gfx.strokeCircle(x, y - 20, 6);
+        this.gfx.lineBetween(x, y - 26, x, y - 14);
+        this.gfx.lineBetween(x - 6, y - 20, x + 6, y - 20);
+        break;
+      case 'Musketeer':
+        // Flame icon on top
+        this.gfx.fillStyle(0xFF6F00, 0.8);
+        this.gfx.fillTriangle(x - 4, y - 16, x + 4, y - 16, x, y - 26);
+        this.gfx.fillStyle(0xFFD600, 0.6);
+        this.gfx.fillTriangle(x - 2, y - 16, x + 2, y - 16, x, y - 22);
+        break;
+      case 'Arcane Wizard':
+        // Large energy ball
+        this.gfx.fillStyle(0x448AFF, 0.7);
+        this.gfx.fillCircle(x, y - 22, 8);
+        this.gfx.lineStyle(1, 0x82B1FF, 0.5);
+        this.gfx.strokeCircle(x, y - 22, 10);
+        break;
+      case 'Sorcerer':
+        // Rotating rune ring
+        this.gfx.lineStyle(1.5, 0x00E5FF, 0.5);
+        this.gfx.strokeCircle(x, y, 24);
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2 + Date.now() * 0.001;
+          this.gfx.fillStyle(0x00E5FF, 0.6);
+          this.gfx.fillCircle(x + Math.cos(a) * 24, y + Math.sin(a) * 24, 2);
+        }
+        break;
+      case 'Big Bertha':
+        // Extra thick barrel
+        this.gfx.fillStyle(0xB71C1C, 1);
+        this.gfx.fillRect(x - 8, y - 22, 16, 18);
+        // Muzzle flame
+        this.gfx.fillStyle(0xFF6F00, 0.6);
+        this.gfx.fillCircle(x, y - 22, 5);
+        break;
+      case 'Tesla':
+        // Electric ball on top
+        this.gfx.fillStyle(0x4FC3F7, 0.7);
+        this.gfx.fillCircle(x, y - 18, 6);
+        // Lightning arcs
+        this.gfx.lineStyle(1.5, 0x00E5FF, 0.6);
+        this.gfx.lineBetween(x - 8, y - 20, x - 4, y - 16);
+        this.gfx.lineBetween(x - 4, y - 16, x - 10, y - 12);
+        this.gfx.lineBetween(x + 8, y - 20, x + 4, y - 16);
+        this.gfx.lineBetween(x + 4, y - 16, x + 10, y - 12);
+        break;
+      case 'Holy Order':
+        // Cross shield icon
+        this.gfx.fillStyle(0xFFFFFF, 0.8);
+        this.gfx.fillRect(x - 1, y - 28, 2, 10);
+        this.gfx.fillRect(x - 4, y - 25, 8, 2);
+        break;
+      case 'Assassin Guild':
+        // Dual daggers
+        this.gfx.fillStyle(0xBDBDBD, 0.8);
+        this.gfx.fillRect(x - 6, y - 28, 2, 10);
+        this.gfx.fillRect(x + 4, y - 28, 2, 10);
+        // Poison drip
+        this.gfx.fillStyle(0x7B1FA2, 0.6);
+        this.gfx.fillCircle(x - 5, y - 18, 2);
+        this.gfx.fillCircle(x + 5, y - 18, 2);
+        break;
+    }
   }
 
   destroy() {
