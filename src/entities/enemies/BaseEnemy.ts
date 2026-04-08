@@ -121,7 +121,8 @@ export class BaseEnemy {
     this.sprite.setPosition(this.x, this.y + (this.isFlying ? -6 : 0));
     this.sprite.setOrigin(0.5, 0.5);
     this.sprite.setFlipX(Math.cos(this.angle) < -0.1);
-    this.sprite.setScale(c.width / 48, c.height / 48);
+    // Slightly larger than strict hitbox size for better readability on the map
+    this.sprite.setScale((c.width / 48) * 1.3, (c.height / 48) * 1.3);
 
     // Slow effect: blue tint overlay when speedMultiplier < 1
     this.slowGfx.clear();

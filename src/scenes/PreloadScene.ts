@@ -6,11 +6,14 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   preload() {
-    // --- Tileset spritesheet: 256x256, 8x8 grid of 32x32 tiles ---
-    this.load.spritesheet('tileset', 'assets/tiles/FieldsTileset.png', {
-      frameWidth: 32,
-      frameHeight: 32,
-    });
+    // --- Kenney TD tiles (64x64 native, no scaling needed) ---
+    // Grass tiles
+    this.load.image('grass1', 'assets/tiles/towerDefense_tile024.png');
+    this.load.image('grass2', 'assets/tiles/towerDefense_tile001.png');
+    this.load.image('grass3', 'assets/tiles/towerDefense_tile004.png');
+    // Path tiles
+    this.load.image('path1', 'assets/tiles/towerDefense_tile051.png');
+    this.load.image('path2', 'assets/tiles/towerDefense_tile028.png');
 
     // --- Tower sprites (archer only) ---
     // 1.png = 70x130 single frame, 3.png = 280x130 (4 frames), 5.png = 420x130 (6 frames)
@@ -46,7 +49,7 @@ export class PreloadScene extends Phaser.Scene {
   create() {
     // Set NEAREST filter on all loaded textures for pixel-perfect rendering
     [
-      'tileset',
+      'grass1', 'grass2', 'grass3', 'path1', 'path2',
       'archer_lv1',
       'archer_lv2',
       'archer_lv3',

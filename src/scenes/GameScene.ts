@@ -117,11 +117,9 @@ export class GameScene extends Phaser.Scene {
     // Tileset frames:
     // Row 0 (frames 0-7): grass variants
     // Row 1 (frames 8-15): more grass / transition
-    // Row 2 (frames 16-23): path/dirt tiles
-    // Row 3 (frames 24-31): more path variants
-    // We'll use frames 0,1,8,9 for grass, frames 16,17,18,24,25 for path
-    const grassFrames = [0, 1, 8, 9];
-    const pathFrames = [16, 17, 18, 24, 25, 26];
+    // Kenney TD tiles: individual 64x64 PNGs (no spritesheet needed)
+    const grassKeys = ['grass1', 'grass2', 'grass3'];
+    const pathKeys = ['path1', 'path2'];
 
     for (let r = 0; r < MAP_DATA.rows; r++) {
       for (let c = 0; c < MAP_DATA.cols; c++) {
@@ -129,13 +127,12 @@ export class GameScene extends Phaser.Scene {
         const tx = c * TILE_SIZE + TILE_SIZE / 2;
         const ty = r * TILE_SIZE + TILE_SIZE / 2;
 
-        // Pick a deterministic frame
         const s = seed(c, r);
-        const frames = isPath ? pathFrames : grassFrames;
-        const frameIdx = frames[s % frames.length];
+        const keys = isPath ? pathKeys : grassKeys;
+        const key = keys[s % keys.length];
 
-        const tile = this.add.image(tx, ty, 'tileset', frameIdx)
-          .setScale(TILE_SIZE / 32) // 32px tiles scaled to TILE_SIZE (64)
+        this.add.image(tx, ty, key)
+          .setDisplaySize(TILE_SIZE, TILE_SIZE)
           .setDepth(0);
 
         // Real tileset handles visual variety — no code-drawn decorations needed
@@ -146,9 +143,9 @@ export class GameScene extends Phaser.Scene {
   private drawBuildSpots() {
     for (const spot of MAP_DATA.buildSpots) {
       const gfx = this.add.graphics();
-      gfx.lineStyle(2, 0xF0E6D3, 0.6);
+      gfx.lineStyle(3, 0xFFFFFF, 0.8);
       gfx.strokeRect(spot.x - 28, spot.y - 28, 56, 56);
-      gfx.fillStyle(0xF0E6D3, 0.15);
+      gfx.fillStyle(0xFFFFFF, 0.25);
       gfx.fillRect(spot.x - 28, spot.y - 28, 56, 56);
 
       const entry = { gfx, spot, occupied: false };
