@@ -192,24 +192,28 @@ export class BaseTower {
 
       this.drawBarracksStatus();
     } else if (this.type === 'archer') {
-      const spriteY = this.y - 6;
-      if (this.level === 1) {
-        this.archerSprite = this.scene.add.image(this.x, spriteY, 'archer_lv1').setDepth(5);
-        this.archerSprite.setScale(48 / 70);
-      } else if (this.level === 2) {
-        const sprite = this.scene.add.sprite(this.x, spriteY, 'archer_lv2', 0).setDepth(5);
-        sprite.play('archer_lv2_idle');
-        sprite.setScale(48 / 70);
-        this.archerSprite = sprite;
-      } else {
-        const sprite = this.scene.add.sprite(this.x, spriteY, 'archer_lv3', 0).setDepth(5);
-        sprite.play('archer_lv3_idle');
-        sprite.setScale(48 / 70);
-        this.archerSprite = sprite;
+      // Graphics-drawn archer tower (unified style with other towers)
+      const aSize = 12 + this.level * 2;
+      const colors = [0x4CAF50, 0x388E3C, 0x2E7D32]; // green progression
+      // Tower body (rectangular with notch top)
+      this.gfx.fillStyle(colors[this.level - 1] || colors[0], 1);
+      this.gfx.fillRect(this.x - aSize, this.y - 12, aSize * 2, 24);
+      // Battlements on top
+      this.gfx.fillRect(this.x - aSize, this.y - 18, 6, 6);
+      this.gfx.fillRect(this.x + aSize - 6, this.y - 18, 6, 6);
+      // Window/arrow slit
+      this.gfx.fillStyle(0x1B5E20, 1);
+      this.gfx.fillRect(this.x - 2, this.y - 6, 4, 10);
+      // Outline
+      this.gfx.lineStyle(1, 0x1B5E20, 0.6);
+      this.gfx.strokeRect(this.x - aSize, this.y - 12, aSize * 2, 24);
+      // Level 3 glow
+      if (this.level >= 3) {
+        this.gfx.lineStyle(2, 0x66BB6A, 0.4);
+        this.gfx.strokeCircle(this.x, this.y, aSize + 8);
       }
-      this.archerSprite.setOrigin(0.5, 0.8);
-      // Tint to match map color temperature (Vivian: CraftPix warm → Kenney cool)
-      this.archerSprite.setTint(0xddffdd);
+      this.gfx.fillStyle(0xffffff, 0.2);
+      this.gfx.fillCircle(this.x - 6, this.y - 8, 3);
     } else if (this.type === 'magic') {
       const r = this.baseConfig.radius + this.level * 2;
       const colors = [0x5C35B0, 0x6A1FCC, 0x7B1FA2]; // deeper purple each level
