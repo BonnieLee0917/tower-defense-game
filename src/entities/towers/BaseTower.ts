@@ -159,15 +159,23 @@ export class BaseTower {
     }
 
     if (this.isBarracks()) {
-      // CraftPix Pack1 barracks (Idle/7, green)
+      // CraftPix Guardian Tower pack — dedicated barracks sprites per level
       const spriteY = this.y - 10;
-      const sprite = this.scene.add.sprite(this.x, spriteY, 'barracks_sprite', 0).setDepth(5);
-      sprite.play('barracks_idle');
-      const baseScale = 48 / 130;
-      const levelScale = 1 + (this.level - 1) * 0.05;
-      sprite.setScale(baseScale * levelScale);
-      sprite.setOrigin(0.5, 0.8);
-      this.archerSprite = sprite;
+      if (this.level === 1) {
+        this.archerSprite = this.scene.add.image(this.x, spriteY, 'barracks_lv1').setDepth(5);
+        this.archerSprite.setScale(48 / 70);
+      } else if (this.level === 2) {
+        const sprite = this.scene.add.sprite(this.x, spriteY, 'barracks_lv2', 0).setDepth(5);
+        sprite.play('barracks_lv2_idle');
+        sprite.setScale(48 / 70);
+        this.archerSprite = sprite;
+      } else {
+        const sprite = this.scene.add.sprite(this.x, spriteY, 'barracks_lv3', 0).setDepth(5);
+        sprite.play('barracks_lv3_idle');
+        sprite.setScale(48 / 70);
+        this.archerSprite = sprite;
+      }
+      this.archerSprite.setOrigin(0.5, 0.8);
       // Overlay: shield + flag for barracks
       this.gfx.fillStyle(0xFFB300, 0.8);
       this.gfx.fillRect(this.x - 12, this.y - 28, 8, 10); // shield
@@ -227,15 +235,23 @@ export class BaseTower {
       this.gfx.lineStyle(1, 0xE040FB, 0.5);
       this.gfx.strokeCircle(this.x, this.y - 30, 7 + this.level);
     } else if (this.type === 'cannon') {
-      // CraftPix Pack1 cannon tower (Idle/5)
+      // CraftPix Catapult Tower pack — dedicated cannon sprites per level
       const spriteY = this.y - 10;
-      const sprite = this.scene.add.sprite(this.x, spriteY, 'cannon_sprite', 0).setDepth(5);
-      sprite.play('cannon_idle');
-      const baseScale = 48 / 130;
-      const levelScale = 1 + (this.level - 1) * 0.05;
-      sprite.setScale(baseScale * levelScale);
-      sprite.setOrigin(0.5, 0.8);
-      this.archerSprite = sprite;
+      if (this.level === 1) {
+        this.archerSprite = this.scene.add.image(this.x, spriteY, 'cannon_lv1').setDepth(5);
+        this.archerSprite.setScale(48 / 70);
+      } else if (this.level === 2) {
+        const sprite = this.scene.add.sprite(this.x, spriteY, 'cannon_lv2', 0).setDepth(5);
+        sprite.play('cannon_lv2_idle');
+        sprite.setScale(48 / 70);
+        this.archerSprite = sprite;
+      } else {
+        const sprite = this.scene.add.sprite(this.x, spriteY, 'cannon_lv3', 0).setDepth(5);
+        sprite.play('cannon_lv3_idle');
+        sprite.setScale(48 / 70);
+        this.archerSprite = sprite;
+      }
+      this.archerSprite.setOrigin(0.5, 0.8);
       // Overlay: cannon barrel
       this.gfx.fillStyle(0x424242, 0.9);
       this.gfx.fillRect(this.x + 10, this.y - 16, 12, 6);
