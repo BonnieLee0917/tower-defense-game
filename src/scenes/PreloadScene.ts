@@ -38,8 +38,8 @@ export class PreloadScene extends Phaser.Scene {
       frameWidth: 70,
       frameHeight: 130,
     });
-    // Magic tower Lv1-3 (Idle/4, 6, not enough for 3 levels so reuse)
-    this.load.spritesheet('magic_lv1', 'assets/towers/pack1/idle_4.png', {
+    // Magic tower (Idle/6 — grey stone)
+    this.load.spritesheet('magic_lv1', 'assets/towers/pack1/idle_6.png', {
       frameWidth: 70,
       frameHeight: 130,
     });

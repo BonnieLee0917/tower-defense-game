@@ -159,14 +159,17 @@ export class BaseTower {
     }
 
     if (this.isBarracks()) {
-      // CraftPix Pack1 barracks sprite (Idle/7, green)
+      // CraftPix Pack1 barracks (Idle/7, green)
       const spriteY = this.y - 10;
       const sprite = this.scene.add.sprite(this.x, spriteY, 'barracks_sprite', 0).setDepth(5);
       sprite.play('barracks_idle');
-      sprite.setScale(48 / 130);
+      const baseScale = 48 / 130;
+      const levelScale = 1 + (this.level - 1) * 0.05;
+      sprite.setScale(baseScale * levelScale);
       sprite.setOrigin(0.5, 0.8);
       this.archerSprite = sprite;
 
+      this.drawBarracksStatus();
       this.drawBarracksStatus();
     } else if (this.type === 'archer') {
       // CraftPix sprite archer tower (小萌 approved visual quality)
@@ -187,22 +190,23 @@ export class BaseTower {
       }
       this.archerSprite.setOrigin(0.5, 0.8);
     } else if (this.type === 'magic') {
-      // CraftPix Pack1 magic tower sprite (Idle/4 + 6)
+      // CraftPix Pack1 magic tower (Idle/6)
       const spriteY = this.y - 10;
-      const magicKeys = ['magic_lv1', 'magic_lv2', 'magic_lv3'];
-      const magicAnims = ['magic_lv1_idle', 'magic_lv2_idle', 'magic_lv3_idle'];
-      const lvl = Math.min(this.level - 1, 2);
-      const sprite = this.scene.add.sprite(this.x, spriteY, magicKeys[lvl], 0).setDepth(5);
-      sprite.play(magicAnims[lvl]);
-      sprite.setScale(48 / 130);
+      const sprite = this.scene.add.sprite(this.x, spriteY, 'magic_lv1', 0).setDepth(5);
+      sprite.play('magic_lv1_idle');
+      const baseScale = 48 / 130;
+      const levelScale = 1 + (this.level - 1) * 0.05; // 1.0 / 1.05 / 1.1
+      sprite.setScale(baseScale * levelScale);
       sprite.setOrigin(0.5, 0.8);
       this.archerSprite = sprite;
     } else if (this.type === 'cannon') {
-      // CraftPix Pack1 cannon tower sprite (Idle/5, grey stone)
+      // CraftPix Pack1 cannon tower (Idle/5)
       const spriteY = this.y - 10;
       const sprite = this.scene.add.sprite(this.x, spriteY, 'cannon_sprite', 0).setDepth(5);
       sprite.play('cannon_idle');
-      sprite.setScale(48 / 130);
+      const baseScale = 48 / 130;
+      const levelScale = 1 + (this.level - 1) * 0.05;
+      sprite.setScale(baseScale * levelScale);
       sprite.setOrigin(0.5, 0.8);
       this.archerSprite = sprite;
     } else {
