@@ -81,6 +81,15 @@ export class PreloadScene extends Phaser.Scene {
       frameWidth: 48,
       frameHeight: 48,
     });
+    // Down/Up walk spritesheets (3-direction support)
+    for (const type of ['normal', 'fast', 'heavy', 'flying']) {
+      this.load.spritesheet(`enemy_${type}_walk_down`, `assets/enemies/${type}_walk_down.png`, {
+        frameWidth: 48, frameHeight: 48,
+      });
+      this.load.spritesheet(`enemy_${type}_walk_up`, `assets/enemies/${type}_walk_up.png`, {
+        frameWidth: 48, frameHeight: 48,
+      });
+    }
   }
 
   create() {
@@ -103,12 +112,24 @@ export class PreloadScene extends Phaser.Scene {
       texture?.setFilter(Phaser.Textures.FilterMode.NEAREST);
     });
 
-    // Create enemy walk animations
+    // Create enemy walk animations (side + down + up)
     const enemyTypes = ['normal', 'fast', 'heavy', 'flying'];
     for (const type of enemyTypes) {
       this.anims.create({
         key: `enemy_${type}_walk_anim`,
         frames: this.anims.generateFrameNumbers(`enemy_${type}_walk`, { start: 0, end: 5 }),
+        frameRate: 8,
+        repeat: -1,
+      });
+      this.anims.create({
+        key: `enemy_${type}_walk_down_anim`,
+        frames: this.anims.generateFrameNumbers(`enemy_${type}_walk_down`, { start: 0, end: 5 }),
+        frameRate: 8,
+        repeat: -1,
+      });
+      this.anims.create({
+        key: `enemy_${type}_walk_up_anim`,
+        frames: this.anims.generateFrameNumbers(`enemy_${type}_walk_up`, { start: 0, end: 5 }),
         frameRate: 8,
         repeat: -1,
       });
