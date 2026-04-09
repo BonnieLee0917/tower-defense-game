@@ -33,13 +33,13 @@ export class PreloadScene extends Phaser.Scene {
       frameWidth: 70,
       frameHeight: 130,
     });
-    // Cannon tower (Idle/4 — warm brown)
-    this.load.spritesheet('cannon_sprite', 'assets/towers/pack1/idle_4.png', {
+    // Cannon tower (Idle/5 — grey stone)
+    this.load.spritesheet('cannon_sprite', 'assets/towers/pack1/idle_5.png', {
       frameWidth: 70,
       frameHeight: 130,
     });
-    // Magic tower Lv1-3 (Idle/5-7 — blue-grey)
-    this.load.spritesheet('magic_lv1', 'assets/towers/pack1/idle_5.png', {
+    // Magic tower Lv1-3 (Idle/4, 6, not enough for 3 levels so reuse)
+    this.load.spritesheet('magic_lv1', 'assets/towers/pack1/idle_4.png', {
       frameWidth: 70,
       frameHeight: 130,
     });
@@ -47,12 +47,12 @@ export class PreloadScene extends Phaser.Scene {
       frameWidth: 70,
       frameHeight: 130,
     });
-    this.load.spritesheet('magic_lv3', 'assets/towers/pack1/idle_7.png', {
+    this.load.spritesheet('magic_lv3', 'assets/towers/pack1/idle_6.png', {
       frameWidth: 70,
       frameHeight: 130,
     });
-    // Barracks (Idle/4 with green tint, or use same as cannon with tint)
-    this.load.spritesheet('barracks_sprite', 'assets/towers/pack1/idle_4.png', {
+    // Barracks (Idle/7 — green)
+    this.load.spritesheet('barracks_sprite', 'assets/towers/pack1/idle_7.png', {
       frameWidth: 70,
       frameHeight: 130,
     });
