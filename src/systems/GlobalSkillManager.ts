@@ -136,9 +136,15 @@ export class GlobalSkillManager {
     }
 
     this.scene.input.on('pointermove', this.onTargetMove);
-    this.scene.input.once('pointerdown', (ptr: Phaser.Input.Pointer) => {
-      this.executeSkill(skillKey, ptr.x, ptr.y);
-      this.deactivateSkill();
+    // Delay placement listener by 1 frame to avoid the activation click
+    // from also triggering the placement
+    this.scene.time.delayedCall(50, () => {
+      if (this.activeSkill !== skillKey) return; // was deactivated
+      this.scene.input.once('pointerdown', (ptr: Phaser.Input.Pointer) => {
+        if (this.activeSkill !== skillKey) return;
+        this.executeSkill(skillKey, ptr.x, ptr.y);
+        this.deactivateSkill();
+      });
     });
 
     // Draw initial circle
