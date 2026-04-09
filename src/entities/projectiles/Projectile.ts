@@ -51,18 +51,17 @@ export class Projectile {
   update(dt: number): boolean {
     if (!this.alive) return true;
 
-    // If target died mid-flight, fly to its last known position then disappear (no damage)
-    if (!this.target.alive && !this.lastTargetPos) {
+    // Continuously cache the last valid live target position.
+    // If the target dies or is destroyed, keep flying to the last good point only.
+    if (this.target.alive && Number.isFinite(this.target.x) && Number.isFinite(this.target.y)) {
       this.lastTargetPos = { x: this.target.x, y: this.target.y };
     }
 
-    const tx = this.lastTargetPos ? this.lastTargetPos.x
-      : (this.target.alive ? this.target.x : this.fallbackPos.x);
-    const ty = this.lastTargetPos ? this.lastTargetPos.y
-      : (this.target.alive ? this.target.y : this.fallbackPos.y);
+    const tx = this.target.alive ? this.target.x : (this.lastTargetPos?.x ?? this.fallbackPos.x);
+    const ty = this.target.alive ? this.target.y : (this.lastTargetPos?.y ?? this.fallbackPos.y);
 
-    // Safety: if target position is invalid (0,0 or NaN), destroy projectile immediately
-    if (!tx && !ty || isNaN(tx) || isNaN(ty)) {
+    // Safety: if target position is invalid, destroy projectile immediately
+    if ((!Number.isFinite(tx) || !Number.isFinite(ty)) || (tx === 0 && ty === 0)) {
       this.alive = false;
       this.gfx.destroy();
       return false;
@@ -75,7 +74,7 @@ export class Projectile {
       this.alive = false;
       this.gfx.destroy();
       // If target died mid-flight, don't deal damage
-      if (this.lastTargetPos) return false;
+      if (!this.target.alive) return false;
       return true;
     }
 
@@ -83,6 +82,13 @@ export class Projectile {
     this.x += (dx / dist) * move;
     this.y += (dy / dist) * move;
     this.angle = Math.atan2(dy, dx);
+
+    // Extra safety: kill any projectile that escapes the playable area
+    if (this.x < -50 || this.x > 1330 || this.y < -50 || this.y > 770) {
+      this.alive = false;
+      this.gfx.destroy();
+      return false;
+    }
 
     // Draw projectile based on tower type
     this.gfx.clear();

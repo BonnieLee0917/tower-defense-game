@@ -215,15 +215,6 @@ export class Soldier {
 
     // Sprite handles body rendering now; keep gfx only for flashes/combat markers/health bar
 
-    // Combat crossed-swords effect
-    if (this.inCombat && this.target) {
-      const midX = (this.x + this.target.x) / 2;
-      const midY = (this.y + this.target.y) / 2;
-      this.gfx.lineStyle(1.5, 0xFFD600, 0.7);
-      this.gfx.lineBetween(midX - 4, midY - 4, midX + 4, midY + 4);
-      this.gfx.lineBetween(midX + 4, midY - 4, midX - 4, midY + 4);
-    }
-
     // Health bar - only show when damaged (KR style)
     if (this.hp < this.maxHp) {
       const barW = 20;
