@@ -126,16 +126,14 @@ export class BaseEnemy {
     // Position sprite and scale to current logical size
     this.sprite.setPosition(this.x, this.y + (this.isFlying ? -6 : 0));
     this.sprite.setOrigin(0.5, 0.5);
-    // Simple direction-based flip: track previous X to determine movement direction
-    const movingRight = Math.cos(this.angle) > 0.1;
-    const movingLeft = Math.cos(this.angle) < -0.1;
-    // All pack2 sprites tested to face RIGHT by default (pixel density analysis)
-    // When moving left, flip. When moving right, don't flip.
-    if (movingLeft) {
-      this.sprite.setFlipX(true);
-    } else if (movingRight) {
-      this.sprite.setFlipX(false);
-    }
+    // Rotate sprite to face movement direction
+    // angle from PathManager: 0=right, PI/2=down, PI=left, -PI/2=up
+    // Sprite default orientation: facing right (0 degrees)
+    // For left-facing sprites, add PI offset
+    const facesRight = (this.config as any).facesRight !== false;
+    const rotationOffset = facesRight ? 0 : Math.PI;
+    this.sprite.setRotation(this.angle + rotationOffset);
+    // Don't use flipX anymore — rotation handles all directions
     // Scale enemies — balanced for path width readability
     const scaleMap: Record<string, number> = { normal: 1.5, fast: 1.5, heavy: 1.8, flying: 1.5 };
     const scale = scaleMap[this.type] || 1.5;

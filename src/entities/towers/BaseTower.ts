@@ -346,6 +346,7 @@ export class BaseTower {
       this.baseConfig.projectileColor,
       this.type === 'cannon' ? 6 : this.type === 'magic' ? 5 : 3,
       this.baseConfig.damageType,
+      this.type,
     );
   }
 
