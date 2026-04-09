@@ -237,20 +237,14 @@ export class GameScene extends Phaser.Scene {
   private drawBuildSpots() {
     for (const spot of this.currentMap.buildSpots) {
       const gfx = this.add.graphics();
-      // Build spot: white dashed circle with pulse animation (Vivian spec)
-      gfx.lineStyle(2, 0xFFFFFF, 0.5);
-      gfx.strokeCircle(spot.x, spot.y, 22);
-      gfx.fillStyle(0xFFFFFF, 0.08);
-      gfx.fillCircle(spot.x, spot.y, 22);
-      // Pulse animation
-      this.tweens.add({
-        targets: gfx,
-        alpha: { from: 0.3, to: 0.7 },
-        duration: 1200,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut',
-      });
+      // Build spot: subtle static indicator (no pulse — pulse looked like "flying circles")
+      gfx.lineStyle(1.5, 0xFFFFFF, 0.25);
+      gfx.strokeCircle(spot.x, spot.y, 20);
+      gfx.fillStyle(0xFFFFFF, 0.06);
+      gfx.fillCircle(spot.x, spot.y, 20);
+      // Small center dot as build hint
+      gfx.fillStyle(0xFFFFFF, 0.3);
+      gfx.fillCircle(spot.x, spot.y, 3);
 
       const entry = { gfx, spot, occupied: false };
       this.spotGfxList.push(entry);

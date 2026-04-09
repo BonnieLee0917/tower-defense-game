@@ -196,7 +196,17 @@ export class Soldier {
       this.sprite.play(animKey);
     }
 
-    // Sprite handles body rendering now; keep gfx only for health bar
+    // Flash effects
+    if (this.attackFlashTimer > 0) {
+      this.gfx.fillStyle(0xFFFFFF, this.attackFlashTimer / 120);
+      this.gfx.fillCircle(this.x, this.y, drawR + 3);
+    }
+    if (this.damageFlashTimer > 0) {
+      this.gfx.fillStyle(0xFF0000, this.damageFlashTimer / 120);
+      this.gfx.fillCircle(this.x, this.y, drawR + 3);
+    }
+
+    // Sprite handles body rendering now; keep gfx only for flashes/combat markers/health bar
 
     // Health bar - only show when damaged (KR style)
     if (this.hp < this.maxHp) {
