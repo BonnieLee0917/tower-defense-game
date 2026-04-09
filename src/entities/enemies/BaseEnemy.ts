@@ -27,6 +27,7 @@ export class BaseEnemy {
   private slowGfx: Phaser.GameObjects.Graphics;
   private bodyGfx: Phaser.GameObjects.Graphics | null = null;
   private pathManager: PathManager;
+  private currentDir: 'd' | 's' | 'u' = 's';
   public readonly config: typeof ENEMY_CONFIG[EnemyType];
   private flyingPath: { x: number; y: number }[] | null = null;
   private destroyed = false;
@@ -123,47 +124,35 @@ export class BaseEnemy {
     this.shadowGfx.fillStyle(0x000000, this.isFlying ? 0.25 : 0.3);
     this.shadowGfx.fillEllipse(this.x, shadowY, shadowW, shadowH);
 
-    // Position sprite and scale to current logical size
+    // Position sprite and choose directional animation
     this.sprite.setPosition(this.x, this.y + (this.isFlying ? -6 : 0));
     this.sprite.setOrigin(0.5, 0.5);
-    this.sprite.setRotation(0);
 
-    // 3-direction sprite switching: Side (S_Walk), Down (D_Walk), Up (U_Walk)
-    const sinA = Math.sin(this.angle);
     const cosA = Math.cos(this.angle);
-    const absCos = Math.abs(cosA);
-    const absSin = Math.abs(sinA);
+    const sinA = Math.sin(this.angle);
+    let dir: 'd' | 's' | 'u' = 's';
+    if (sinA > 0.5) dir = 'd';
+    else if (sinA < -0.5) dir = 'u';
+    else dir = 's';
 
-    const baseAnim = this.getAnimationKey();
-    if (absSin > absCos) {
-      // Predominantly vertical movement
-      if (sinA > 0) {
-        // Moving DOWN
-        const downAnim = baseAnim.replace('_walk_anim', '_walk_down_anim');
-        if (this.sprite.anims?.currentAnim?.key !== downAnim) {
-          this.sprite.play(downAnim, true);
-        }
-        this.sprite.setFlipX(false);
-      } else {
-        // Moving UP
-        const upAnim = baseAnim.replace('_walk_anim', '_walk_up_anim');
-        if (this.sprite.anims?.currentAnim?.key !== upAnim) {
-          this.sprite.play(upAnim, true);
-        }
-        this.sprite.setFlipX(false);
-      }
-    } else {
-      // Predominantly horizontal movement — use side walk
-      if (this.sprite.anims?.currentAnim?.key !== baseAnim) {
-        this.sprite.play(baseAnim, true);
-      }
-      // Pack2 S_Walk sprites face LEFT by default (PIL verified)
-      if (cosA > 0) {
+    if (dir !== this.currentDir) {
+      this.currentDir = dir;
+      this.sprite.setTexture(this.getTextureKey(dir), 0);
+      this.sprite.play(this.getAnimationKey(dir), true);
+    }
+
+    // Only side-view needs horizontal flip; up/down use dedicated sprites
+    if (dir === 's') {
+      // Pack2 side sprites face LEFT by default
+      if (cosA > 0.3) {
         this.sprite.setFlipX(true);  // moving right → flip
-      } else {
+      } else if (cosA < -0.3) {
         this.sprite.setFlipX(false); // moving left → no flip
       }
+    } else {
+      this.sprite.setFlipX(false);
     }
+    this.sprite.setRotation(0); // no rotation; use directional sprites instead
     // Scale enemies — balanced for path width readability
     const scaleMap: Record<string, number> = { normal: 1.5, fast: 1.5, heavy: 1.8, flying: 1.5 };
     const scale = scaleMap[this.type] || 1.5;
@@ -215,23 +204,23 @@ export class BaseEnemy {
     this.hpBar.fillRect(bx, by, barW * ratio, barH);
   }
 
-  private getTextureKey(): string {
+  private getTextureKey(dir: 'd' | 's' | 'u' = 's'): string {
     switch (this.type) {
-      case 'normal': return 'enemy_normal_walk';
-      case 'fast': return 'enemy_fast_walk';
-      case 'heavy': return 'enemy_heavy_walk';
-      case 'flying': return 'enemy_flying_walk';
-      default: return 'enemy_normal_walk';
+      case 'normal': return `enemy_normal_walk_${dir}`;
+      case 'fast': return `enemy_fast_walk_${dir}`;
+      case 'heavy': return `enemy_heavy_walk_${dir}`;
+      case 'flying': return `enemy_flying_walk_${dir}`;
+      default: return `enemy_normal_walk_${dir}`;
     }
   }
 
-  private getAnimationKey(): string {
+  private getAnimationKey(dir: 'd' | 's' | 'u' = 's'): string {
     switch (this.type) {
-      case 'normal': return 'enemy_normal_walk_anim';
-      case 'fast': return 'enemy_fast_walk_anim';
-      case 'heavy': return 'enemy_heavy_walk_anim';
-      case 'flying': return 'enemy_flying_walk_anim';
-      default: return 'enemy_normal_walk_anim';
+      case 'normal': return `enemy_normal_walk_${dir}_anim`;
+      case 'fast': return `enemy_fast_walk_${dir}_anim`;
+      case 'heavy': return `enemy_heavy_walk_${dir}_anim`;
+      case 'flying': return `enemy_flying_walk_${dir}_anim`;
+      default: return `enemy_normal_walk_${dir}_anim`;
     }
   }
 

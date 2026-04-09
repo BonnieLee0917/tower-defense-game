@@ -21,6 +21,7 @@ export class Soldier {
   private rallyX: number;
   private rallyY: number;
   private gfx: Phaser.GameObjects.Graphics;
+  private sprite: Phaser.GameObjects.Sprite;
   private label: Phaser.GameObjects.Text;
   private attackTimer = 0;
   private retaliationTimer = 0;
@@ -46,6 +47,10 @@ export class Soldier {
     this.attackInterval = stats.attackInterval;
 
     this.gfx = scene.add.graphics().setDepth(4);
+    this.sprite = scene.add.sprite(this.x, this.y, 'soldier_idle', 0).setDepth(4);
+    this.sprite.setScale(28 / 48);
+    this.sprite.setOrigin(0.5, 0.8);
+    this.sprite.play('soldier_idle_anim');
     this.label = scene.add.text(this.x, this.y, '', {
       fontSize: '9px',
       color: '#4E342E',
@@ -133,6 +138,8 @@ export class Soldier {
         }
       }
       this.inCombat = true;
+      // Side-view soldier sprite: only horizontal facing matters
+      this.facingAngle = this.target.x >= this.rallyX ? 0 : Math.PI;
     } else {
       this.x = this.rallyX;
       this.y = this.rallyY;
@@ -158,7 +165,7 @@ export class Soldier {
       this.target = null;
 
       this.scene.tweens.add({
-        targets: [this.gfx, this.label],
+        targets: [this.gfx, this.sprite, this.label],
         alpha: 0,
         duration: 180,
         onComplete: () => this.destroy(),
@@ -187,6 +194,15 @@ export class Soldier {
     const scale = this.inCombat ? 1.1 : 1.0;
     const drawR = radius * scale;
 
+    // Soldier sprite render
+    this.sprite.setPosition(this.x, this.y + 6);
+    this.sprite.setScale((28 / 48) * scale);
+    this.sprite.setFlipX(Math.cos(this.facingAngle) > 0);
+    const animKey = this.inCombat ? 'soldier_attack_anim' : 'soldier_idle_anim';
+    if (this.sprite.anims.currentAnim?.key !== animKey) {
+      this.sprite.play(animKey);
+    }
+
     // Flash effects
     if (this.attackFlashTimer > 0) {
       this.gfx.fillStyle(0xFFFFFF, this.attackFlashTimer / 120);
@@ -197,38 +213,7 @@ export class Soldier {
       this.gfx.fillCircle(this.x, this.y, drawR + 3);
     }
 
-    // Body — humanoid soldier shape instead of yellow circle
-    const sx = this.x, sy = this.y;
-    const facing = this.facingAngle !== 0 ? (Math.cos(this.facingAngle) < 0 ? -1 : 1) : 1;
-    
-    // Legs
-    const walkCycle = this.inCombat ? Math.sin(Date.now() * 0.01) * 3 : 0;
-    this.gfx.fillStyle(0x5D4037, 1);
-    this.gfx.fillRect(sx - 3 + walkCycle, sy + 4, 3, 6);
-    this.gfx.fillRect(sx + 1 - walkCycle, sy + 4, 3, 6);
-    // Body (golden armor)
-    this.gfx.fillStyle(0xFFB300, 1);
-    this.gfx.fillRect(sx - 5, sy - 6, 10, 12);
-    // Armor detail
-    this.gfx.fillStyle(0xE6A200, 0.6);
-    this.gfx.fillRect(sx - 5, sy + 2, 10, 4);
-    // Head
-    this.gfx.fillStyle(0xE8C4A0, 1);
-    this.gfx.fillCircle(sx, sy - 10, 4);
-    // Helmet
-    this.gfx.fillStyle(0x757575, 1);
-    this.gfx.fillRect(sx - 4, sy - 14, 8, 3);
-    // Shield
-    this.gfx.fillStyle(0xE65100, 1);
-    this.gfx.fillRect(sx - 7 * facing, sy - 5, 3, 8);
-    // Sword (visible in combat)
-    if (this.inCombat) {
-      this.gfx.fillStyle(0xBDBDBD, 1);
-      this.gfx.fillRect(sx + 6 * facing, sy - 8, 2, 10);
-    }
-    // Outline
-    this.gfx.lineStyle(1, 0x5D4037, 0.6);
-    this.gfx.strokeRect(sx - 5, sy - 6, 10, 12);
+    // Sprite handles body rendering now; keep gfx only for flashes/combat markers/health bar
 
     // Combat crossed-swords effect
     if (this.inCombat && this.target) {
@@ -260,6 +245,7 @@ export class Soldier {
     if (this.destroyed) return;
     this.destroyed = true;
     this.gfx.destroy();
+    this.sprite.destroy();
     this.label.destroy();
   }
 }
