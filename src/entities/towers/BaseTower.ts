@@ -159,37 +159,18 @@ export class BaseTower {
     }
 
     if (this.isBarracks()) {
-      const bSize = 14 + this.level * 2; // grows with level
-      const colors = [0xFFB300, 0xF59600, 0xE68000]; // deeper each level
-      this.gfx.fillStyle(colors[this.level - 1] || colors[0], 1);
-      this.gfx.fillRect(this.x - bSize, this.y - 8, bSize * 2, 26);
-      this.gfx.fillStyle(0xE6A200, 0.5);
-      this.gfx.fillRect(this.x - bSize, this.y + 6, bSize * 2, 12);
-      this.gfx.fillTriangle(this.x - bSize - 4, this.y - 8, this.x + bSize + 4, this.y - 8, this.x, this.y - 22);
-      this.gfx.lineStyle(2, 0xF57C00, 1);
-      this.gfx.strokeRect(this.x - bSize, this.y - 8, bSize * 2, 26);
-      this.gfx.strokeTriangle(this.x - bSize - 4, this.y - 8, this.x + bSize + 4, this.y - 8, this.x, this.y - 22);
-      this.gfx.fillStyle(0x8D6E00, 1);
-      this.gfx.fillRect(this.x - 4, this.y + 6, 8, 12);
-      this.gfx.lineStyle(1, 0x5D4E37, 1);
-      this.gfx.strokeRect(this.x - 4, this.y + 6, 8, 12);
-      // Level 3 glow
-      if (this.level >= 3) {
-        this.gfx.lineStyle(2, 0xFFD600, 0.4);
-        this.gfx.strokeCircle(this.x, this.y, bSize + 10);
-      }
-      // Flagpole + pennant (Vivian spec)
-      this.gfx.lineStyle(2, 0x5D4037, 1);
-      this.gfx.lineBetween(this.x + bSize - 2, this.y - 22, this.x + bSize - 2, this.y - 34);
-      this.gfx.fillStyle(0xFFB300, 1);
-      this.gfx.fillTriangle(
-        this.x + bSize - 2, this.y - 34,
-        this.x + bSize - 2, this.y - 28,
-        this.x + bSize + 8, this.y - 31
-      );
-      this.gfx.fillStyle(0xffffff, 0.2);
-      this.gfx.fillCircle(this.x - 10, this.y - 14, 4);
+      // CraftPix Pack1 barracks sprite (Idle/4, green tinted)
+      const spriteY = this.y - 10;
+      const sprite = this.scene.add.sprite(this.x, spriteY, 'barracks_sprite', 0).setDepth(5);
+      sprite.play('barracks_idle');
+      sprite.setScale(48 / 130);
+      sprite.setOrigin(0.5, 0.8);
+      sprite.setTint(0xCCFFCC); // green tint for barracks feel
+      if (this.level >= 2) sprite.setTint(0xAAEEAA);
+      if (this.level >= 3) sprite.setTint(0x88DD88);
+      this.archerSprite = sprite;
 
+      this.drawBarracksStatus();
       this.drawBarracksStatus();
     } else if (this.type === 'archer') {
       // CraftPix sprite archer tower (小萌 approved visual quality)
@@ -210,67 +191,30 @@ export class BaseTower {
       }
       this.archerSprite.setOrigin(0.5, 0.8);
     } else if (this.type === 'magic') {
-      const r = this.baseConfig.radius + this.level * 2;
-      const colors = [0x5C35B0, 0x6A1FCC, 0x7B1FA2]; // deeper purple each level
-      // Bottom platform ellipse
-      this.gfx.fillStyle(colors[this.level - 1] || colors[0], 0.7);
-      this.gfx.fillEllipse(this.x, this.y + 8, 36 + this.level * 2, 12);
-      // Main diamond body
-      this.gfx.fillStyle(colors[this.level - 1] || colors[0], 1);
-      this.gfx.fillPoints([
-        new Phaser.Geom.Point(this.x, this.y - r - 4),
-        new Phaser.Geom.Point(this.x + r - 2, this.y),
-        new Phaser.Geom.Point(this.x, this.y + r + 4),
-        new Phaser.Geom.Point(this.x - r + 2, this.y),
-      ], true);
-      this.gfx.lineStyle(1, 0x4A148C, 0.6);
-      this.gfx.strokePoints([
-        new Phaser.Geom.Point(this.x, this.y - r - 4),
-        new Phaser.Geom.Point(this.x + r - 2, this.y),
-        new Phaser.Geom.Point(this.x, this.y + r + 4),
-        new Phaser.Geom.Point(this.x - r + 2, this.y),
-      ], true);
-      // Energy orb grows with level
-      const orbSize = 2 + this.level;
-      this.gfx.fillStyle(0xE040FB, 0.8);
-      this.gfx.fillCircle(this.x, this.y - r - 2, orbSize);
-      // Level 3 glow ring
-      if (this.level >= 3) {
-        this.gfx.lineStyle(2, 0xB388FF, 0.4);
-        this.gfx.strokeCircle(this.x, this.y, r + 8);
-      }
-      this.gfx.fillStyle(0xffffff, 0.2);
-      this.gfx.fillCircle(this.x - 5, this.y - 6, 3);
+      // CraftPix Pack1 magic tower sprite (Idle/5-7, blue-grey)
+      const spriteY = this.y - 10;
+      const magicKeys = ['magic_lv1', 'magic_lv2', 'magic_lv3'];
+      const magicAnims = ['magic_lv1_idle', 'magic_lv2_idle', 'magic_lv3_idle'];
+      const key = magicKeys[Math.min(this.level - 1, 2)];
+      const anim = magicAnims[Math.min(this.level - 1, 2)];
+      const sprite = this.scene.add.sprite(this.x, spriteY, key, 0).setDepth(5);
+      sprite.play(anim);
+      sprite.setScale(48 / 130);
+      sprite.setOrigin(0.5, 0.8);
+      this.archerSprite = sprite;
     } else if (this.type === 'cannon') {
-      const cSize = 16 + this.level * 2;
-      const barrelW = 6 + this.level * 2; // wider barrel each level
-      // Base platform (brick red)
-      const baseColors = [0xBF360C, 0xA52D08, 0x8B2506];
-      this.gfx.fillStyle(baseColors[this.level - 1] || baseColors[0], 1);
-      this.gfx.fillRect(this.x - cSize, this.y - 2, cSize * 2, 22);
-      // Base shading
-      this.gfx.fillStyle(0x000000, 0.15);
-      this.gfx.fillRect(this.x - cSize, this.y + 12, cSize * 2, 8);
-      // Barrel (dark metal)
-      this.gfx.fillStyle(0x424242, 1);
-      this.gfx.fillRect(this.x - barrelW / 2, this.y - 16, barrelW, 14);
-      // Barrel bore
-      this.gfx.fillStyle(0x212121, 1);
-      this.gfx.fillCircle(this.x, this.y - 16, barrelW / 2 - 1);
-      // Barrel outline
-      this.gfx.lineStyle(1, 0x212121, 1);
-      this.gfx.strokeRect(this.x - barrelW / 2, this.y - 16, barrelW, 14);
-      // Cannon ball detail
-      this.gfx.fillStyle(0x333333, 1);
-      this.gfx.fillCircle(this.x + cSize - 4, this.y + 8, 3);
-      // Level 3 glow
-      if (this.level >= 3) {
-        this.gfx.lineStyle(2, 0xFF6D00, 0.4);
-        this.gfx.strokeCircle(this.x, this.y, cSize + 8);
-      }
-      this.gfx.fillStyle(0xffffff, 0.15);
-      this.gfx.fillCircle(this.x - 5, this.y - 10, 3);
+      // CraftPix Pack1 cannon tower sprite (Idle/4, warm brown)
+      const spriteY = this.y - 10;
+      const sprite = this.scene.add.sprite(this.x, spriteY, 'cannon_sprite', 0).setDepth(5);
+      sprite.play('cannon_idle');
+      sprite.setScale(48 / 130);
+      sprite.setOrigin(0.5, 0.8);
+      // Tint to differentiate levels
+      if (this.level === 2) sprite.setTint(0xDDCCBB);
+      else if (this.level >= 3) sprite.setTint(0xCCBBAA);
+      this.archerSprite = sprite;
     } else {
+      // Fallback for any other tower type
       this.gfx.fillStyle(this.baseConfig.color, 1);
       this.gfx.fillCircle(this.x, this.y, this.baseConfig.radius);
       this.gfx.fillStyle(0xffffff, 0.2);
