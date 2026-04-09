@@ -11,16 +11,16 @@ export class FXManager {
     this.scene = scene;
   }
 
-  /** Arrow/projectile hit — small white flash */
+  /** Arrow/projectile hit — subtle hit marker */
   hitFlash(x: number, y: number, color = 0xFFFFFF) {
+    if (isNaN(x) || isNaN(y) || (x === 0 && y === 0)) return;
     const gfx = this.scene.add.graphics().setDepth(50);
-    gfx.fillStyle(color, 0.8);
-    gfx.fillCircle(x, y, 6);
+    gfx.fillStyle(color, 0.3);
+    gfx.fillCircle(x, y, 3);
     this.scene.tweens.add({
       targets: gfx,
       alpha: 0,
-      scaleX: 2, scaleY: 2,
-      duration: 200,
+      duration: 80,
       onComplete: () => gfx.destroy(),
     });
   }
