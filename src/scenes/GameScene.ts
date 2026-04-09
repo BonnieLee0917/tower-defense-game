@@ -758,31 +758,31 @@ export class GameScene extends Phaser.Scene {
     });
 
     // Speed / Pause buttons
-    const btnStyle = { fontSize: '14px', color: '#ffffff', backgroundColor: '#37474F', padding: { x: 10, y: 6 } };
-    this.speedBtn = this.add.text(GAME_WIDTH - 80, GAME_HEIGHT - 90, '▶ 1x', btnStyle)
-      .setDepth(100).setInteractive({ useHandCursor: true });
-    this.speedBtn.on('pointerdown', () => {
-      if (this.gameSpeed === 1) {
-        this.gameSpeed = 2;
-        this.speedBtn.setText('▶▶ 2x');
-        this.speedBtn.setStyle({ backgroundColor: '#FF8F00' });
-      } else {
-        this.gameSpeed = 1;
-        this.speedBtn.setText('▶ 1x');
-        this.speedBtn.setStyle({ backgroundColor: '#37474F' });
-      }
-    });
-
-    this.pauseBtn = this.add.text(GAME_WIDTH - 190, GAME_HEIGHT - 90, '⏸ Pause', btnStyle)
+    const btnStyle = { fontSize: '13px', color: '#ffffff', backgroundColor: '#37474F', padding: { x: 8, y: 4 } };
+    this.pauseBtn = this.add.text(GAME_WIDTH - 130, 8, '⏸', btnStyle)
       .setDepth(100).setInteractive({ useHandCursor: true });
     this.pauseBtn.on('pointerdown', () => {
       this.paused = !this.paused;
       if (this.paused) {
-        this.pauseBtn.setText('▶ Resume');
+        this.pauseBtn.setText('▶');
         this.pauseBtn.setStyle({ backgroundColor: '#1976D2' });
       } else {
-        this.pauseBtn.setText('⏸ Pause');
+        this.pauseBtn.setText('⏸');
         this.pauseBtn.setStyle({ backgroundColor: '#37474F' });
+      }
+    });
+
+    this.speedBtn = this.add.text(GAME_WIDTH - 90, 8, '1x', btnStyle)
+      .setDepth(100).setInteractive({ useHandCursor: true });
+    this.speedBtn.on('pointerdown', () => {
+      if (this.gameSpeed === 1) {
+        this.gameSpeed = 2;
+        this.speedBtn.setText('2x');
+        this.speedBtn.setStyle({ backgroundColor: '#FF8F00' });
+      } else {
+        this.gameSpeed = 1;
+        this.speedBtn.setText('1x');
+        this.speedBtn.setStyle({ backgroundColor: '#37474F' });
       }
     });
 
