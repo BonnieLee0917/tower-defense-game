@@ -49,13 +49,15 @@ export class Projectile {
   update(dt: number): boolean {
     if (!this.alive) return true;
 
-    // If target died mid-flight, fly to its last known position then disappear (no damage)
-    if (!this.target.alive && !this.lastTargetPos) {
+    // Continuously cache the last live target position.
+    // If the target dies or is destroyed before this projectile lands,
+    // we keep flying toward the last valid point instead of snapping to bad coords.
+    if (this.target.alive) {
       this.lastTargetPos = { x: this.target.x, y: this.target.y };
     }
 
-    const tx = this.lastTargetPos ? this.lastTargetPos.x : this.target.x;
-    const ty = this.lastTargetPos ? this.lastTargetPos.y : this.target.y;
+    const tx = this.target.alive ? this.target.x : (this.lastTargetPos?.x ?? this.x);
+    const ty = this.target.alive ? this.target.y : (this.lastTargetPos?.y ?? this.y);
     const dx = tx - this.x;
     const dy = ty - this.y;
     const dist = Math.hypot(dx, dy);
@@ -64,7 +66,7 @@ export class Projectile {
       this.alive = false;
       this.gfx.destroy();
       // If target died mid-flight, don't deal damage
-      if (this.lastTargetPos) return false;
+      if (!this.target.alive) return false;
       return true;
     }
 

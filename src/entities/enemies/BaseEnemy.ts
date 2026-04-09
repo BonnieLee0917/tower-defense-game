@@ -129,9 +129,9 @@ export class BaseEnemy {
     // Direction-based flip only (no rotation — side-view sprites look wrong rotated)
     // Pack2 sprites face LEFT by default (verified via PIL pixel density analysis)
     const cosA = Math.cos(this.angle);
-    if (cosA > 0.15) {
+    if (cosA > 0.3) {
       this.sprite.setFlipX(true);  // moving right → flip (sprite faces left by default)
-    } else if (cosA < -0.15) {
+    } else if (cosA < -0.3) {
       this.sprite.setFlipX(false); // moving left → no flip
     }
     // Pure vertical: keep last flip state
