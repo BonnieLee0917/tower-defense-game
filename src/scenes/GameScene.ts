@@ -212,7 +212,7 @@ export class GameScene extends Phaser.Scene {
         // Deterministic random: ~10% of eligible tiles get decoration (edges preferred)
         const s = seed(c, r);
         const isEdge = c <= 1 || c >= this.currentMap.cols - 2 || r <= 1 || r >= this.currentMap.rows - 2;
-        const decoChance = isEdge ? 12 : 5; // edges 12%, interior 5%
+        const decoChance = 0; // disabled per Vivian: clean grass only, no decoration tiles
         if (s % 100 < decoChance) {
           const tx = c * TILE_SIZE + TILE_SIZE / 2;
           const ty = r * TILE_SIZE + TILE_SIZE / 2;
@@ -229,11 +229,20 @@ export class GameScene extends Phaser.Scene {
   private drawBuildSpots() {
     for (const spot of this.currentMap.buildSpots) {
       const gfx = this.add.graphics();
-      // KR-style subtle stone platform marker
-      gfx.fillStyle(0xA1887F, 0.15);
-      gfx.fillEllipse(spot.x, spot.y, 40, 16);
-      gfx.lineStyle(1, 0x8D6E63, 0.25);
-      gfx.strokeEllipse(spot.x, spot.y, 40, 16);
+      // Build spot: white dashed circle with pulse animation (Vivian spec)
+      gfx.lineStyle(2, 0xFFFFFF, 0.5);
+      gfx.strokeCircle(spot.x, spot.y, 22);
+      gfx.fillStyle(0xFFFFFF, 0.08);
+      gfx.fillCircle(spot.x, spot.y, 22);
+      // Pulse animation
+      this.tweens.add({
+        targets: gfx,
+        alpha: { from: 0.3, to: 0.7 },
+        duration: 1200,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
 
       const entry = { gfx, spot, occupied: false };
       this.spotGfxList.push(entry);
@@ -758,31 +767,31 @@ export class GameScene extends Phaser.Scene {
     });
 
     // Speed / Pause buttons
-    const btnStyle = { fontSize: '14px', color: '#ffffff', backgroundColor: '#37474F', padding: { x: 10, y: 6 } };
-    this.speedBtn = this.add.text(GAME_WIDTH - 80, GAME_HEIGHT - 90, '▶ 1x', btnStyle)
-      .setDepth(100).setInteractive({ useHandCursor: true });
-    this.speedBtn.on('pointerdown', () => {
-      if (this.gameSpeed === 1) {
-        this.gameSpeed = 2;
-        this.speedBtn.setText('▶▶ 2x');
-        this.speedBtn.setStyle({ backgroundColor: '#FF8F00' });
-      } else {
-        this.gameSpeed = 1;
-        this.speedBtn.setText('▶ 1x');
-        this.speedBtn.setStyle({ backgroundColor: '#37474F' });
-      }
-    });
-
-    this.pauseBtn = this.add.text(GAME_WIDTH - 190, GAME_HEIGHT - 90, '⏸ Pause', btnStyle)
+    const btnStyle = { fontSize: '13px', color: '#ffffff', backgroundColor: '#37474F', padding: { x: 8, y: 4 } };
+    this.pauseBtn = this.add.text(GAME_WIDTH - 130, 8, '⏸', btnStyle)
       .setDepth(100).setInteractive({ useHandCursor: true });
     this.pauseBtn.on('pointerdown', () => {
       this.paused = !this.paused;
       if (this.paused) {
-        this.pauseBtn.setText('▶ Resume');
+        this.pauseBtn.setText('▶');
         this.pauseBtn.setStyle({ backgroundColor: '#1976D2' });
       } else {
-        this.pauseBtn.setText('⏸ Pause');
+        this.pauseBtn.setText('⏸');
         this.pauseBtn.setStyle({ backgroundColor: '#37474F' });
+      }
+    });
+
+    this.speedBtn = this.add.text(GAME_WIDTH - 90, 8, '1x', btnStyle)
+      .setDepth(100).setInteractive({ useHandCursor: true });
+    this.speedBtn.on('pointerdown', () => {
+      if (this.gameSpeed === 1) {
+        this.gameSpeed = 2;
+        this.speedBtn.setText('2x');
+        this.speedBtn.setStyle({ backgroundColor: '#FF8F00' });
+      } else {
+        this.gameSpeed = 1;
+        this.speedBtn.setText('1x');
+        this.speedBtn.setStyle({ backgroundColor: '#37474F' });
       }
     });
 
