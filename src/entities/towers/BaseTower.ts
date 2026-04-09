@@ -170,7 +170,6 @@ export class BaseTower {
       this.archerSprite = sprite;
 
       this.drawBarracksStatus();
-      this.drawBarracksStatus();
     } else if (this.type === 'archer') {
       // CraftPix sprite archer tower (小萌 approved visual quality)
       const spriteY = this.y - 6;
