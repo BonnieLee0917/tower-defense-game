@@ -204,15 +204,23 @@ export class BaseTower {
       this.gfx.lineBetween(this.x + 16, this.y - 26, this.x + 16, this.y - 14); // bow string
       this.gfx.lineBetween(this.x + 16, this.y - 20, this.x + 24, this.y - 20); // arrow
     } else if (this.type === 'magic') {
-      // CraftPix Pack1 magic tower (Idle/6)
+      // CraftPix Mage Tower pack — dedicated mage sprites per level
       const spriteY = this.y - 10;
-      const sprite = this.scene.add.sprite(this.x, spriteY, 'magic_lv1', 0).setDepth(5);
-      sprite.play('magic_lv1_idle');
-      const baseScale = 48 / 130;
-      const levelScale = 1 + (this.level - 1) * 0.05; // 1.0 / 1.05 / 1.1
-      sprite.setScale(baseScale * levelScale);
-      sprite.setOrigin(0.5, 0.8);
-      this.archerSprite = sprite;
+      if (this.level === 1) {
+        this.archerSprite = this.scene.add.image(this.x, spriteY, 'magic_lv1').setDepth(5);
+        this.archerSprite.setScale(48 / 70);
+      } else if (this.level === 2) {
+        const sprite = this.scene.add.sprite(this.x, spriteY, 'magic_lv2', 0).setDepth(5);
+        sprite.play('magic_lv2_idle');
+        sprite.setScale(48 / 70);
+        this.archerSprite = sprite;
+      } else {
+        const sprite = this.scene.add.sprite(this.x, spriteY, 'magic_lv3', 0).setDepth(5);
+        sprite.play('magic_lv3_idle');
+        sprite.setScale(48 / 70);
+        this.archerSprite = sprite;
+      }
+      this.archerSprite.setOrigin(0.5, 0.8);
       // Overlay: magic crystal/energy orb
       this.gfx.fillStyle(0xB388FF, 0.7);
       this.gfx.fillCircle(this.x, this.y - 30, 5 + this.level);
