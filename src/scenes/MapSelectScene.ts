@@ -1,8 +1,8 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config/gameConfig';
 
-const MAP_NAMES = ['Grasslands', 'Forest Path', 'Fortress Approach'];
-const MAP_COLORS = [0x4CAF50, 0x2E7D32, 0x795548];
+const MAP_NAMES = ['Grasslands', 'Desert Crossing', 'Dark Fortress'];
+const MAP_COLORS = [0x4CAF50, 0xE6A817, 0x607D8B];
 
 export class MapSelectScene extends Phaser.Scene {
   constructor() {

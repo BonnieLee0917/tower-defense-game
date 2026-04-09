@@ -34,6 +34,13 @@ export class GameScene extends Phaser.Scene {
   private currentMap: MapData = MAP_DATA;
   private static ALL_MAPS = [MAP_DATA, MAP2_DATA, MAP3_DATA];
   private static mapIndex = 0;
+
+  // Map theme colors
+  private static MAP_THEMES = [
+    { name: 'Grasslands', ground: 'grass1', pathColor: 0x9C6B30, pathInner: 0xB9823C, cardColor: 0x4CAF50 },
+    { name: 'Desert', ground: 'path1', pathColor: 0x8D6E3F, pathInner: 0xA68550, cardColor: 0xE6A817 },
+    { name: 'Fortress', ground: 'grass1', pathColor: 0x5D4037, pathInner: 0x795548, cardColor: 0x607D8B },
+  ];
   private gameWon = false;
 
   private totalKills = 0;
@@ -145,7 +152,8 @@ export class GameScene extends Phaser.Scene {
   private drawMap() {
     // Seeded random for deterministic decoration
     const seed = (c: number, r: number) => ((c * 7 + r * 13 + 37) * 2654435761) >>> 0;
-    const grassKeys = ['grass1']; // single clean grass tile for uniform look
+    const theme = GameScene.MAP_THEMES[GameScene.mapIndex] || GameScene.MAP_THEMES[0];
+    const grassKeys = [theme.ground]; // themed ground tile
 
     // Grass base layer
     for (let r = 0; r < this.currentMap.rows; r++) {
@@ -166,7 +174,7 @@ export class GameScene extends Phaser.Scene {
     const roadWidth = 58;
 
     // Base road strips
-    pathGfx.fillStyle(0x9C6B30, 1);
+    pathGfx.fillStyle(theme.pathColor, 1);
     for (let i = 0; i < this.currentMap.waypoints.length - 1; i++) {
       const a = this.currentMap.waypoints[i];
       const b = this.currentMap.waypoints[i + 1];
@@ -183,7 +191,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Light center highlight for readability
-    pathGfx.fillStyle(0xB9823C, 0.35);
+    pathGfx.fillStyle(theme.pathInner, 0.35);
     const innerWidth = 34;
     for (let i = 0; i < this.currentMap.waypoints.length - 1; i++) {
       const a = this.currentMap.waypoints[i];
