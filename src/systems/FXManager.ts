@@ -12,7 +12,12 @@ export class FXManager {
   }
 
   /** Arrow/projectile hit — small white flash */
+  private isValidPos(x: number, y: number): boolean {
+    return !isNaN(x) && !isNaN(y) && x > -50 && x < 1330 && y > -50 && y < 770;
+  }
+
   hitFlash(x: number, y: number, color = 0xFFFFFF) {
+    if (!this.isValidPos(x, y)) return;
     const gfx = this.scene.add.graphics().setDepth(50);
     gfx.fillStyle(color, 0.8);
     gfx.fillCircle(x, y, 6);
@@ -27,6 +32,7 @@ export class FXManager {
 
   /** Cannon/splash explosion — orange expanding ring */
   explosion(x: number, y: number, radius: number) {
+    if (!this.isValidPos(x, y)) return;
     const gfx = this.scene.add.graphics().setDepth(50);
     const proxy = { r: 8 };
     this.scene.tweens.add({
@@ -47,6 +53,7 @@ export class FXManager {
 
   /** Magic hit — purple sparkle burst */
   magicHit(x: number, y: number) {
+    if (!this.isValidPos(x, y)) return;
     const colors = [0xE040FB, 0xB388FF, 0x7C4DFF];
     for (let i = 0; i < 5; i++) {
       const angle = (i / 5) * Math.PI * 2 + Math.random() * 0.5;

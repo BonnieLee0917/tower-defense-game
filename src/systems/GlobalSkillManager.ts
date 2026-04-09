@@ -173,6 +173,8 @@ export class GlobalSkillManager {
     this.activeSkill = null;
     if (this.targetCircle) {
       this.targetCircle.clear();
+      this.targetCircle.destroy();
+      this.targetCircle = null;
     }
     this.scene.input.off('pointermove', this.onTargetMove);
   }
