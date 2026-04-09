@@ -212,7 +212,7 @@ export class GameScene extends Phaser.Scene {
         // Deterministic random: ~10% of eligible tiles get decoration (edges preferred)
         const s = seed(c, r);
         const isEdge = c <= 1 || c >= this.currentMap.cols - 2 || r <= 1 || r >= this.currentMap.rows - 2;
-        const decoChance = isEdge ? 12 : 5; // edges 12%, interior 5%
+        const decoChance = 0; // disabled per Vivian: clean grass only, no decoration tiles
         if (s % 100 < decoChance) {
           const tx = c * TILE_SIZE + TILE_SIZE / 2;
           const ty = r * TILE_SIZE + TILE_SIZE / 2;
@@ -229,11 +229,20 @@ export class GameScene extends Phaser.Scene {
   private drawBuildSpots() {
     for (const spot of this.currentMap.buildSpots) {
       const gfx = this.add.graphics();
-      // KR-style subtle stone platform marker
-      gfx.fillStyle(0xA1887F, 0.15);
-      gfx.fillEllipse(spot.x, spot.y, 40, 16);
-      gfx.lineStyle(1, 0x8D6E63, 0.25);
-      gfx.strokeEllipse(spot.x, spot.y, 40, 16);
+      // Build spot: white dashed circle with pulse animation (Vivian spec)
+      gfx.lineStyle(2, 0xFFFFFF, 0.5);
+      gfx.strokeCircle(spot.x, spot.y, 22);
+      gfx.fillStyle(0xFFFFFF, 0.08);
+      gfx.fillCircle(spot.x, spot.y, 22);
+      // Pulse animation
+      this.tweens.add({
+        targets: gfx,
+        alpha: { from: 0.3, to: 0.7 },
+        duration: 1200,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
 
       const entry = { gfx, spot, occupied: false };
       this.spotGfxList.push(entry);
