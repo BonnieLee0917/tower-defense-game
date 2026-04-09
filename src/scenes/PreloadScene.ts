@@ -21,6 +21,16 @@ export class PreloadScene extends Phaser.Scene {
     // Path tiles (BROWN/SAND)
     this.load.image('path1', 'assets/tiles/kenney/towerDefense_tile046.png'); // pure brown sand, uniform brightness
 
+    // Barracks / reinforcement soldier sprites (CraftPix unit)
+    this.load.spritesheet('soldier_idle', 'assets/units/soldier_idle.png', {
+      frameWidth: 48,
+      frameHeight: 48,
+    });
+    this.load.spritesheet('soldier_attack', 'assets/units/soldier_attack.png', {
+      frameWidth: 48,
+      frameHeight: 48,
+    });
+
     // --- Tower sprites (archer only) ---
     // Tower sprites from CraftPix Pack1
     // 1.png = 70x130 single frame, 2-3.png = 280x130 (4 frames), 4-7.png = 420x130 (6 frames)
@@ -65,19 +75,35 @@ export class PreloadScene extends Phaser.Scene {
     });
 
     // --- Enemy walk spritesheets: 288x48, 6 frames of 48x48 ---
-    this.load.spritesheet('enemy_normal_walk', 'assets/enemies/normal_walk.png?v=6', {
+    // 3 directions per enemy: D=Down, S=Side, U=Up
+    const enemyAssets = [
+      { key: 'normal', pack: '2' },
+      { key: 'fast', pack: '3' },
+      { key: 'heavy', pack: '3' },
+      { key: 'flying', pack: '4' },
+    ];
+    for (const { key } of enemyAssets) {
+      for (const dir of ['d', 's', 'u']) {
+        this.load.spritesheet(`enemy_${key}_walk_${dir}`, `assets/enemies/${key}_walk_${dir}.png?v=7`, {
+          frameWidth: 48,
+          frameHeight: 48,
+        });
+      }
+    }
+    // Keep old keys as aliases for backward compatibility (point to side view)
+    this.load.spritesheet('enemy_normal_walk', 'assets/enemies/normal_walk_s.png?v=7', {
       frameWidth: 48,
       frameHeight: 48,
     });
-    this.load.spritesheet('enemy_fast_walk', 'assets/enemies/fast_walk.png?v=6', {
+    this.load.spritesheet('enemy_fast_walk', 'assets/enemies/fast_walk_s.png?v=7', {
       frameWidth: 48,
       frameHeight: 48,
     });
-    this.load.spritesheet('enemy_heavy_walk', 'assets/enemies/heavy_walk.png?v=6', {
+    this.load.spritesheet('enemy_heavy_walk', 'assets/enemies/heavy_walk_s.png?v=7', {
       frameWidth: 48,
       frameHeight: 48,
     });
-    this.load.spritesheet('enemy_flying_walk', 'assets/enemies/flying_walk.png?v=6', {
+    this.load.spritesheet('enemy_flying_walk', 'assets/enemies/flying_walk_s.png?v=7', {
       frameWidth: 48,
       frameHeight: 48,
     });
@@ -103,9 +129,18 @@ export class PreloadScene extends Phaser.Scene {
       texture?.setFilter(Phaser.Textures.FilterMode.NEAREST);
     });
 
-    // Create enemy walk animations
+    // Create enemy walk animations (3 directions each)
     const enemyTypes = ['normal', 'fast', 'heavy', 'flying'];
     for (const type of enemyTypes) {
+      for (const dir of ['d', 's', 'u']) {
+        this.anims.create({
+          key: `enemy_${type}_walk_${dir}_anim`,
+          frames: this.anims.generateFrameNumbers(`enemy_${type}_walk_${dir}`, { start: 0, end: 5 }),
+          frameRate: 8,
+          repeat: -1,
+        });
+      }
+      // Legacy anim key (side view)
       this.anims.create({
         key: `enemy_${type}_walk_anim`,
         frames: this.anims.generateFrameNumbers(`enemy_${type}_walk`, { start: 0, end: 5 }),
@@ -169,6 +204,20 @@ export class PreloadScene extends Phaser.Scene {
       key: 'barracks_lv3_idle',
       frames: this.anims.generateFrameNumbers('barracks_lv3', { start: 0, end: 3 }),
       frameRate: 4,
+      repeat: -1,
+    });
+
+    // Soldier animations
+    this.anims.create({
+      key: 'soldier_idle_anim',
+      frames: this.anims.generateFrameNumbers('soldier_idle', { start: 0, end: 3 }),
+      frameRate: 6,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: 'soldier_attack_anim',
+      frames: this.anims.generateFrameNumbers('soldier_attack', { start: 0, end: 5 }),
+      frameRate: 10,
       repeat: -1,
     });
 

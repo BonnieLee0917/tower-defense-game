@@ -16,6 +16,7 @@ export class Projectile {
   private color: number;
   private radius: number;
   private lastTargetPos: { x: number; y: number } | null = null;
+  private fallbackPos: { x: number; y: number };
   private towerType: string;
   private angle = 0;
 
@@ -42,6 +43,7 @@ export class Projectile {
     this.radius = radius;
     this.damageType = damageType;
     this.towerType = towerType;
+    this.fallbackPos = { x: target.x, y: target.y }; // snapshot at creation
     this.gfx = scene.add.graphics();
   }
 
@@ -54,8 +56,17 @@ export class Projectile {
       this.lastTargetPos = { x: this.target.x, y: this.target.y };
     }
 
-    const tx = this.lastTargetPos ? this.lastTargetPos.x : this.target.x;
-    const ty = this.lastTargetPos ? this.lastTargetPos.y : this.target.y;
+    const tx = this.lastTargetPos ? this.lastTargetPos.x
+      : (this.target.alive ? this.target.x : this.fallbackPos.x);
+    const ty = this.lastTargetPos ? this.lastTargetPos.y
+      : (this.target.alive ? this.target.y : this.fallbackPos.y);
+
+    // Safety: if target position is invalid (0,0 or NaN), destroy projectile immediately
+    if (!tx && !ty || isNaN(tx) || isNaN(ty)) {
+      this.alive = false;
+      this.gfx.destroy();
+      return false;
+    }
     const dx = tx - this.x;
     const dy = ty - this.y;
     const dist = Math.hypot(dx, dy);
