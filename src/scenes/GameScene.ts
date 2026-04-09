@@ -237,12 +237,13 @@ export class GameScene extends Phaser.Scene {
   private drawBuildSpots() {
     for (const spot of this.currentMap.buildSpots) {
       const gfx = this.add.graphics();
-      // Build spot: static low-opacity marker (no pulse — pulse looked like "flying circles" in recording)
-      gfx.lineStyle(1.5, 0xFFFFFF, 0.25);
-      gfx.strokeCircle(spot.x, spot.y, 22);
-      gfx.fillStyle(0xFFFFFF, 0.05);
-      gfx.fillCircle(spot.x, spot.y, 22);
-      gfx.setAlpha(0.4);
+      // Build spot: dark base + white outline (no pulse, Vivian R6 spec)
+      gfx.fillStyle(0x3E2723, 0.3); // dark brown base for grass contrast
+      gfx.fillCircle(spot.x, spot.y, 24);
+      gfx.lineStyle(1.5, 0xFFFFFF, 0.45);
+      gfx.strokeCircle(spot.x, spot.y, 24);
+      gfx.fillStyle(0xFFFFFF, 0.25);
+      gfx.fillCircle(spot.x, spot.y, 3); // center dot
 
       const entry = { gfx, spot, occupied: false };
       this.spotGfxList.push(entry);
@@ -673,11 +674,12 @@ export class GameScene extends Phaser.Scene {
       if (entry.spot.x === tower.x && entry.spot.y === tower.y) {
         entry.occupied = false;
         entry.gfx.clear();
-        entry.gfx.lineStyle(1.5, 0xFFFFFF, 0.25);
-        entry.gfx.strokeCircle(entry.spot.x, entry.spot.y, 22);
-        entry.gfx.fillStyle(0xFFFFFF, 0.05);
-        entry.gfx.fillCircle(entry.spot.x, entry.spot.y, 22);
-        entry.gfx.setAlpha(0.4);
+        entry.gfx.fillStyle(0x3E2723, 0.3);
+        entry.gfx.fillCircle(entry.spot.x, entry.spot.y, 24);
+        entry.gfx.lineStyle(1.5, 0xFFFFFF, 0.45);
+        entry.gfx.strokeCircle(entry.spot.x, entry.spot.y, 24);
+        entry.gfx.fillStyle(0xFFFFFF, 0.25);
+        entry.gfx.fillCircle(entry.spot.x, entry.spot.y, 3);
         break;
       }
     }

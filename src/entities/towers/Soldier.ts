@@ -22,12 +22,9 @@ export class Soldier {
   private rallyY: number;
   private gfx: Phaser.GameObjects.Graphics;
   private sprite: Phaser.GameObjects.Sprite;
-  private label: Phaser.GameObjects.Text;
   private attackTimer = 0;
   private retaliationTimer = 0;
   private destroyed = false;
-  private attackFlashTimer = 0;
-  private damageFlashTimer = 0;
   public inCombat = false;
   private facingAngle = 0;
 
@@ -51,12 +48,6 @@ export class Soldier {
     this.sprite.setScale(28 / 48);
     this.sprite.setOrigin(0.5, 0.8);
     this.sprite.play('soldier_idle_anim');
-    this.label = scene.add.text(this.x, this.y, '', {
-      fontSize: '9px',
-      color: '#4E342E',
-      fontStyle: 'bold',
-      fontFamily: 'Arial',
-    }).setOrigin(0.5).setDepth(5);
 
     this.draw();
   }
@@ -115,7 +106,6 @@ export class Soldier {
 
       if (this.attackTimer >= this.attackInterval) {
         this.attackTimer -= this.attackInterval;
-        this.attackFlashTimer = 120;
         const died = this.target.takeDamage(this.damage, 'physical');
         if (died) {
           const killed = this.target;
@@ -131,7 +121,6 @@ export class Soldier {
       if (this.retaliationTimer >= ENEMY_RETALIATION_INTERVAL) {
         this.retaliationTimer -= ENEMY_RETALIATION_INTERVAL;
         const retDmg = this.target.config.retaliationDamage ?? ENEMY_RETALIATION_DAMAGE_DEFAULT;
-        this.damageFlashTimer = 120;
         const soldierDied = this.takeDamage(retDmg);
         if (soldierDied) {
           return { killed: null, died: true };
@@ -145,10 +134,6 @@ export class Soldier {
       this.y = this.rallyY;
       this.inCombat = false;
     }
-
-    // Decay flash timers
-    if (this.attackFlashTimer > 0) this.attackFlashTimer = Math.max(0, this.attackFlashTimer - dt);
-    if (this.damageFlashTimer > 0) this.damageFlashTimer = Math.max(0, this.damageFlashTimer - dt);
 
     this.draw();
     return { killed: null, died: false };
@@ -165,7 +150,7 @@ export class Soldier {
       this.target = null;
 
       this.scene.tweens.add({
-        targets: [this.gfx, this.sprite, this.label],
+        targets: [this.gfx, this.sprite],
         alpha: 0,
         duration: 180,
         onComplete: () => this.destroy(),
@@ -203,17 +188,7 @@ export class Soldier {
       this.sprite.play(animKey);
     }
 
-    // Flash effects
-    if (this.attackFlashTimer > 0) {
-      this.gfx.fillStyle(0xFFFFFF, this.attackFlashTimer / 120);
-      this.gfx.fillCircle(this.x, this.y, drawR + 3);
-    }
-    if (this.damageFlashTimer > 0) {
-      this.gfx.fillStyle(0xFF0000, this.damageFlashTimer / 120);
-      this.gfx.fillCircle(this.x, this.y, drawR + 3);
-    }
-
-    // Sprite handles body rendering now; keep gfx only for flashes/combat markers/health bar
+    // Sprite handles body rendering now; keep gfx only for health bar
 
     // Health bar - only show when damaged (KR style)
     if (this.hp < this.maxHp) {
@@ -229,7 +204,6 @@ export class Soldier {
       this.gfx.fillRect(bx, by, barW * hpRatio, barH);
     }
 
-    this.label.setPosition(this.x, this.y);
   }
 
   destroy() {
@@ -237,6 +211,5 @@ export class Soldier {
     this.destroyed = true;
     this.gfx.destroy();
     this.sprite.destroy();
-    this.label.destroy();
   }
 }
