@@ -168,6 +168,16 @@ export class BaseTower {
       sprite.setScale(baseScale * levelScale);
       sprite.setOrigin(0.5, 0.8);
       this.archerSprite = sprite;
+      // Overlay: shield + flag for barracks
+      this.gfx.fillStyle(0xFFB300, 0.8);
+      this.gfx.fillRect(this.x - 12, this.y - 28, 8, 10); // shield
+      this.gfx.lineStyle(1, 0xE65100, 1);
+      this.gfx.strokeRect(this.x - 12, this.y - 28, 8, 10);
+      // Flag
+      this.gfx.lineStyle(1.5, 0x5D4037, 1);
+      this.gfx.lineBetween(this.x + 14, this.y - 20, this.x + 14, this.y - 32);
+      this.gfx.fillStyle(0xFFD600, 1);
+      this.gfx.fillTriangle(this.x + 14, this.y - 32, this.x + 14, this.y - 26, this.x + 22, this.y - 29);
 
       this.drawBarracksStatus();
     } else if (this.type === 'archer') {
@@ -188,6 +198,11 @@ export class BaseTower {
         this.archerSprite = sprite;
       }
       this.archerSprite.setOrigin(0.5, 0.8);
+      // Overlay: bow icon
+      this.gfx.lineStyle(2, 0x8D6E63, 0.8);
+      this.gfx.strokeCircle(this.x + 16, this.y - 20, 6); // bow curve
+      this.gfx.lineBetween(this.x + 16, this.y - 26, this.x + 16, this.y - 14); // bow string
+      this.gfx.lineBetween(this.x + 16, this.y - 20, this.x + 24, this.y - 20); // arrow
     } else if (this.type === 'magic') {
       // CraftPix Pack1 magic tower (Idle/6)
       const spriteY = this.y - 10;
@@ -198,6 +213,11 @@ export class BaseTower {
       sprite.setScale(baseScale * levelScale);
       sprite.setOrigin(0.5, 0.8);
       this.archerSprite = sprite;
+      // Overlay: magic crystal/energy orb
+      this.gfx.fillStyle(0xB388FF, 0.7);
+      this.gfx.fillCircle(this.x, this.y - 30, 5 + this.level);
+      this.gfx.lineStyle(1, 0xE040FB, 0.5);
+      this.gfx.strokeCircle(this.x, this.y - 30, 7 + this.level);
     } else if (this.type === 'cannon') {
       // CraftPix Pack1 cannon tower (Idle/5)
       const spriteY = this.y - 10;
@@ -208,6 +228,11 @@ export class BaseTower {
       sprite.setScale(baseScale * levelScale);
       sprite.setOrigin(0.5, 0.8);
       this.archerSprite = sprite;
+      // Overlay: cannon barrel
+      this.gfx.fillStyle(0x424242, 0.9);
+      this.gfx.fillRect(this.x + 10, this.y - 16, 12, 6);
+      this.gfx.fillStyle(0xFF6F00, 0.6);
+      this.gfx.fillCircle(this.x + 22, this.y - 13, 3); // muzzle flash
     } else {
       // Fallback for any other tower type
       this.gfx.fillStyle(this.baseConfig.color, 1);
