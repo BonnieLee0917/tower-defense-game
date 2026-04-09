@@ -16,6 +16,8 @@ export class Projectile {
   private color: number;
   private radius: number;
   private lastTargetPos: { x: number; y: number } | null = null;
+  private towerType: string;
+  private angle = 0;
 
   constructor(
     scene: Phaser.Scene,
@@ -27,6 +29,7 @@ export class Projectile {
     color: number,
     radius: number,
     damageType: DamageType = 'physical',
+    towerType = 'archer',
   ) {
     this.scene = scene;
     this.x = x;
@@ -38,6 +41,7 @@ export class Projectile {
     this.color = color;
     this.radius = radius;
     this.damageType = damageType;
+    this.towerType = towerType;
     this.gfx = scene.add.graphics();
   }
 
@@ -67,11 +71,55 @@ export class Projectile {
     const move = this.speed * (dt / 1000);
     this.x += (dx / dist) * move;
     this.y += (dy / dist) * move;
+    this.angle = Math.atan2(dy, dx);
 
-    // Draw
+    // Draw projectile based on tower type
     this.gfx.clear();
-    this.gfx.fillStyle(this.color, 1);
-    this.gfx.fillCircle(this.x, this.y, this.radius);
+    this.gfx.setDepth(15);
+    switch (this.towerType) {
+      case 'archer': {
+        // Arrow: thin rotated line
+        const len = 12;
+        const ax = this.x - Math.cos(this.angle) * len / 2;
+        const ay = this.y - Math.sin(this.angle) * len / 2;
+        const bx = this.x + Math.cos(this.angle) * len / 2;
+        const by = this.y + Math.sin(this.angle) * len / 2;
+        this.gfx.lineStyle(2, 0x8D6E63, 1);
+        this.gfx.lineBetween(ax, ay, bx, by);
+        // Arrowhead
+        this.gfx.fillStyle(0xBDBDBD, 1);
+        this.gfx.fillTriangle(bx, by,
+          bx - Math.cos(this.angle - 0.4) * 5, by - Math.sin(this.angle - 0.4) * 5,
+          bx - Math.cos(this.angle + 0.4) * 5, by - Math.sin(this.angle + 0.4) * 5);
+        break;
+      }
+      case 'magic': {
+        // Magic orb: glowing purple ball + trail
+        this.gfx.fillStyle(0x7C4DFF, 0.3);
+        this.gfx.fillCircle(this.x, this.y, this.radius + 4);
+        this.gfx.fillStyle(0xB388FF, 0.8);
+        this.gfx.fillCircle(this.x, this.y, this.radius);
+        // Trail
+        this.gfx.fillStyle(0xE040FB, 0.2);
+        this.gfx.fillCircle(this.x - Math.cos(this.angle) * 8, this.y - Math.sin(this.angle) * 8, this.radius - 1);
+        break;
+      }
+      case 'cannon': {
+        // Cannonball: dark sphere
+        this.gfx.fillStyle(0x333333, 1);
+        this.gfx.fillCircle(this.x, this.y, this.radius + 1);
+        this.gfx.fillStyle(0x666666, 0.5);
+        this.gfx.fillCircle(this.x - 1, this.y - 1, this.radius - 1);
+        // Smoke trail
+        this.gfx.fillStyle(0x999999, 0.15);
+        this.gfx.fillCircle(this.x - Math.cos(this.angle) * 6, this.y - Math.sin(this.angle) * 6, this.radius + 2);
+        break;
+      }
+      default: {
+        this.gfx.fillStyle(this.color, 1);
+        this.gfx.fillCircle(this.x, this.y, this.radius);
+      }
+    }
     return false;
   }
 
