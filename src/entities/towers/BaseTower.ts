@@ -168,7 +168,6 @@ export class BaseTower {
       this.archerSprite = sprite;
 
       this.drawBarracksStatus();
-      this.drawBarracksStatus();
     } else if (this.type === 'archer') {
       // CraftPix sprite archer tower (小萌 approved visual quality)
       const spriteY = this.y - 6;
@@ -197,8 +196,6 @@ export class BaseTower {
       sprite.play(magicAnims[lvl]);
       sprite.setScale(48 / 130);
       sprite.setOrigin(0.5, 0.8);
-      // Purple tint for magic feel
-      sprite.setTint(0xDDCCFF);
       this.archerSprite = sprite;
     } else if (this.type === 'cannon') {
       // CraftPix Pack1 cannon tower sprite (Idle/5, grey stone)
