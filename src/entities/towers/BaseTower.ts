@@ -192,7 +192,7 @@ export class BaseTower {
 
       this.drawBarracksStatus();
     } else if (this.type === 'archer') {
-      // CraftPix sprite archer tower (小萌 approved style)
+      // CraftPix sprite archer tower (小萌 approved visual quality)
       const spriteY = this.y - 6;
       if (this.level === 1) {
         this.archerSprite = this.scene.add.image(this.x, spriteY, 'archer_lv1').setDepth(5);
@@ -209,7 +209,6 @@ export class BaseTower {
         this.archerSprite = sprite;
       }
       this.archerSprite.setOrigin(0.5, 0.8);
-      this.archerSprite.setTint(0xddffdd);
     } else if (this.type === 'magic') {
       const r = this.baseConfig.radius + this.level * 2;
       const colors = [0x5C35B0, 0x6A1FCC, 0x7B1FA2]; // deeper purple each level

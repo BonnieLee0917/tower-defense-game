@@ -145,7 +145,7 @@ export class GameScene extends Phaser.Scene {
   private drawMap() {
     // Seeded random for deterministic decoration
     const seed = (c: number, r: number) => ((c * 7 + r * 13 + 37) * 2654435761) >>> 0;
-    const grassKeys = ['grass1', 'grass2', 'grass3', 'grass4', 'grass5', 'grass6'];
+    const grassKeys = ['grass1']; // single clean grass tile for uniform look
 
     // Grass base layer
     for (let r = 0; r < this.currentMap.rows; r++) {
