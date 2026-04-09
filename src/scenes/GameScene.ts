@@ -237,20 +237,12 @@ export class GameScene extends Phaser.Scene {
   private drawBuildSpots() {
     for (const spot of this.currentMap.buildSpots) {
       const gfx = this.add.graphics();
-      // Build spot: white dashed circle with pulse animation (Vivian spec)
-      gfx.lineStyle(2, 0xFFFFFF, 0.5);
+      // Build spot: static low-opacity marker (no pulse — pulse looked like "flying circles" in recording)
+      gfx.lineStyle(1.5, 0xFFFFFF, 0.25);
       gfx.strokeCircle(spot.x, spot.y, 22);
-      gfx.fillStyle(0xFFFFFF, 0.08);
+      gfx.fillStyle(0xFFFFFF, 0.05);
       gfx.fillCircle(spot.x, spot.y, 22);
-      // Pulse animation
-      this.tweens.add({
-        targets: gfx,
-        alpha: { from: 0.3, to: 0.7 },
-        duration: 1200,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut',
-      });
+      gfx.setAlpha(0.4);
 
       const entry = { gfx, spot, occupied: false };
       this.spotGfxList.push(entry);
@@ -681,10 +673,11 @@ export class GameScene extends Phaser.Scene {
       if (entry.spot.x === tower.x && entry.spot.y === tower.y) {
         entry.occupied = false;
         entry.gfx.clear();
-        entry.gfx.fillStyle(0xFFFFFF, 0.12);
-        entry.gfx.fillRoundedRect(entry.spot.x - 26, entry.spot.y - 26, 52, 52, 8);
-        entry.gfx.lineStyle(2, 0xFFFFFF, 0.35);
-        entry.gfx.strokeRoundedRect(entry.spot.x - 26, entry.spot.y - 26, 52, 52, 8);
+        entry.gfx.lineStyle(1.5, 0xFFFFFF, 0.25);
+        entry.gfx.strokeCircle(entry.spot.x, entry.spot.y, 22);
+        entry.gfx.fillStyle(0xFFFFFF, 0.05);
+        entry.gfx.fillCircle(entry.spot.x, entry.spot.y, 22);
+        entry.gfx.setAlpha(0.4);
         break;
       }
     }
