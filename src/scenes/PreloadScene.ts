@@ -38,16 +38,13 @@ export class PreloadScene extends Phaser.Scene {
       frameWidth: 70,
       frameHeight: 130,
     });
-    // Magic tower (Idle/6 — grey stone)
-    this.load.spritesheet('magic_lv1', 'assets/towers/pack1/idle_6.png', {
+    // Magic tower — CraftPix Mage Tower pack (same author, dedicated mage sprites)
+    this.load.image('magic_lv1', 'assets/towers/mage/idle_lv1.png');
+    this.load.spritesheet('magic_lv2', 'assets/towers/mage/idle_lv2.png', {
       frameWidth: 70,
       frameHeight: 130,
     });
-    this.load.spritesheet('magic_lv2', 'assets/towers/pack1/idle_6.png', {
-      frameWidth: 70,
-      frameHeight: 130,
-    });
-    this.load.spritesheet('magic_lv3', 'assets/towers/pack1/idle_6.png', {
+    this.load.spritesheet('magic_lv3', 'assets/towers/mage/idle_lv3.png', {
       frameWidth: 70,
       frameHeight: 130,
     });
@@ -128,22 +125,18 @@ export class PreloadScene extends Phaser.Scene {
       frameRate: 4,
       repeat: -1,
     });
-    // Magic tower animations (6 frames each)
-    this.anims.create({
-      key: 'magic_lv1_idle',
-      frames: this.anims.generateFrameNumbers('magic_lv1', { start: 0, end: 5 }),
-      frameRate: 4,
-      repeat: -1,
-    });
+    // Magic tower animations — CraftPix Mage Tower pack
+    // Lv1 = single image, no animation needed
+    // Lv2/3 = 280×130 = 4 frames of 70×130
     this.anims.create({
       key: 'magic_lv2_idle',
-      frames: this.anims.generateFrameNumbers('magic_lv2', { start: 0, end: 5 }),
+      frames: this.anims.generateFrameNumbers('magic_lv2', { start: 0, end: 3 }),
       frameRate: 4,
       repeat: -1,
     });
     this.anims.create({
       key: 'magic_lv3_idle',
-      frames: this.anims.generateFrameNumbers('magic_lv3', { start: 0, end: 5 }),
+      frames: this.anims.generateFrameNumbers('magic_lv3', { start: 0, end: 3 }),
       frameRate: 4,
       repeat: -1,
     });
