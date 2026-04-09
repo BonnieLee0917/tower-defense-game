@@ -278,21 +278,10 @@ export class BaseTower {
   private drawBarracksStatus() {
     if (!this.statusGfx) return;
     this.statusGfx.clear();
-
+    // Soldier count text only, no dot indicators (removed per 小萌 feedback)
     const aliveCount = this.soldiers.filter(s => s?.alive).length;
     const total = BARRACKS_CONFIG.maxSoldiers;
     const statusY = this.y + 24;
-
-    for (let i = 0; i < total; i++) {
-      const sx = this.x - 12 + i * 12;
-      if (this.soldiers[i]?.alive) {
-        this.statusGfx.fillStyle(0xFFB300, 1);
-        this.statusGfx.fillCircle(sx, statusY, 4);
-      } else {
-        this.statusGfx.fillStyle(0x616161, 1);
-        this.statusGfx.fillCircle(sx, statusY, 4);
-      }
-    }
 
     const countStr = `${aliveCount}/${total}`;
     if (this.statusText) {

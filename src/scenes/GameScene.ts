@@ -237,12 +237,13 @@ export class GameScene extends Phaser.Scene {
   private drawBuildSpots() {
     for (const spot of this.currentMap.buildSpots) {
       const gfx = this.add.graphics();
-      // Build spot: static low-opacity marker (no pulse — pulse looked like "flying circles" in recording)
-      gfx.lineStyle(1.5, 0xFFFFFF, 0.25);
-      gfx.strokeCircle(spot.x, spot.y, 22);
-      gfx.fillStyle(0xFFFFFF, 0.05);
+      // Build spot: visible static marker with ground contrast
+      gfx.fillStyle(0x5D4037, 0.35);
       gfx.fillCircle(spot.x, spot.y, 22);
-      gfx.setAlpha(0.4);
+      gfx.lineStyle(2, 0xFFFFFF, 0.45);
+      gfx.strokeCircle(spot.x, spot.y, 22);
+      gfx.fillStyle(0xFFFFFF, 0.4);
+      gfx.fillCircle(spot.x, spot.y, 3);
 
       const entry = { gfx, spot, occupied: false };
       this.spotGfxList.push(entry);
@@ -673,11 +674,12 @@ export class GameScene extends Phaser.Scene {
       if (entry.spot.x === tower.x && entry.spot.y === tower.y) {
         entry.occupied = false;
         entry.gfx.clear();
-        entry.gfx.lineStyle(1.5, 0xFFFFFF, 0.25);
-        entry.gfx.strokeCircle(entry.spot.x, entry.spot.y, 22);
-        entry.gfx.fillStyle(0xFFFFFF, 0.05);
+        entry.gfx.fillStyle(0x5D4037, 0.35);
         entry.gfx.fillCircle(entry.spot.x, entry.spot.y, 22);
-        entry.gfx.setAlpha(0.4);
+        entry.gfx.lineStyle(2, 0xFFFFFF, 0.45);
+        entry.gfx.strokeCircle(entry.spot.x, entry.spot.y, 22);
+        entry.gfx.fillStyle(0xFFFFFF, 0.4);
+        entry.gfx.fillCircle(entry.spot.x, entry.spot.y, 3);
         break;
       }
     }
@@ -988,7 +990,7 @@ export class GameScene extends Phaser.Scene {
               this.fx.magicHit(target.x, target.y);
               this.statusEffects.applyEffect(target, { type: 'slow', magnitude: 0.3, duration: 2000 });
             } else {
-              this.fx.hitFlash(target.x, target.y);
+            // No hit flash for physical projectiles (removed per 小萌 R6 feedback)
             }
           }
         }
