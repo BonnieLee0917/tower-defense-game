@@ -159,15 +159,12 @@ export class BaseTower {
     }
 
     if (this.isBarracks()) {
-      // CraftPix Pack1 barracks sprite (Idle/4, green tinted)
+      // CraftPix Pack1 barracks sprite (Idle/7, green)
       const spriteY = this.y - 10;
       const sprite = this.scene.add.sprite(this.x, spriteY, 'barracks_sprite', 0).setDepth(5);
       sprite.play('barracks_idle');
       sprite.setScale(48 / 130);
       sprite.setOrigin(0.5, 0.8);
-      sprite.setTint(0xCCFFCC); // green tint for barracks feel
-      if (this.level >= 2) sprite.setTint(0xAAEEAA);
-      if (this.level >= 3) sprite.setTint(0x88DD88);
       this.archerSprite = sprite;
 
       this.drawBarracksStatus();
@@ -191,27 +188,25 @@ export class BaseTower {
       }
       this.archerSprite.setOrigin(0.5, 0.8);
     } else if (this.type === 'magic') {
-      // CraftPix Pack1 magic tower sprite (Idle/5-7, blue-grey)
+      // CraftPix Pack1 magic tower sprite (Idle/4 + 6)
       const spriteY = this.y - 10;
       const magicKeys = ['magic_lv1', 'magic_lv2', 'magic_lv3'];
       const magicAnims = ['magic_lv1_idle', 'magic_lv2_idle', 'magic_lv3_idle'];
-      const key = magicKeys[Math.min(this.level - 1, 2)];
-      const anim = magicAnims[Math.min(this.level - 1, 2)];
-      const sprite = this.scene.add.sprite(this.x, spriteY, key, 0).setDepth(5);
-      sprite.play(anim);
+      const lvl = Math.min(this.level - 1, 2);
+      const sprite = this.scene.add.sprite(this.x, spriteY, magicKeys[lvl], 0).setDepth(5);
+      sprite.play(magicAnims[lvl]);
       sprite.setScale(48 / 130);
       sprite.setOrigin(0.5, 0.8);
+      // Purple tint for magic feel
+      sprite.setTint(0xDDCCFF);
       this.archerSprite = sprite;
     } else if (this.type === 'cannon') {
-      // CraftPix Pack1 cannon tower sprite (Idle/4, warm brown)
+      // CraftPix Pack1 cannon tower sprite (Idle/5, grey stone)
       const spriteY = this.y - 10;
       const sprite = this.scene.add.sprite(this.x, spriteY, 'cannon_sprite', 0).setDepth(5);
       sprite.play('cannon_idle');
       sprite.setScale(48 / 130);
       sprite.setOrigin(0.5, 0.8);
-      // Tint to differentiate levels
-      if (this.level === 2) sprite.setTint(0xDDCCBB);
-      else if (this.level >= 3) sprite.setTint(0xCCBBAA);
       this.archerSprite = sprite;
     } else {
       // Fallback for any other tower type
