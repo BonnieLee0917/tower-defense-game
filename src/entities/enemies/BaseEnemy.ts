@@ -126,16 +126,44 @@ export class BaseEnemy {
     // Position sprite and scale to current logical size
     this.sprite.setPosition(this.x, this.y + (this.isFlying ? -6 : 0));
     this.sprite.setOrigin(0.5, 0.5);
-    // Direction-based flip only (no rotation — side-view sprites look wrong rotated)
-    // Pack2 sprites face LEFT by default (verified via PIL pixel density analysis)
+    this.sprite.setRotation(0);
+
+    // 3-direction sprite switching: Side (S_Walk), Down (D_Walk), Up (U_Walk)
+    const sinA = Math.sin(this.angle);
     const cosA = Math.cos(this.angle);
-    if (cosA > 0.3) {
-      this.sprite.setFlipX(true);  // moving right → flip (sprite faces left by default)
-    } else if (cosA < -0.3) {
-      this.sprite.setFlipX(false); // moving left → no flip
+    const absCos = Math.abs(cosA);
+    const absSin = Math.abs(sinA);
+
+    const baseAnim = this.getAnimationKey();
+    if (absSin > absCos) {
+      // Predominantly vertical movement
+      if (sinA > 0) {
+        // Moving DOWN
+        const downAnim = baseAnim.replace('_walk_anim', '_walk_down_anim');
+        if (this.sprite.anims?.currentAnim?.key !== downAnim) {
+          this.sprite.play(downAnim, true);
+        }
+        this.sprite.setFlipX(false);
+      } else {
+        // Moving UP
+        const upAnim = baseAnim.replace('_walk_anim', '_walk_up_anim');
+        if (this.sprite.anims?.currentAnim?.key !== upAnim) {
+          this.sprite.play(upAnim, true);
+        }
+        this.sprite.setFlipX(false);
+      }
+    } else {
+      // Predominantly horizontal movement — use side walk
+      if (this.sprite.anims?.currentAnim?.key !== baseAnim) {
+        this.sprite.play(baseAnim, true);
+      }
+      // Pack2 S_Walk sprites face LEFT by default (PIL verified)
+      if (cosA > 0) {
+        this.sprite.setFlipX(true);  // moving right → flip
+      } else {
+        this.sprite.setFlipX(false); // moving left → no flip
+      }
     }
-    // Pure vertical: keep last flip state
-    this.sprite.setRotation(0); // ensure no residual rotation
     // Scale enemies — balanced for path width readability
     const scaleMap: Record<string, number> = { normal: 1.5, fast: 1.5, heavy: 1.8, flying: 1.5 };
     const scale = scaleMap[this.type] || 1.5;
