@@ -33,8 +33,13 @@ export class PreloadScene extends Phaser.Scene {
       frameWidth: 70,
       frameHeight: 130,
     });
-    // Cannon tower (Idle/5 — grey stone)
-    this.load.spritesheet('cannon_sprite', 'assets/towers/pack1/idle_5.png', {
+    // Cannon tower — CraftPix Catapult Tower pack
+    this.load.image('cannon_lv1', 'assets/towers/catapult/idle_lv1.png');
+    this.load.spritesheet('cannon_lv2', 'assets/towers/catapult/idle_lv2.png', {
+      frameWidth: 70,
+      frameHeight: 130,
+    });
+    this.load.spritesheet('cannon_lv3', 'assets/towers/catapult/idle_lv3.png', {
       frameWidth: 70,
       frameHeight: 130,
     });
@@ -51,8 +56,13 @@ export class PreloadScene extends Phaser.Scene {
       frameWidth: 70,
       frameHeight: 130,
     });
-    // Barracks (Idle/7 — green)
-    this.load.spritesheet('barracks_sprite', 'assets/towers/pack1/idle_7.png', {
+    // Barracks — CraftPix Guardian Tower pack
+    this.load.image('barracks_lv1', 'assets/towers/guardian/idle_lv1.png');
+    this.load.spritesheet('barracks_lv2', 'assets/towers/guardian/idle_lv2.png', {
+      frameWidth: 70,
+      frameHeight: 130,
+    });
+    this.load.spritesheet('barracks_lv3', 'assets/towers/guardian/idle_lv3.png', {
       frameWidth: 70,
       frameHeight: 130,
     });
@@ -121,36 +131,46 @@ export class PreloadScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    // Cannon tower animation (6 frames)
+    // Cannon tower animations — CraftPix Catapult pack
+    // Lv1 = single image, no animation
+    // Lv2 = 280×130 = 4 frames, Lv3 = 420×130 = 6 frames
     this.anims.create({
-      key: 'cannon_idle',
-      frames: this.anims.generateFrameNumbers('cannon_sprite', { start: 0, end: 5 }),
+      key: 'cannon_lv2_idle',
+      frames: this.anims.generateFrameNumbers('cannon_lv2', { start: 0, end: 3 }),
       frameRate: 4,
       repeat: -1,
     });
-    // Magic tower animations (6 frames each)
     this.anims.create({
-      key: 'magic_lv1_idle',
-      frames: this.anims.generateFrameNumbers('magic_lv1', { start: 0, end: 5 }),
+      key: 'cannon_lv3_idle',
+      frames: this.anims.generateFrameNumbers('cannon_lv3', { start: 0, end: 5 }),
       frameRate: 4,
       repeat: -1,
     });
+    // Magic tower animations — CraftPix Mage pack
+    // Lv1 = single image, no animation
     this.anims.create({
       key: 'magic_lv2_idle',
-      frames: this.anims.generateFrameNumbers('magic_lv2', { start: 0, end: 5 }),
+      frames: this.anims.generateFrameNumbers('magic_lv2', { start: 0, end: 3 }),
       frameRate: 4,
       repeat: -1,
     });
     this.anims.create({
       key: 'magic_lv3_idle',
-      frames: this.anims.generateFrameNumbers('magic_lv3', { start: 0, end: 5 }),
+      frames: this.anims.generateFrameNumbers('magic_lv3', { start: 0, end: 3 }),
       frameRate: 4,
       repeat: -1,
     });
-    // Barracks animation (6 frames)
+    // Barracks animations — CraftPix Guardian pack
+    // Lv1 = single image, no animation
     this.anims.create({
-      key: 'barracks_idle',
-      frames: this.anims.generateFrameNumbers('barracks_sprite', { start: 0, end: 5 }),
+      key: 'barracks_lv2_idle',
+      frames: this.anims.generateFrameNumbers('barracks_lv2', { start: 0, end: 3 }),
+      frameRate: 4,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: 'barracks_lv3_idle',
+      frames: this.anims.generateFrameNumbers('barracks_lv3', { start: 0, end: 3 }),
       frameRate: 4,
       repeat: -1,
     });
