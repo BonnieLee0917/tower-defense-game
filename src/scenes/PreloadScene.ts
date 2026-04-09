@@ -22,13 +22,37 @@ export class PreloadScene extends Phaser.Scene {
     this.load.image('path1', 'assets/tiles/kenney/towerDefense_tile046.png'); // pure brown sand, uniform brightness
 
     // --- Tower sprites (archer only) ---
-    // 1.png = 70x130 single frame, 3.png = 280x130 (4 frames), 5.png = 420x130 (6 frames)
+    // Tower sprites from CraftPix Pack1
+    // 1.png = 70x130 single frame, 2-3.png = 280x130 (4 frames), 4-7.png = 420x130 (6 frames)
     this.load.image('archer_lv1', 'assets/towers/archer_lv1.png');
     this.load.spritesheet('archer_lv2', 'assets/towers/archer_lv2.png', {
       frameWidth: 70,
       frameHeight: 130,
     });
     this.load.spritesheet('archer_lv3', 'assets/towers/archer_lv3.png', {
+      frameWidth: 70,
+      frameHeight: 130,
+    });
+    // Cannon tower (Idle/4 — warm brown)
+    this.load.spritesheet('cannon_sprite', 'assets/towers/pack1/idle_4.png', {
+      frameWidth: 70,
+      frameHeight: 130,
+    });
+    // Magic tower Lv1-3 (Idle/5-7 — blue-grey)
+    this.load.spritesheet('magic_lv1', 'assets/towers/pack1/idle_5.png', {
+      frameWidth: 70,
+      frameHeight: 130,
+    });
+    this.load.spritesheet('magic_lv2', 'assets/towers/pack1/idle_6.png', {
+      frameWidth: 70,
+      frameHeight: 130,
+    });
+    this.load.spritesheet('magic_lv3', 'assets/towers/pack1/idle_7.png', {
+      frameWidth: 70,
+      frameHeight: 130,
+    });
+    // Barracks (Idle/4 with green tint, or use same as cannon with tint)
+    this.load.spritesheet('barracks_sprite', 'assets/towers/pack1/idle_4.png', {
       frameWidth: 70,
       frameHeight: 130,
     });
@@ -60,6 +84,9 @@ export class PreloadScene extends Phaser.Scene {
       'archer_lv1',
       'archer_lv2',
       'archer_lv3',
+      'cannon_sprite',
+      'magic_lv1', 'magic_lv2', 'magic_lv3',
+      'barracks_sprite',
       'enemy_normal_walk',
       'enemy_fast_walk',
       'enemy_heavy_walk',
@@ -90,6 +117,40 @@ export class PreloadScene extends Phaser.Scene {
     this.anims.create({
       key: 'archer_lv3_idle',
       frames: this.anims.generateFrameNumbers('archer_lv3', { start: 0, end: 5 }),
+      frameRate: 4,
+      repeat: -1,
+    });
+
+    // Cannon tower animation (6 frames)
+    this.anims.create({
+      key: 'cannon_idle',
+      frames: this.anims.generateFrameNumbers('cannon_sprite', { start: 0, end: 5 }),
+      frameRate: 4,
+      repeat: -1,
+    });
+    // Magic tower animations (6 frames each)
+    this.anims.create({
+      key: 'magic_lv1_idle',
+      frames: this.anims.generateFrameNumbers('magic_lv1', { start: 0, end: 5 }),
+      frameRate: 4,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: 'magic_lv2_idle',
+      frames: this.anims.generateFrameNumbers('magic_lv2', { start: 0, end: 5 }),
+      frameRate: 4,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: 'magic_lv3_idle',
+      frames: this.anims.generateFrameNumbers('magic_lv3', { start: 0, end: 5 }),
+      frameRate: 4,
+      repeat: -1,
+    });
+    // Barracks animation (6 frames)
+    this.anims.create({
+      key: 'barracks_idle',
+      frames: this.anims.generateFrameNumbers('barracks_sprite', { start: 0, end: 5 }),
       frameRate: 4,
       repeat: -1,
     });
